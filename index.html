@@ -1,73 +1,110 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#0b1720" />
-<title>Motion Sense｜即時追蹤</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0c1925">
+<title>Motion Sense｜顏色追蹤</title>
 <style>
-:root{color-scheme:dark;--bg:#0b1720;--text:#f5fafc;--muted:#b7cbd1;--edge:#344d57;--green:#65e6a8;--warn:#ffce83}*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:focus-visible{outline:3px solid #ffcb7d;outline-offset:3px}button:disabled{opacity:.55;cursor:wait}.app{width:min(100%,1050px);height:100dvh;min-height:380px;margin:auto;display:flex;flex-direction:column;padding:calc(9px + env(safe-area-inset-top)) 10px calc(9px + env(safe-area-inset-bottom));gap:9px}.top{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:29px}.brand{font-weight:850;font-size:clamp(1rem,3vw,1.25rem);white-space:nowrap}.brand small{font-size:.65em;color:var(--muted);font-weight:600}.fullscreen{background:#223947;border:1px solid var(--edge);color:white;padding:6px 10px;border-radius:11px;white-space:nowrap}.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mode{background:#213a47;color:#ebf6f9;border:2px solid #395661;padding:12px 6px;border-radius:15px;font-size:clamp(1rem,3.5vw,1.15rem);font-weight:850}.mode[aria-pressed="true"]{background:#235844;border-color:#69eab1;color:white}.view{position:relative;flex:1 1 auto;min-height:0;background:#172a34;border:1px solid var(--edge);border-radius:18px;overflow:hidden;isolation:isolate}.view video,.view canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.view video{transform:scaleX(-1)}.view canvas{pointer-events:none}.view .scrim{position:absolute;inset:0;background:linear-gradient(180deg,#09191faa,transparent 23%,transparent 66%,#08151bca);pointer-events:none}.hud{position:absolute;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}.chip{display:inline-flex;gap:7px;align-items:center;background:#081921e8;border:1px solid #456371;border-radius:999px;padding:9px 12px;font-size:clamp(.85rem,3.5vw,1.02rem);font-weight:800;max-width:100%}.dot{width:10px;height:10px;border-radius:50%;background:#a1b2ba;flex-shrink:0}.chip.good .dot{background:var(--green);box-shadow:0 0 9px #65e6a8}.chip.warn .dot{background:var(--warn)}.sub{color:#c8dce2;font-size:.8rem;position:absolute;bottom:76px;left:12px;right:12px;text-align:center;text-shadow:0 1px 4px #000}.bottom{position:absolute;bottom:12px;left:12px;right:12px;min-height:54px;border:1px solid #486875;border-radius:15px;background:#0a1c24e8;display:flex;justify-content:center;align-items:center;text-align:center;padding:10px 12px;font-size:clamp(1rem,4.3vw,1.3rem);font-weight:850}.bottom.good{background:#14543fdc;border-color:#54d8a2}.bottom.warn{background:#5c421fdc;border-color:#b28a4e}.startOverlay{position:absolute;inset:0;background:#10232cdd;display:flex;justify-content:center;align-items:center;flex-direction:column;gap:13px;padding:20px;text-align:center;z-index:5}.startOverlay[hidden]{display:none}.startOverlay h2{margin:0;font-size:1.35rem}.startOverlay p{margin:0;color:#d6e5eb;line-height:1.6;max-width:360px}.primary{background:#77efb6;color:#0e2a21;border:0;border-radius:14px;padding:16px 26px;font-weight:900;font-size:1.15rem;min-width:170px}.retry{background:#2c4654;border:1px solid #678592;border-radius:11px;padding:9px 13px;color:white;font-weight:750}.foot{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:30px;padding:0 3px}.foot .hint{color:#bbd0d7;font-size:.79rem;line-height:1.4}.infoBtn{border:1px solid #3b5866;border-radius:10px;padding:6px 9px;color:#dbeaf0;background:#192e39;white-space:nowrap}.help{display:none;background:#182f3b;border:1px solid #385663;border-radius:11px;padding:11px 13px;font-size:.84rem;line-height:1.65;color:#dceaf0}.help.open{display:block}.help p{margin:0 0 6px}.help p:last-child{margin:0}.help a{color:#91e8be}body:has(.help.open) .view{min-height:200px}@media(min-width:760px){.app{padding:14px;gap:12px}.view{max-height:none}.mode{padding:11px}.foot{min-height:35px}}@media(max-height:570px){.top{min-height:24px}.mode{padding:6px}.app{gap:5px;padding-top:calc(4px + env(safe-area-inset-top));padding-bottom:calc(3px + env(safe-area-inset-bottom))}.bottom{min-height:38px;padding:6px}.sub{bottom:57px}.hud{top:7px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;background:#09151e;color:#fff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;touch-action:manipulation}#app{height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);gap:9px;max-width:800px;margin:auto}
+header{height:50px;min-height:50px;display:flex;justify-content:space-between;align-items:center;padding:0 3px}h1{font-size:18px;letter-spacing:.1px;margin:0}#status{font-size:13px;color:#dce9f2;display:flex;align-items:center;gap:7px;white-space:nowrap}#dot{width:9px;height:9px;border-radius:50%;background:#718596}#dot.ok{background:#44e5a3}#dot.wait{background:#f9bd57}
+#stage{flex:1;min-height:0;position:relative;border-radius:17px;overflow:hidden;background:#112c3c;border:1px solid #315263;touch-action:none}canvas{display:block;width:100%;height:100%;touch-action:none}#video{display:none}
+#instruction{position:absolute;left:12px;right:12px;top:12px;border-radius:12px;background:#071b27d9;padding:11px 13px;text-align:center;font-size:15px;line-height:1.5;pointer-events:none;box-shadow:0 3px 16px #071b2730}#instruction.hidden{display:none}#startCover{position:absolute;inset:0;background:#0d2636de;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:26px;text-align:center;gap:15px}#startCover.hidden{display:none}#startCover p{font-size:15px;line-height:1.65;color:#b9d2e0;margin:0}#startCover strong{font-size:22px}
+button{border-radius:12px;border:1px solid #456172;background:#203f51;color:#fff;font-weight:700;padding:12px 16px;cursor:pointer;min-height:48px}button:disabled{opacity:.45}button.primary{background:#25a47a;border-color:#25a47a;color:#fff}#controls{display:flex;align-items:stretch;gap:9px;flex-shrink:0}#reset{flex:1}#help{width:52px;padding:0;font-size:20px}#colorBox{width:60px;display:flex;align-items:center;justify-content:center;background:#152e3c;border:1px solid #406174;border-radius:12px}#sampleColor{width:28px;height:28px;border-radius:50%;background:#536a75;border:2px solid #fff8;box-shadow:0 0 0 2px #102330}#bottom{min-height:22px;text-align:center;font-size:12px;color:#a9c2d0}#alert{position:absolute;bottom:14px;left:12px;right:12px;background:#132b3be8;border-radius:12px;padding:11px;text-align:center;font-size:14px;line-height:1.5;pointer-events:none}#alert[hidden]{display:none}
+#settings{position:absolute;inset:0;background:#081720ef;display:flex;justify-content:center;align-items:center;padding:22px}#settings[hidden]{display:none}#settings section{background:#173142;border:1px solid #335467;border-radius:16px;padding:20px;width:100%;max-width:420px}#settings h2{margin:0 0 10px;font-size:20px}#settings p{font-size:14px;line-height:1.7;color:#d5e4ec}#settings label{display:flex;gap:10px;align-items:center;margin:18px 0}#settings input{flex:1}#settings .actions{display:flex;justify-content:flex-end}#settings button{min-width:100px}
 </style>
 </head>
-<body>
-<main class="app">
-<header class="top"><div class="brand">Motion Sense <small>即時追蹤</small></div><button type="button" class="fullscreen" id="fullscreen">⛶ 全螢幕</button></header>
-<nav class="modes" aria-label="追蹤對象"><button type="button" class="mode" id="handBtn" aria-pressed="true">✋ 手部追蹤</button><button type="button" class="mode" id="headBtn" aria-pressed="false">🙂 頭部追蹤</button></nav>
-<section class="view" id="view" aria-label="攝影機追蹤畫面"><video id="video" autoplay playsinline muted></video><canvas id="overlay"></canvas><div class="scrim"></div>
-<div class="hud"><div class="chip" id="chip"><span class="dot"></span><span id="chipText">攝影機未開啟</span></div><div class="chip" id="modeLabel">手部模式</div></div>
-<div class="sub" id="sub">辨識到的目標會顯示綠色追蹤標記</div><div class="bottom" id="bottom" aria-live="polite">按下「啟動攝影機」</div>
-<div class="startOverlay" id="startOverlay"><h2 id="overlayTitle">準備開始追蹤</h2><p id="overlayDesc">讓手機看見你的手或臉。移出畫面後，再回來也會自動辨識，不需要校正。</p><button type="button" class="primary" id="start">啟動攝影機</button><button type="button" class="retry" id="retry" hidden>重新嘗試</button></div>
-</section>
-<footer class="foot"><span class="hint" id="hint">首次使用需允許相機權限，並連網載入辨識模型。</span><button type="button" class="infoBtn" id="info" aria-expanded="false">ⓘ 說明</button></footer>
-<aside class="help" id="help"><p>這一版只測試即時追蹤，不會計數，也不需要校正。綠色標記應該跟著手或頭移動。目標離開畫面後標記會消失，重新出現則自動恢復。</p><p>手部模型可能無法辨識握拳、太靠近鏡頭、快速移動或只有局部手掌的情況。請先讓完整手掌進入畫面，再嘗試不同手型。畫面顯示「未偵測到」只代表模型目前沒找到，不一定代表手已離開畫面。</p><p>若無法開啟相機：請透過 HTTPS 網址在 Chrome／Safari 開啟，並允許相機權限。手部與頭部是兩種不同模型，切換模式可能需要短暫載入。</p></aside>
+<body><main id="app">
+<header><h1>Motion Sense <span style="font-size:13px;color:#aac9d7;font-weight:400">顏色追蹤</span></h1><div id="status" aria-live="polite"><span id="dot"></span><span id="statusText">尚未啟動</span></div></header>
+<div id="stage">
+<video id="video" playsinline autoplay muted></video><canvas id="canvas" aria-label="即時鏡頭畫面，點選要追蹤的物品顏色"></canvas>
+<div id="instruction" class="hidden"></div>
+<div id="alert" hidden></div>
+<div id="startCover"><strong>追蹤手上拿的物品</strong><p>開啟前鏡頭後，點一下畫面中的彩色物品。物品移動時，綠色追蹤圈會跟著走；離開畫面後，再出現會自動找回。</p><button id="start" class="primary">啟動前鏡頭</button></div>
+<div id="settings" hidden><section><h2>使用說明與調整</h2><p>① 將彩色物品放進鏡頭。<br>② 點一下物品中央，讓系統記住顏色。<br>③ 移動物品，觀察綠色追蹤圈。<br>④ 要換物品，按下方「重新選擇顏色」。</p><p>使用霧面、飽和、與背景不同的顏色會較穩定。同色衣物或桌面可能造成誤判；這個功能只辨識顏色，無法確定是哪一個物品。</p><label>顏色容許範圍 <input id="tolerance" type="range" min="8" max="30" value="16"><output id="tolValue">16</output></label><div class="actions"><button id="closeSettings">返回鏡頭</button></div></section></div>
+</div>
+<div id="controls"><div id="colorBox" title="目前選取的顏色"><span id="sampleColor"></span></div><button id="reset" disabled>重新選擇顏色</button><button id="help" aria-label="使用說明">?</button></div>
+<div id="bottom">全程在裝置上辨識；不會上傳攝影機影像</div>
 </main>
 <script>
-(()=>{'use strict';
+(()=>{
+'use strict';
 const $=id=>document.getElementById(id);
-const video=$('video'),canvas=$('overlay'),ctx=canvas.getContext('2d');
-let mode='hand',stream=null,handModel=null,faceModel=null,active=false,busy=false,raf=0,loading=false,loopToken=0,misses=0,lastSeen=0,lastVideoTime=-1,tracked=false,broken=false;
-const scripts={hand:'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js',head:'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js'};
-function setStatus(kind,top,bottom,sub){const chip=$('chip'),bar=$('bottom');chip.className='chip'+(kind==='good'?' good':kind==='warn'?' warn':'');chip.querySelector('#chipText').textContent=top;bar.className='bottom'+(kind==='good'?' good':kind==='warn'?' warn':'');bar.textContent=bottom;if(sub!==undefined)$('sub').textContent=sub;}
-function overlay(show,title,desc){$('startOverlay').hidden=!show;if(title)$('overlayTitle').textContent=title;if(desc)$('overlayDesc').textContent=desc;$('start').hidden=active;$('retry').hidden=!active;}
-function setMode(next){if(next===mode)return;mode=next;loopToken++;misses=0;tracked=false;lastVideoTime=-1;drawClear();$('handBtn').setAttribute('aria-pressed',String(mode==='hand'));$('headBtn').setAttribute('aria-pressed',String(mode==='head'));$('modeLabel').textContent=mode==='hand'?'手部模式':'頭部模式';$('hint').textContent=mode==='hand'?'手掌靠近鏡頭太多時可能難以辨識。':'頭部追蹤不需校正，也不會要求對準固定框。';if(active){setStatus('','切換辨識模型…','正在準備'+targetName()+'追蹤','鏡頭保持開啟');startLoop();}else setStatus('','攝影機未開啟','按下「啟動攝影機」','辨識到的目標會顯示綠色追蹤標記');}
-function targetName(){return mode==='hand'?'手部':'頭部';}
-$('handBtn').addEventListener('click',()=>setMode('hand'));
-$('headBtn').addEventListener('click',()=>setMode('head'));
-$('info').addEventListener('click',()=>{const show=!$('help').classList.contains('open');$('help').classList.toggle('open',show);$('info').setAttribute('aria-expanded',String(show));});
-$('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement){await document.exitFullscreen();}else if(document.documentElement.requestFullscreen){await document.documentElement.requestFullscreen();}else{setStatus('warn','全螢幕不支援','請改用瀏覽器全螢幕','部分 iPhone 瀏覽器不支援網頁全螢幕');}}catch(e){setStatus('warn','全螢幕不支援','瀏覽器無法切換全螢幕',e.message||'');}});
-function inject(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.crossOrigin='anonymous';s.onload=resolve;s.onerror=()=>{s.remove();reject(new Error('無法載入 '+src))};document.head.appendChild(s);});}
-async function scriptFor(kind){const global=kind==='hand'?'Hands':'FaceMesh';if(window[global])return;try{await inject(scripts[kind]);}catch(e){await inject(kind==='hand'?'https://unpkg.com/@mediapipe/hands/hands.js':'https://unpkg.com/@mediapipe/face_mesh/face_mesh.js');}if(!window[global])throw new Error('AI 辨識程式載入失敗，請確認網路連線');}
-async function getModel(kind){if(kind==='hand'&&handModel)return handModel;if(kind==='head'&&faceModel)return faceModel;await scriptFor(kind);if(kind==='hand'){
-const instance=new window.Hands({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+file});instance.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.45,minTrackingConfidence:.4});instance.onResults(r=>handleResults('hand',r));handModel=instance;return instance;
-}else{
-const instance=new window.FaceMesh({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/'+file});instance.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.45});instance.onResults(r=>handleResults('head',r));faceModel=instance;return instance;}}
-function drawClear(){ctx.clearRect(0,0,canvas.width,canvas.height);}
-// CSS object-fit:cover + mirrored preview: convert model coordinates to overlay pixel coordinates.
-function project(p){const vw=video.videoWidth||640,vh=video.videoHeight||480;const box=$('view').getBoundingClientRect();const dw=box.width,dh=box.height;const s=Math.max(dw/vw,dh/vh);const offsetX=(vw*s-dw)/2,offsetY=(vh*s-dh)/2;return {x:((1-p.x)*vw*s-offsetX),y:(p.y*vh*s-offsetY)};}
-function resizeCanvas(){const rect=$('view').getBoundingClientRect();const scale=Math.min(window.devicePixelRatio||1,2);const w=Math.round(rect.width*scale),h=Math.round(rect.height*scale);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.setTransform(scale,0,0,scale,0,0);return rect;}
-function drawTarget(point,points,kind){const rect=resizeCanvas();drawClear();if(!point)return;const p=project(point);if(!Number.isFinite(p.x)||!Number.isFinite(p.y))return;
-ctx.lineWidth=2.5;ctx.strokeStyle='rgba(101,230,168,.85)';ctx.fillStyle='rgba(101,230,168,.09)';if(kind==='head'&&points){const indices=[10,234,152,454];const q=indices.map(i=>points[i]).filter(Boolean).map(project);if(q.length===4){const xs=q.map(x=>x.x),ys=q.map(x=>x.y),x=Math.min(...xs),y=Math.min(...ys),w=Math.max(...xs)-x,h=Math.max(...ys)-y;ctx.strokeRect(x-14,y-14,w+28,h+28);}}
-if(kind==='hand'&&points){const ids=[0,5,9,13,17];for(const id of ids){if(points[id]){const q=project(points[id]);ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();}}}
-ctx.beginPath();ctx.arc(p.x,p.y,22,0,Math.PI*2);ctx.fillStyle='rgba(75,244,175,.13)';ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle='#6cffb5';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();}
-function handleResults(kind,r){if(kind!==mode||!active)return;let pts,point;if(kind==='hand'){
-pts=r.multiHandLandmarks?.[0];if(pts?.length){ // Palm-centre is more robust than a single fingertip when the fingers bend.
-const ids=[0,5,9,13,17].filter(i=>pts[i]);point={x:ids.reduce((a,i)=>a+pts[i].x,0)/ids.length,y:ids.reduce((a,i)=>a+pts[i].y,0)/ids.length};}
-}else{pts=r.multiFaceLandmarks?.[0];if(pts?.length){const nose=pts[1]||pts[4];point=nose?{x:nose.x,y:nose.y}:null;}}
-if(point&&Number.isFinite(point.x)&&Number.isFinite(point.y)){misses=0;lastSeen=performance.now();tracked=true;drawTarget(point,pts,kind);setStatus('good','已偵測到'+(kind==='hand'?'手':'頭部'),'● 正在追蹤'+(kind==='hand'?'手部':'頭部'),'移動目標，確認綠點是否跟著移動');}else{misses++;if(misses>=2||performance.now()-lastSeen>250){tracked=false;drawClear();setStatus('warn','目前未偵測到'+(kind==='hand'?'手':'頭部'),kind==='hand'?'手進入畫面會自動重新追蹤':'臉進入畫面會自動重新追蹤',kind==='hand'?'也可能因握拳、遮擋或太近而暫時辨識不到':'不需重新校正或按開始');}}}
-async function startCamera(){if(loading)return;loading=true;$('start').disabled=true;$('retry').disabled=true;setStatus('','正在啟動…','正在取得相機權限','首次使用請允許攝影機權限');try{
-if(!navigator.mediaDevices?.getUserMedia)throw new Error('瀏覽器不支援攝影機，請使用 HTTPS 網址與 Chrome／Safari');
-if(!stream){stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:640},height:{ideal:480},frameRate:{ideal:24,max:30}}});video.srcObject=stream;await video.play();}
-active=true;broken=false;overlay(false);setStatus('','正在準備辨識…','正在載入'+targetName()+'模型','首次載入需要網路');startLoop();}catch(e){active=false;const msg=e?.name==='NotAllowedError'?'相機權限被拒絕，請在瀏覽器設定允許攝影機':e?.name==='NotFoundError'?'找不到可用的攝影機':e?.message||String(e);overlay(true,'無法啟動攝影機',msg);$('start').textContent='重新嘗試';setStatus('warn','無法啟動','請檢查攝影機權限',msg);}finally{loading=false;$('start').disabled=false;$('retry').disabled=false;}}
-$('start').addEventListener('click',startCamera);$('retry').addEventListener('click',()=>{broken=false;overlay(false);startLoop();});
-function startLoop(){const token=++loopToken;broken=false;lastVideoTime=-1;misses=0;tracked=false;drawClear();void runLoop(token);}
-async function runLoop(token){if(token!==loopToken||!active)return;try{const selected=mode;setStatus('','載入辨識模型…','正在準備'+targetName()+'追蹤','首次使用需要連網下載模型');const model=await getModel(selected);if(token!==loopToken||!active)return;
-setStatus('warn','正在尋找'+targetName()+'…','請讓'+(selected==='hand'?'手':'臉')+'出現在鏡頭內','進出畫面後都會自動繼續追蹤');
-const frame=async()=>{if(token!==loopToken||!active)return;if(!document.hidden&&video.readyState>=2&&!busy){const time=video.currentTime;if(time!==lastVideoTime){lastVideoTime=time;busy=true;try{await model.send({image:video});}catch(e){busy=false;broken=true;stopError(e);return;}finally{busy=false;}}}raf=requestAnimationFrame(frame);};raf=requestAnimationFrame(frame);
-}catch(e){if(token!==loopToken)return;broken=true;stopError(e);}}
-function stopError(e){loopToken++;cancelAnimationFrame(raf);drawClear();const msg=e?.message||String(e);setStatus('warn','辨識模型發生錯誤','無法追蹤：請重新嘗試',msg);overlay(true,'辨識模型無法使用','攝影機已開啟，但 AI 辨識載入或執行失敗：'+msg);}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&active&&!broken&&!(raf&&false)){ // When returning from another app, restart the prediction loop.
-cancelAnimationFrame(raf);startLoop();}});
-window.addEventListener('resize',()=>{resizeCanvas();drawClear();});
+const vid=$('video'),view=$('canvas'),ctx=view.getContext('2d',{willReadFrequently:true});
+const work=document.createElement('canvas'),wctx=work.getContext('2d',{willReadFrequently:true});
+const state={stream:null,running:false,selected:null,last:null,seen:false,frame:0,processing:false,camError:'',tolerance:16,failFrames:0};
+const setStatus=(text,kind='')=>{$('statusText').textContent=text;$('dot').className=kind};
+const note=(text)=>{$('instruction').textContent=text;$('instruction').classList.remove('hidden')};
+const hideNote=()=>$('instruction').classList.add('hidden');
+const popup=(text)=>{$('alert').textContent=text;$('alert').hidden=false;clearTimeout(popup.timeout);popup.timeout=setTimeout(()=>$('alert').hidden=true,2600)};
+function rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;let h=0;if(d){switch(max){case r:h=((g-b)/d)%6;break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;}h=(h*60+360)%360;}return [h,max===0?0:d/max,max]}
+const hueDiff=(a,b)=>Math.min(Math.abs(a-b),360-Math.abs(a-b));
+function sizeCanvas(){const rect=$('stage').getBoundingClientRect();const scale=Math.min(1,300/rect.width,530/rect.height);work.width=Math.max(100,Math.round(rect.width*scale));work.height=Math.max(100,Math.round(rect.height*scale));view.width=work.width;view.height=work.height;state.last=null;}
+// Draw exactly the same mirrored, cover-cropped camera image used for color analysis.
+function drawCamera(){const W=work.width,H=work.height,vw=vid.videoWidth,vh=vid.videoHeight;if(!vw||!vh)return false;const s=Math.max(W/vw,H/vh),sw=W/s,sh=H/s,sx=(vw-sw)/2,sy=(vh-sh)/2;
+wctx.save();wctx.translate(W,0);wctx.scale(-1,1);wctx.drawImage(vid,sx,sy,sw,sh,0,0,W,H);wctx.restore();return true;}
+function sampleColor(x,y){const W=work.width,H=work.height;const im=wctx.getImageData(0,0,W,H).data;let a=[];for(let yy=Math.max(0,y-6);yy<=Math.min(H-1,y+6);yy+=2){for(let xx=Math.max(0,x-6);xx<=Math.min(W-1,x+6);xx+=2){const k=(yy*W+xx)*4;const c=rgb2hsv(im[k],im[k+1],im[k+2]);if(c[1]>.18&&c[2]>.14)a.push({c,r:im[k],g:im[k+1],b:im[k+2]});}}
+if(a.length<8){popup('此處顏色太淡或太暗，請點選較鮮明的物品');return;}
+// Circular median approximation: choose hue nearest to dominant 10-degree bin.
+let bins=new Array(36).fill(0);for(const p of a)bins[Math.floor(p.c[0]/10)%36]++;
+let best=0;for(let i=0;i<36;i++){const score=bins[(i+35)%36]+bins[i]+bins[(i+1)%36];if(score>best){best=score;state.bin=i;}}
+let center=state.bin*10+5;let sel=a.filter(p=>hueDiff(p.c[0],center)<22);if(sel.length<5)sel=a;
+sel.sort((p,q)=>p.c[1]-q.c[1]);const med=sel[Math.floor(sel.length/2)];let hsumX=0,hsumY=0;for(const p of sel){hsumX+=Math.cos(p.c[0]*Math.PI/180);hsumY+=Math.sin(p.c[0]*Math.PI/180)}
+const hue=(Math.atan2(hsumY,hsumX)*180/Math.PI+360)%360;
+state.selected={hue,sat:med.c[1],val:med.c[2],r:med.r,g:med.g,b:med.b};state.last=null;state.failFrames=0;
+$('sampleColor').style.background=`rgb(${med.r},${med.g},${med.b})`;$('reset').disabled=false;hideNote();setStatus('正在尋找物品','wait');
+}
+function segment(image){const W=work.width,H=work.height,pixels=image.data,c=state.selected;if(!c)return null;
+// Low-resolution binary mask for efficient connected component analysis.
+const step=3,gw=Math.ceil(W/step),gh=Math.ceil(H/step);let mask=new Uint8Array(gw*gh);let matches=0;
+const htol=state.tolerance,stol=.34,vtol=.44;
+for(let gy=0;gy<gh;gy++)for(let gx=0;gx<gw;gx++){
+ const x=Math.min(W-1,gx*step+1),y=Math.min(H-1,gy*step+1),i=(y*W+x)*4;
+ const hsv=rgb2hsv(pixels[i],pixels[i+1],pixels[i+2]);
+ if(hueDiff(hsv[0],c.hue)<=htol && hsv[1]>=Math.max(.21,c.sat-stol) && hsv[2]>=Math.max(.13,c.val-vtol)&&hsv[2]<=Math.min(1,c.val+vtol)) {mask[gy*gw+gx]=1;matches++;}
+}
+if(matches>gw*gh*.4)return {ambiguous:true};
+const visited=new Uint8Array(mask.length), comps=[];
+for(let i=0;i<mask.length;i++){
+if(!mask[i]||visited[i])continue;
+let queue=[i],head=0;visited[i]=1;let count=0,minX=gw,maxX=0,minY=gh,maxY=0,sx=0,sy=0;
+while(head<queue.length){let cur=queue[head++],cy=Math.floor(cur/gw),cx=cur%gw;count++;sx+=cx;sy+=cy;minX=Math.min(minX,cx);maxX=Math.max(maxX,cx);minY=Math.min(minY,cy);maxY=Math.max(maxY,cy);
+const ns=[cur-1,cur+1,cur-gw,cur+gw];for(let j=0;j<4;j++){const n=ns[j];if(n<0||n>=mask.length)continue;if(j===0&&cx===0||j===1&&cx===gw-1)continue;if(mask[n]&&!visited[n]){visited[n]=1;queue.push(n)}}
+}
+if(count>=Math.max(5,Math.round(gw*gh*.0007)))comps.push({count,x:(sx/count+.5)*step,y:(sy/count+.5)*step,box:[minX*step,minY*step,Math.min(W,(maxX+1)*step),Math.min(H,(maxY+1)*step)]});
+}
+if(!comps.length)return null;
+// Favor substantial regions, with a modest continuity bonus. Can still confuse identical-colored objects.
+comps.sort((a,b)=>score(b)-score(a));
+function score(o){const bonus=state.last?Math.max(0,1-Math.hypot(o.x-state.last.x,o.y-state.last.y)/(Math.max(W,H)*.5))*.4:0;return o.count*(1+bonus)}
+return comps[0];
+}
+function render(ms){if(!state.running)return;requestAnimationFrame(render);if(ms-state.frame<65)return;state.frame=ms;
+if(vid.readyState<2||!drawCamera())return;
+const W=work.width,H=work.height;const im=wctx.getImageData(0,0,W,H);
+ctx.putImageData(im,0,0);
+if(!state.selected)return;
+const o=segment(im);
+if(o?.ambiguous){state.last=null;state.failFrames++;setStatus('顏色太多，無法區分','wait');note('畫面中有太多相近顏色，請換背景或重新選色');return;}
+if(o){state.last={x:o.x,y:o.y};state.failFrames=0;state.seen=true;hideNote();setStatus('已偵測到顏色','ok');
+const [x1,y1,x2,y2]=o.box,rad=Math.max(20,Math.min(110,Math.max(x2-x1,y2-y1)*.65));
+ctx.save();ctx.strokeStyle='#47ffac';ctx.lineWidth=3.2;ctx.shadowColor='#10e78f';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(o.x,o.y,rad,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#47ffac';ctx.beginPath();ctx.arc(o.x,o.y,4.5,0,Math.PI*2);ctx.fill();ctx.restore();
+}else{state.failFrames++;state.last=null;setStatus('未偵測到顏色','wait');if(state.failFrames>4)note('目前找不到物品；重新進入畫面會自動追蹤');}
+}
+function pointer(e){if(!state.running||vid.readyState<2)return;if($('settings').hidden===false)return;const rect=view.getBoundingClientRect();const x=Math.max(0,Math.min(work.width-1,Math.floor((e.clientX-rect.left)/rect.width*work.width)));const y=Math.max(0,Math.min(work.height-1,Math.floor((e.clientY-rect.top)/rect.height*work.height)));
+// Use current camera frame, without overlays, to sample the tapped color.
+if(drawCamera())sampleColor(x,y);
+}
+async function start(){const btn=$('start');btn.disabled=true;btn.textContent='正在啟動…';setStatus('啟動攝影機中','wait');
+try{if(!navigator.mediaDevices?.getUserMedia)throw new Error('此瀏覽器無法啟動相機。請從 HTTPS 網址開啟，並使用 Safari 或 Chrome。');
+const s=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}});state.stream=s;vid.srcObject=s;await vid.play();
+sizeCanvas();state.running=true;$('startCover').classList.add('hidden');$('reset').disabled=false;setStatus('等待選擇顏色','wait');note('把彩色物品放進畫面，點一下物品中央');requestAnimationFrame(render);
+}catch(e){let msg='無法啟動相機：'+(e?.message||String(e));if(e?.name==='NotAllowedError')msg='相機權限被拒絕，請在瀏覽器設定中允許攝影機';if(e?.name==='NotFoundError')msg='找不到可使用的攝影機';setStatus('啟動失敗','wait');popup(msg);$('startCover').querySelector('p').textContent=msg;btn.disabled=false;btn.textContent='重新啟動';}}
+$('start').addEventListener('click',start);view.addEventListener('pointerdown',pointer);
+$('reset').addEventListener('click',()=>{state.selected=null;state.last=null;state.seen=false;state.failFrames=0;$('sampleColor').style.background='#536a75';setStatus('等待選擇顏色','wait');note('點一下畫面中想追蹤的彩色物品')});
+$('help').addEventListener('click',()=>{$('settings').hidden=false});$('closeSettings').addEventListener('click',()=>{$('settings').hidden=true});
+$('tolerance').addEventListener('input',e=>{state.tolerance=Number(e.target.value);$('tolValue').textContent=e.target.value});
+window.addEventListener('resize',()=>{if(state.running)sizeCanvas()});
+window.addEventListener('pagehide',()=>{state.stream?.getTracks().forEach(t=>t.stop());state.running=false});
 })();
-</script>
-</body></html>
+</script></body></html>
