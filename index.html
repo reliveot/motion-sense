@@ -1,171 +1,4285 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#0b1720" />
-<title>Motion Sense｜星星練習場</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#091820">
+<title>Motion Sense｜星星復健遊戲 V2</title>
 <style>
-:root{color-scheme:dark;--bg:#0b1720;--text:#f5fafc;--muted:#b7cbd1;--edge:#344d57;--green:#65e6a8;--warn:#ffce83}*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:focus-visible{outline:3px solid #ffcb7d;outline-offset:3px}button:disabled{opacity:.55;cursor:wait}.app{width:min(100%,1050px);height:100dvh;min-height:380px;margin:auto;display:flex;flex-direction:column;padding:calc(9px + env(safe-area-inset-top)) 10px calc(9px + env(safe-area-inset-bottom));gap:9px}.top{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:29px}.brand{font-weight:850;font-size:clamp(1rem,3vw,1.25rem);white-space:nowrap}.brand small{font-size:.65em;color:var(--muted);font-weight:600}.fullscreen{background:#223947;border:1px solid var(--edge);color:white;padding:6px 10px;border-radius:11px;white-space:nowrap}.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mode{background:#213a47;color:#ebf6f9;border:2px solid #395661;padding:12px 6px;border-radius:15px;font-size:clamp(1rem,3.5vw,1.15rem);font-weight:850}.mode[aria-pressed="true"]{background:#235844;border-color:#69eab1;color:white}.view{position:relative;flex:1 1 auto;min-height:0;background:#172a34;border:1px solid var(--edge);border-radius:18px;overflow:hidden;isolation:isolate}.view video,.view canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.view video{transform:scaleX(-1)}.view canvas{pointer-events:none}.view .scrim{position:absolute;inset:0;background:linear-gradient(180deg,#09191faa,transparent 23%,transparent 66%,#08151bca);pointer-events:none}.hud{position:absolute;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}.chip{display:inline-flex;gap:7px;align-items:center;background:#081921e8;border:1px solid #456371;border-radius:999px;padding:9px 12px;font-size:clamp(.85rem,3.5vw,1.02rem);font-weight:800;max-width:100%}.dot{width:10px;height:10px;border-radius:50%;background:#a1b2ba;flex-shrink:0}.chip.good .dot{background:var(--green);box-shadow:0 0 9px #65e6a8}.chip.warn .dot{background:var(--warn)}.sub{color:#c8dce2;font-size:.8rem;position:absolute;bottom:76px;left:12px;right:12px;text-align:center;text-shadow:0 1px 4px #000}.bottom{position:absolute;bottom:12px;left:12px;right:12px;min-height:54px;border:1px solid #486875;border-radius:15px;background:#0a1c24e8;display:flex;justify-content:center;align-items:center;text-align:center;padding:10px 12px;font-size:clamp(1rem,4.3vw,1.3rem);font-weight:850}.bottom.good{background:#14543fdc;border-color:#54d8a2}.bottom.warn{background:#5c421fdc;border-color:#b28a4e}.startOverlay{position:absolute;inset:0;background:#10232cdd;display:flex;justify-content:center;align-items:center;flex-direction:column;gap:13px;padding:20px;text-align:center;z-index:5}.startOverlay[hidden]{display:none}.startOverlay h2{margin:0;font-size:1.35rem}.startOverlay p{margin:0;color:#d6e5eb;line-height:1.6;max-width:360px}.primary{background:#77efb6;color:#0e2a21;border:0;border-radius:14px;padding:16px 26px;font-weight:900;font-size:1.15rem;min-width:170px}.retry{background:#2c4654;border:1px solid #678592;border-radius:11px;padding:9px 13px;color:white;font-weight:750}.foot{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:30px;padding:0 3px}.foot .hint{color:#bbd0d7;font-size:.79rem;line-height:1.4}.infoBtn{border:1px solid #3b5866;border-radius:10px;padding:6px 9px;color:#dbeaf0;background:#192e39;white-space:nowrap}.help{display:none;background:#182f3b;border:1px solid #385663;border-radius:11px;padding:11px 13px;font-size:.84rem;line-height:1.65;color:#dceaf0}.help.open{display:block}.help p{margin:0 0 6px}.help p:last-child{margin:0}.help a{color:#91e8be}body:has(.help.open) .view{min-height:200px}@media(min-width:760px){.app{padding:14px;gap:12px}.view{max-height:none}.mode{padding:11px}.foot{min-height:35px}}@media(max-height:570px){.top{min-height:24px}.mode{padding:6px}.app{gap:5px;padding-top:calc(4px + env(safe-area-inset-top));padding-bottom:calc(3px + env(safe-area-inset-bottom))}.bottom{min-height:38px;padding:6px}.sub{bottom:57px}.hud{top:7px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-.modes{grid-template-columns:repeat(3,1fr)}.mode{font-size:1rem}.sub,.bottom,.hud #modeLabel{display:none}.hud{top:5px;left:6px}.chip{padding:4px 9px;font-size:.8rem}.view{background:radial-gradient(ellipse at 70% 25%,#254d59,#122930 75%)}.startOverlay{background:radial-gradient(ellipse at 70% 10%,#275662f2,#112630f7 75%)}#field{position:absolute;inset:36px 0 0;pointer-events:none}#overlay{z-index:2}.star{position:absolute;transform:translate(-50%,-50%);filter:drop-shadow(0 2px 3px #11282fab)}.star svg{width:100%;height:100%;display:block}.star b{position:absolute;inset:0;display:grid;place-items:center;color:#192d35;font:900 1.35rem system-ui}.pop{position:absolute;transform:translate(-50%,-80%);font-weight:900;color:white;text-shadow:0 1px 4px #182a37;animation:lift .55s ease-out forwards}@keyframes lift{to{opacity:0;translate:0 -15px}}#scorebar{display:flex;align-items:center;gap:6px}#score{flex:1;font-weight:750}#scorebar button,dialog button,select{border:1px solid #506e77;border-radius:10px;background:#223e48;color:white;padding:8px;font:inherit}progress{width:100%;height:6px;accent-color:#ffc766}dialog{background:#132d36;color:white;border:1px solid #50727c;border-radius:18px;width:min(92vw,450px);max-height:88dvh;overflow:auto;padding:22px}dialog::backdrop{background:#061319b8}dialog h2{margin:0 0 12px}dialog label{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:9px 0}dialog [hidden],[hidden]{display:none!important}dialog .action{background:#85e6b8;color:#123829;font-weight:800}#result p{line-height:1.7}.foot{min-height:22px}.app{min-height:275px}@media(prefers-reduced-motion:reduce){.pop{animation:none}}
-#startOverlay::before{content:"✦";color:#ffcf7c;font:72px Georgia;text-shadow:0 4px 20px #f6c46566}#result::before{content:"✦";color:#ffd487;font-size:32px}@media(max-height:420px){#startOverlay::before{display:none}}</style>
+:root {
+  font-family: system-ui, -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  color-scheme: dark;
+  color: #f3fafb;
+  background: #091820;
+  --accent: #70e5ab;
+  --accent-bright: #4cffb3;
+  --gold: #ffd452;
+  --gold-warm: #ffaa2b;
+  --cyan: #38bdf8;
+  --blue: #3b82f6;
+  --purple: #a855f7;
+  --surface: #152c37;
+  --surface-elevated: #1e3b49;
+  --border: #3b5c6b;
+}
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #091820;
+  user-select: none;
+  -webkit-user-select: none;
+}
+button, select, input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 3px solid #ffd17d;
+  outline-offset: 2px;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+[hidden] {
+  display: none !important;
+}
+
+/* 整體版面：手機優先、單一畫面不需捲動，遊戲舞台佔約 75–85% 可用高度 */
+.app {
+  height: 100dvh;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 6px) 10px calc(env(safe-area-inset-bottom) + 6px);
+  gap: 6px;
+}
+
+/* 頂部標題與進度列 */
+.top {
+  min-height: 38px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.brand strong {
+  font-size: clamp(15px, 4vw, 19px);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #281d46;
+  border: 2px solid #c084fc;
+  color: #f3e8ff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: clamp(14px, 3.6vw, 16px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.timer-badge.urgent {
+  background: #541b1b;
+  border-color: #f87171;
+  color: #fecaca;
+}
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #1a3745;
+  border: 2px solid #ffd452;
+  color: #fff6d6;
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: clamp(14px, 3.8vw, 17px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+.score-badge svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+.icon-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  border-radius: 11px;
+  padding: 7px 11px;
+  color: #f3fafb;
+  font-weight: 800;
+  font-size: 14px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.icon-btn:active {
+  transform: scale(0.97);
+}
+
+/* 三模式切換按鈕固定在最上方 */
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  flex-shrink: 0;
+}
+.tab {
+  padding: 9px 4px;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 2px solid #35515d;
+  background: #17303c;
+  color: #e4f2f5;
+  font-weight: 800;
+  font-size: clamp(14px, 3.8vw, 17px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.tab[aria-pressed="true"] {
+  background: #1f5c41;
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(112, 229, 171, 0.3);
+}
+
+/* 遊戲與攝影機主舞台（佔 75–85% 高度） */
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1.5px solid #3a5968;
+  background: #0e222b;
+  touch-action: none;
+}
+.stage video,
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.stage video {
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+.stage canvas {
+  pointer-events: none;
+  z-index: 2;
+}
+/* 輕柔深色遮罩：確保星星清晰，且患者清楚看到自己的動作 */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 20, 28, 0.58) 0%, rgba(8, 22, 30, 0.18) 18%, rgba(8, 22, 30, 0.18) 76%, rgba(6, 18, 25, 0.65) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 舞台內頂部狀態膠囊 */
+.status-bar {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 3;
+}
+.pill {
+  border-radius: 999px;
+  border: 1.5px solid #496a78;
+  background: rgba(9, 26, 35, 0.86);
+  padding: 6px 12px;
+  font-size: clamp(12px, 3.3vw, 15px);
+  font-weight: 800;
+  color: #e9f5f8;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pill.good {
+  border-color: #55d69c;
+  color: #b0ffd8;
+  background: rgba(14, 52, 38, 0.88);
+}
+.pill.warn {
+  border-color: #f0ad58;
+  color: #ffe3b8;
+  background: rgba(56, 36, 12, 0.88);
+}
+.pill.info {
+  border-color: #6bc2e8;
+  color: #d4f2ff;
+  background: rgba(12, 40, 58, 0.88);
+}
+
+/* 舞台內底部即時引導訊息 */
+.bottom-banner {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  text-align: center;
+  padding: 10px 12px;
+  background: rgba(9, 26, 35, 0.9);
+  border: 1.5px solid #4c6d7a;
+  border-radius: 13px;
+  font-size: clamp(14px, 3.8vw, 17px);
+  font-weight: 800;
+  color: #f3fafb;
+  pointer-events: none;
+  z-index: 3;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.bottom-banner.good {
+  background: rgba(19, 69, 52, 0.9);
+  border-color: #63dca5;
+  color: #eafff4;
+}
+.bottom-banner.warn {
+  background: rgba(68, 41, 14, 0.92);
+  border-color: #f2b15c;
+  color: #fff0d6;
+}
+.bottom-banner.info {
+  background: rgba(14, 46, 66, 0.92);
+  border-color: #6bc2e8;
+  color: #e3f6ff;
+}
+
+/* 活動範圍編輯列：位於攝影機舞台下方外部，完全不遮擋攝影機畫面與四邊控制點 */
+.calib-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 8px;
+  background: #132c38;
+  border: 1.5px solid #70e5ab;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.calib-guide {
+  flex: 1;
+  font-size: clamp(12px, 3.2vw, 14px);
+  font-weight: 800;
+  color: #e9f7f2;
+  line-height: 1.3;
+  margin: 0;
+}
+.calib-btn-row {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.calib-btn {
+  border-radius: 10px;
+  padding: 8px 13px;
+  min-height: 38px;
+  font-weight: 900;
+  font-size: clamp(13px, 3.5vw, 15px);
+  border: 1.5px solid #4c7285;
+  background: #1d3c4b;
+  color: #f3fafb;
+  white-space: nowrap;
+}
+.calib-btn.primary {
+  background: #6ee7ac;
+  color: #062919;
+  border-color: #6ee7ac;
+}
+.calib-btn:active {
+  transform: scale(0.98);
+}
+
+/* 覆蓋層（啟動前鏡頭、錯誤提示、完成結算畫面） */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 29, 38, 0.92);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  text-align: center;
+  z-index: 6;
+}
+.overlay-card {
+  background: #16303d;
+  border: 1.5px solid #456878;
+  border-radius: 20px;
+  padding: 20px 18px;
+  max-width: 440px;
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.overlay h2 {
+  font-size: clamp(20px, 4.8vw, 25px);
+  margin: 0;
+  color: #ffffff;
+}
+.overlay p {
+  margin: 0;
+  color: #d5e7ec;
+  line-height: 1.5;
+  font-size: clamp(14px, 3.6vw, 16px);
+}
+.overlay .sub-note {
+  font-size: 13px;
+  color: #9ec0ca;
+}
+.stats-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  text-align: left;
+}
+.stat-item {
+  background: #10242e;
+  border: 1px solid #355564;
+  border-radius: 12px;
+  padding: 8px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat-item.wide {
+  grid-column: 1 / -1;
+}
+.stat-label {
+  font-size: 12px;
+  color: #9ec0ca;
+  font-weight: 700;
+}
+.stat-value {
+  font-size: clamp(15px, 4vw, 18px);
+  font-weight: 900;
+  color: #fff6d6;
+}
+.stat-value.highlight {
+  color: #70e5ab;
+  font-size: clamp(17px, 4.5vw, 21px);
+}
+.mainbtn {
+  background: #6ee7ac;
+  color: #062919;
+  border: 0;
+  border-radius: 14px;
+  padding: 13px 24px;
+  font-size: clamp(16px, 4vw, 19px);
+  font-weight: 900;
+  min-height: 48px;
+  min-width: 160px;
+  box-shadow: 0 4px 14px rgba(110, 231, 172, 0.3);
+}
+.mainbtn:active {
+  transform: scale(0.98);
+}
+.secondary-btn {
+  background: #234252;
+  color: #e9f6f9;
+  border: 1.5px solid #4f7384;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 800;
+  min-height: 44px;
+}
+
+/* 底部精簡操作列 */
+.footer {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  min-height: 40px;
+  flex-shrink: 0;
+}
+.footer .hint {
+  flex: 1;
+  color: #c2dae0;
+  font-size: clamp(13px, 3.3vw, 15px);
+  line-height: 1.35;
+  font-weight: 600;
+}
+.swatch {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  background: #546c78;
+  flex: 0 0 28px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.opt {
+  background: #1f3a47;
+  border: 1.5px solid #466675;
+  border-radius: 11px;
+  color: #ffffff;
+  padding: 8px 13px;
+  min-height: 40px;
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.opt:active {
+  transform: scale(0.97);
+}
+
+/* 齒輪設定抽屜 */
+.sheet {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 18, 25, 0.82);
+  backdrop-filter: blur(3px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+.sheet article {
+  background: #17313d;
+  border: 1.5px solid #486978;
+  border-radius: 18px;
+  padding: 16px;
+  width: min(100%, 500px);
+  max-height: 92dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55);
+}
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #31505e;
+  padding-bottom: 9px;
+}
+.sheet-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.setting-section {
+  background: rgba(14, 32, 42, 0.65);
+  border: 1px solid #2e4d5c;
+  border-radius: 13px;
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.setting-row label {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #d6eaef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.seg-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  gap: 6px;
+}
+.seg-btn {
+  padding: 8px 6px;
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid #3c5d6b;
+  background: #112630;
+  color: #d5e7ec;
+  font-weight: 800;
+  font-size: 13.5px;
+  text-align: center;
+}
+.seg-btn[aria-checked="true"] {
+  background: #1f5c41;
+  border-color: #70e5ab;
+  color: #ffffff;
+}
+.range-calib-box {
+  background: #112631;
+  border: 1.5px solid #3e6272;
+  border-radius: 12px;
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.range-row input[type="range"] {
+  flex: 1;
+  accent-color: #70e5ab;
+  height: 26px;
+}
+.notice-box {
+  background: #10242e;
+  border-left: 4px solid #6bc2e8;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #c8dfe6;
+}
+.notice-box strong {
+  color: #fff0c2;
+}
+.sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #31505e;
+}
+
+/* 橫向或矮螢幕自適應 */
+@media (max-height: 540px) {
+  .app {
+    gap: 4px;
+    padding-top: calc(env(safe-area-inset-top) + 3px);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 3px);
+  }
+  .top {
+    min-height: 32px;
+  }
+  .tab {
+    padding: 5px 4px;
+    min-height: 36px;
+    font-size: 14px;
+  }
+  .bottom-banner {
+    padding: 6px 10px;
+    bottom: 6px;
+    font-size: 14px;
+  }
+  .calib-bar {
+    min-height: 36px;
+    padding: 3px 8px;
+  }
+  .calib-btn {
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: 13px;
+  }
+  .status-bar {
+    top: 6px;
+    left: 6px;
+    right: 6px;
+  }
+  .pill {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .footer {
+    min-height: 34px;
+  }
+  .opt, .icon-btn {
+    min-height: 34px;
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
 </head>
 <body>
 <main class="app">
-<header class="top"><div class="brand">Motion Sense <small>星星練習場</small></div><button type="button" class="fullscreen" id="fullscreen">⛶ 全螢幕</button></header>
-<nav class="modes" aria-label="追蹤對象"><button type="button" class="mode" id="handBtn" aria-pressed="true">✋ 手部追蹤</button><button type="button" class="mode" id="headBtn" aria-pressed="false">🙂 頭部追蹤</button><button class="mode" id="colorBtn" aria-pressed="false">◉ 顏色追蹤</button></nav>
-<section class="view" id="view" aria-label="攝影機追蹤畫面"><video id="video" autoplay playsinline muted></video><canvas id="overlay"></canvas><div class="scrim"></div><div id="field"></div>
-<div class="hud"><div class="chip" id="chip"><span class="dot"></span><span id="chipText">攝影機未開啟</span></div><div class="chip" id="modeLabel">手部模式</div></div>
-<div class="sub" id="sub">辨識到的目標會顯示綠色追蹤標記</div><div class="bottom" id="bottom" aria-live="polite">按下「啟動攝影機」</div>
-<div class="startOverlay" id="startOverlay"><h2 id="overlayTitle">星星練習場</h2><p id="overlayDesc">選好玩法，讓鏡頭裡的綠點碰到星星。</p><button type="button" class="primary" id="start">啟動攝影機</button><button type="button" class="retry" id="retry" hidden>重新嘗試</button></div>
-</section>
-<div id="scorebar"><span id="score"></span><button id="cue" hidden></button><button id="pick" hidden>重新選色</button><button id="settings">玩法設定</button></div><progress id="progress" value="0" max="10"></progress><footer class="foot"><span class="hint" id="hint">首次使用需允許相機權限，並連網載入辨識模型。</span><button type="button" class="infoBtn" id="info" aria-expanded="false">ⓘ 說明</button></footer>
-<aside class="help" id="help"><p>這一版只測試星星練習場，不會計數，也不需要校正。綠色標記應該跟著手或頭移動。目標離開畫面後標記會消失，重新出現則自動恢復。</p><p>手部模型可能無法辨識握拳、太靠近鏡頭、快速移動或只有局部手掌的情況。請先讓完整手掌進入畫面，再嘗試不同手型。畫面顯示「未偵測到」只代表模型目前沒找到，不一定代表手已離開畫面。</p><p>若無法開啟相機：請透過 HTTPS 網址在 Chrome／Safari 開啟，並允許相機權限。手部與頭部是兩種不同模型，切換模式可能需要短暫載入。</p></aside>
-<dialog id="config"><h2>玩法設定</h2><div id="options"></div><details><summary>活動範圍與聲音</summary><div id="ranges"></div><label>語音報數<input type="checkbox" id="voice" checked></label><label>成功音效<input type="checkbox" id="sound" checked></label></details><p><button id="apply" class="action">套用並開始新回合</button> <button id="back">返回</button></p></dialog><dialog id="result"><h2>本回合完成</h2><h3 id="total"></h3><p id="details"></p><button class="action" id="again">再玩一次</button> <button id="adjust">調整設定</button></dialog>
-</main>
-<script>
-(()=>{'use strict';
-const $=id=>document.getElementById(id);
-const video=$('video'),canvas=$('overlay'),ctx=canvas.getContext('2d');
-let mode='hand',stream=null,handModel=null,faceModel=null,active=false,busy=false,raf=0,loading=false,loopToken=0,misses=0,lastSeen=0,lastVideoTime=-1,tracked=false,broken=false;
-const scripts={hand:'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js',head:'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js'};
-function setStatus(kind,top,bottom,sub){const chip=$('chip'),bar=$('bottom');chip.className='chip'+(kind==='good'?' good':kind==='warn'?' warn':'');chip.querySelector('#chipText').textContent=top;bar.className='bottom'+(kind==='good'?' good':kind==='warn'?' warn':'');bar.textContent=bottom;if(sub!==undefined)$('sub').textContent=sub;}
-function overlay(show,title,desc){$('startOverlay').hidden=!show;if(title)$('overlayTitle').textContent=title;if(desc)$('overlayDesc').textContent=desc;$('start').hidden=active;$('retry').hidden=!active;}
-function setMode(next){if(next===mode)return;picking=false;resetLock();mode=next;loadRange();$('colorBtn').setAttribute('aria-pressed',String(mode==='color'));$('pick').hidden=mode!=='color';loopToken++;misses=0;tracked=false;lastVideoTime=-1;drawClear();$('handBtn').setAttribute('aria-pressed',String(mode==='hand'));$('headBtn').setAttribute('aria-pressed',String(mode==='head'));$('modeLabel').textContent=targetName()+'模式';$('hint').textContent=mode==='color'?'點一下物品選色，背景顏色不同時較容易辨識。':mode==='hand'?'讓完整手掌進入畫面。':'移動頭部，讓綠點碰到星星。';if(active){setStatus('','切換辨識模型…','正在準備'+targetName()+'追蹤','鏡頭保持開啟');startLoop();}else setStatus('','攝影機未開啟','按下「啟動攝影機」','辨識到的目標會顯示綠色追蹤標記');}
-function targetName(){return ({hand:'手部',head:'頭部',color:'顏色'})[mode];}
-$('handBtn').addEventListener('click',()=>setMode('hand'));
-$('headBtn').addEventListener('click',()=>setMode('head'));
-$('info').addEventListener('click',()=>{const show=!$('help').classList.contains('open');$('help').classList.toggle('open',show);$('info').setAttribute('aria-expanded',String(show));});
-$('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement){await document.exitFullscreen();}else if(document.documentElement.requestFullscreen){await document.documentElement.requestFullscreen();}else{setStatus('warn','全螢幕不支援','請改用瀏覽器全螢幕','部分 iPhone 瀏覽器不支援網頁全螢幕');}}catch(e){setStatus('warn','全螢幕不支援','瀏覽器無法切換全螢幕',e.message||'');}});
-function inject(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.crossOrigin='anonymous';s.onload=resolve;s.onerror=()=>{s.remove();reject(new Error('無法載入 '+src))};document.head.appendChild(s);});}
-async function scriptFor(kind){const global=kind==='hand'?'Hands':'FaceMesh';if(window[global])return;try{await inject(scripts[kind]);}catch(e){await inject(kind==='hand'?'https://unpkg.com/@mediapipe/hands/hands.js':'https://unpkg.com/@mediapipe/face_mesh/face_mesh.js');}if(!window[global])throw new Error('AI 辨識程式載入失敗，請確認網路連線');}
-async function getModel(kind){if(kind==='hand'&&handModel)return handModel;if(kind==='head'&&faceModel)return faceModel;await scriptFor(kind);if(kind==='hand'){
-const instance=new window.Hands({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+file});instance.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.45,minTrackingConfidence:.4});instance.onResults(r=>handleResults('hand',r));handModel=instance;return instance;
-}else{
-const instance=new window.FaceMesh({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/'+file});instance.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.45});instance.onResults(r=>handleResults('head',r));faceModel=instance;return instance;}}
-function drawClear(){ctx.clearRect(0,0,canvas.width,canvas.height);}
-// CSS object-fit:cover + mirrored preview: convert model coordinates to overlay pixel coordinates.
-function project(p){const vw=video.videoWidth||640,vh=video.videoHeight||480;const box=$('view').getBoundingClientRect();const dw=box.width,dh=box.height;const s=Math.max(dw/vw,dh/vh);const offsetX=(vw*s-dw)/2,offsetY=(vh*s-dh)/2;return {x:((1-p.x)*vw*s-offsetX),y:(p.y*vh*s-offsetY)};}
-function resizeCanvas(){const rect=$('view').getBoundingClientRect();const scale=Math.min(window.devicePixelRatio||1,2);const w=Math.round(rect.width*scale),h=Math.round(rect.height*scale);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.setTransform(scale,0,0,scale,0,0);return rect;}
-function drawTarget(point,points,kind){const rect=resizeCanvas();drawClear();if(!point)return;const p=project(point);if(!Number.isFinite(p.x)||!Number.isFinite(p.y))return;
-ctx.lineWidth=2.5;ctx.strokeStyle='rgba(101,230,168,.85)';ctx.fillStyle='rgba(101,230,168,.09)';if(kind==='head'&&points){const indices=[10,234,152,454];const q=indices.map(i=>points[i]).filter(Boolean).map(project);if(q.length===4){const xs=q.map(x=>x.x),ys=q.map(x=>x.y),x=Math.min(...xs),y=Math.min(...ys),w=Math.max(...xs)-x,h=Math.max(...ys)-y;ctx.strokeRect(x-14,y-14,w+28,h+28);}}
-if(kind==='hand'&&points){const ids=[0,5,9,13,17];for(const id of ids){if(points[id]){const q=project(points[id]);ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();}}}
-ctx.beginPath();ctx.arc(p.x,p.y,22,0,Math.PI*2);ctx.fillStyle='rgba(75,244,175,.13)';ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle='#6cffb5';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();}
-function handleResults(kind,r){if(kind!==mode||!active)return;let pts,point;if(kind==='hand'){
-pts=r.multiHandLandmarks?.[0];if(pts?.length){ // Palm-centre is more robust than a single fingertip when the fingers bend.
-const ids=[0,5,9,13,17].filter(i=>pts[i]);point={x:ids.reduce((a,i)=>a+pts[i].x,0)/ids.length,y:ids.reduce((a,i)=>a+pts[i].y,0)/ids.length};}
-}else{pts=r.multiFaceLandmarks?.[0];if(pts?.length){const nose=pts[1]||pts[4];point=nose?{x:nose.x,y:nose.y}:null;}}
-observe(point);if(point&&Number.isFinite(point.x)&&Number.isFinite(point.y)){misses=0;lastSeen=performance.now();tracked=true;drawTarget(point,pts,kind);setStatus('good','已偵測到'+(kind==='hand'?'手':'頭部'),'● 正在追蹤'+(kind==='hand'?'手部':'頭部'),'移動目標，確認綠點是否跟著移動');}else{misses++;if(misses>=2||performance.now()-lastSeen>250){tracked=false;drawClear();setStatus('warn','目前未偵測到'+(kind==='hand'?'手':'頭部'),kind==='hand'?'手進入畫面會自動重新追蹤':'臉進入畫面會自動重新追蹤',kind==='hand'?'也可能因握拳、遮擋或太近而暫時辨識不到':'不需重新校正或按開始');}}}
-async function startCamera(){if(loading)return;loading=true;$('start').disabled=true;$('retry').disabled=true;setStatus('','正在啟動…','正在取得相機權限','首次使用請允許攝影機權限');try{
-if(!navigator.mediaDevices?.getUserMedia)throw new Error('瀏覽器不支援攝影機，請使用 HTTPS 網址與 Chrome／Safari');
-if(!stream){stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:640},height:{ideal:480},frameRate:{ideal:24,max:30}}});video.srcObject=stream;await video.play();}
-active=true;broken=false;overlay(false);setStatus('','正在準備辨識…','正在載入'+targetName()+'模型','首次載入需要網路');startLoop();}catch(e){active=false;const msg=e?.name==='NotAllowedError'?'相機權限被拒絕，請在瀏覽器設定允許攝影機':e?.name==='NotFoundError'?'找不到可用的攝影機':e?.message||String(e);overlay(true,'無法啟動攝影機',msg);$('start').textContent='重新嘗試';setStatus('warn','無法啟動','請檢查攝影機權限',msg);}finally{loading=false;$('start').disabled=false;$('retry').disabled=false;}}
-$('start').addEventListener('click',startCamera);$('retry').addEventListener('click',()=>{broken=false;overlay(false);startLoop();});
-function startLoop(){const token=++loopToken;broken=false;lastVideoTime=-1;misses=0;tracked=false;drawClear();void runLoop(token);}
-async function runLoop(token){if(token!==loopToken||!active)return;try{const selected=mode;setStatus('','載入辨識模型…','正在準備'+targetName()+'追蹤','首次使用需要連網下載模型');const model=selected==='color'?null:await getModel(selected);if(token!==loopToken||!active)return;
-setStatus('warn','正在尋找'+targetName()+'…','請讓'+(selected==='hand'?'手':'臉')+'出現在鏡頭內','進出畫面後都會自動繼續追蹤');
-const frame=async()=>{if(token!==loopToken||!active)return;if(!document.hidden&&video.readyState>=2&&!busy){const time=video.currentTime;if(time!==lastVideoTime){lastVideoTime=time;busy=true;try{if(model)await model.send({image:video});else colorFrame();}catch(e){busy=false;if(token!==loopToken)return;broken=true;stopError(e);return;}finally{busy=false;}}}raf=requestAnimationFrame(frame);};raf=requestAnimationFrame(frame);
-}catch(e){if(token!==loopToken)return;broken=true;stopError(e);}}
-function stopError(e){loopToken++;cancelAnimationFrame(raf);drawClear();const msg=e?.message||String(e);setStatus('warn','辨識模型發生錯誤','無法追蹤：請重新嘗試',msg);overlay(true,'辨識模型無法使用','攝影機已開啟，但 AI 辨識載入或執行失敗：'+msg);}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&active&&!broken&&!(raf&&false)){ // When returning from another app, restart the prediction loop.
-cancelAnimationFrame(raf);startLoop();}});
-window.addEventListener('resize',()=>{resizeCanvas();drawClear();});
-const field=$('field'), names={collect:'星星收集',charge:'星星充能',sequence:'星星連線'};
-function menu(id,title,values,labels,parent='options'){
- const row=document.createElement('label'),select=document.createElement('select');select.id=id;row.append(title,select);
- values.forEach((v,i)=>select.add(new Option(labels[i],v)));$(parent).append(row);
-}
-menu('game','玩法',Object.keys(names),Object.values(names));
-menu('challenge','挑戰方式',['count','time'],['指定次數','限時挑戰']);
-menu('goal','目標次數',[5,10,20],['5 次','10 次','20 次']);
-menu('limit','挑戰時間',[30,60,120],['30 秒','60 秒','120 秒']);
-menu('special','特殊星星',[0,.2,.45],['關閉','少量','豐富']);
-menu('speed','移動速度',[.07,.13],['慢速','一般']);
-menu('mix','充能星星',[0,1],['固定','固定＋移動']);
-menu('hold','充能時間',[1,2,3],['1 秒','2 秒','3 秒']);$('hold').value='2';
-menu('memory','連線提示',['number','memory'],['保留數字','記住後隱藏']);
-menu('length','每組顆數',[2,3,4],['2 顆','3 顆','4 顆']);
-menu('preview','記憶時間',[3,5,0],['3 秒','5 秒','按準備好']);
-menu('guide','提示下一顆',[0,1],['關閉','亮框提示']);
-for(const [id,label] of [['width','左右幅度'],['height','上下幅度']])menu(id,label,[.25,.45,.7,1],['25%','45%','70%','100%'],'ranges');
-for(const [id,label] of [['cx','水平位置'],['cy','垂直位置']])menu(id,label,[.25,.5,.75],id==='cx'?['偏左','置中','偏右']:['偏上','置中','偏下'],'ranges');
-const ids=['game','challenge','goal','limit','special','speed','mix','hold','memory','length','preview','guide'];
-const val=id=>$(id).value;
-let prefs={},range={},round,stars=[],lock=0,previous=0,pointNow=null,color=null,picking=false,audioCtx,previewLeft=0,lastSpecial=false,fx=0;
-function loadRange(){try{range=JSON.parse(localStorage.getItem('star-range-'+mode))||{};}catch{range={};}
- for(const id of ['width','height','cx','cy'])$(id).value=range[id]??(id==='cx'||id==='cy'?.5:mode==='head'?(id==='width'?.45:.25):.7);}
-function saveRange(){range=Object.fromEntries(['width','height','cx','cy'].map(id=>[id,+val(id)]));try{localStorage.setItem('star-range-'+mode,JSON.stringify(range));}catch{}}
-function refreshForm(){const g=val('game'),timed=val('challenge')==='time';
- const show={goal:!timed,limit:timed,special:g==='collect',speed:g==='collect',mix:g==='charge',hold:g==='charge',memory:g==='sequence',length:g==='sequence',guide:g==='sequence'&&val('memory')==='number',preview:g==='sequence'&&val('memory')==='memory'};
- for(const [id,on] of Object.entries(show))$(id).parentNode.hidden=!on;}
-$('options').onchange=refreshForm;
-function resetLock(){lock=0;previous=0;pointNow=null;}
-function configure(){ids.forEach(id=>$(id).value=prefs[id]);loadRange();refreshForm();resetLock();$('config').showModal();}
-$('settings').onclick=configure;$('back').onclick=()=>$('config').close();
-$('apply').onclick=()=>{saveRange();$('config').close();begin();};
-$('again').onclick=()=>{$('result').close();begin();};$('adjust').onclick=()=>{$('result').close();configure();};
-const types={normal:['普通星','#fff2a4','#ffad32',1,''],timed:['限時星','#ffbe85','#bd8bea',3,'◷'],moving:['移動星','#ceffaf','#39be89',2,'»'],charge:['固定充能星','#b8faff','#41ace8',2,'ϟ'],movingCharge:['移動充能星','#ecd6ff','#aa75ed',3,'ϟ»']};
-function begin(){prefs=Object.fromEntries(ids.map(id=>[id,val(id)]));round={count:0,points:0,elapsed:0,groups:0,index:0,hits:{},done:false};lastSpecial=false;resetLock();spawn();hud();}
-function spawn(){field.replaceChildren();stars=[];round.index=0;let n=1,k='normal';
- if(prefs.game==='collect'){if(!lastSpecial&&Math.random()<+prefs.special)k=Math.random()<.5?'moving':'timed';lastSpecial=k!=='normal';}
- if(prefs.game==='charge')k=+prefs.mix&&Math.random()<.4?'movingCharge':'charge';
- if(prefs.game==='sequence')n=+prefs.length;
- const cells=Array.from({length:4},(_,i)=>i);
- for(let i=0;i<n;i++){const cell=cells.splice(Math.floor(Math.random()*cells.length),1)[0];
- const star={k,x:n===1?Math.random():(cell%2)*.88+.06,y:n===1?Math.random():Math.floor(cell/2)*.88+.06,dx:(Math.random()<.5?-1:1),dy:.58,age:0,energy:0,el:document.createElement('div')};
- const [name,light,dark,,symbol]=types[k];star.el.className='star';star.el.setAttribute('aria-label',name);
- const stops=k==='timed'?'<stop stop-color="#ffe790"/><stop offset=".34" stop-color="#ffa8b0"/><stop offset=".65" stop-color="#bba2fc"/><stop offset="1" stop-color="#7ce8da"/>':'<stop stop-color="'+light+'"/><stop offset="1" stop-color="'+dark+'"/>';
- star.el.innerHTML='<svg viewBox="0 0 100 100"><defs><linearGradient id="gem'+i+'" x2="55%" y2="100%">'+stops+'</linearGradient></defs><path d="M46 12 Q50 4 54 12 L65 34 L88 38 Q96 39 90 46 L73 63 L76 86 Q77 95 69 91 L50 80 L29 91 Q22 94 23 86 L27 63 L10 46 Q4 39 12 38 L35 34Z" fill="url(#gem'+i+')" stroke="#fffae8" stroke-width="3"/><path d="M39 37 L48 18" stroke="#fff" opacity=".65" stroke-width="4" stroke-linecap="round"/><circle cx="50" cy="50" r="47" fill="none" stroke="#fff" stroke-width="4" pathLength="1" stroke-dasharray="0 1" transform="rotate(-90 50 50)"/></svg><b></b>';
- star.el.lastChild.textContent=n>1?i+1:symbol;field.append(star.el);stars.push(star);}
- previewLeft=prefs.game==='sequence'&&prefs.memory==='memory'?(+prefs.preview||Infinity):0;updateCue();layout();}
-function updateCue(){const memory=prefs.game==='sequence'&&prefs.memory==='memory';$('cue').hidden=!memory||!active||round.done;
- $('cue').textContent=previewLeft?'準備好了':'再看數字';if(memory)stars.forEach((s,i)=>s.el.lastChild.textContent=previewLeft?i+1:'');}
-$('cue').onclick=()=>{previewLeft=previewLeft?0:(+prefs.preview||Infinity);updateCue();};
-function layout(){const w=field.clientWidth,h=field.clientHeight;
- const bw=w*(range.width??+val('width')),bh=h*(range.height??+val('height'));
- const size=Math.min(76,w*.16,h*.32,prefs.game==='sequence'?Math.min(bw,bh)*.48:Infinity);
- const left=Math.max(0,Math.min(w-bw,w*(range.cx??.5)-bw/2)),top=Math.max(0,Math.min(h-bh,h*(range.cy??.5)-bh/2));
- for(const [i,s] of stars.entries()){const d=Math.min(size,bw,bh);s.px=left+d/2+s.x*(bw-d);s.py=top+d/2+s.y*(bh-d);s.radius=d*.48;
- Object.assign(s.el.style,{width:d+'px',height:d+'px',left:s.px+'px',top:s.py+'px'});
- s.el.querySelector('circle').setAttribute('stroke-dasharray',Math.max(0,s.k==='timed'?1-s.age/3:s.energy/(+prefs.hold)||(+prefs.guide&&prefs.game==='sequence'&&prefs.memory==='number'&&i===round.index?1:0))+' 1');}}
-function drawLinks(){if(round.done||prefs.game!=='sequence'||round.index<2)return;
- let line=field.querySelector('svg.links');if(!line){line=document.createElementNS('http://www.w3.org/2000/svg','svg');line.setAttribute('class','links');line.style.cssText='position:absolute;inset:0;width:100%;height:100%';field.prepend(line);}
- line.innerHTML='<polyline fill="none" stroke="#ffe8a3" stroke-width="4" stroke-linecap="round" points="'+stars.slice(0,round.index).map(s=>s.px+','+s.py).join(' ')+'"/>';}
-function hud(){drawLinks();const timed=prefs.challenge==='time';$('score').textContent=names[prefs.game]+'　'+(timed?Math.ceil(Math.max(0,+prefs.limit-round.elapsed))+' 秒 · '+round.points+' 分':round.count+' / '+prefs.goal+' 次');$('progress').max=timed?+prefs.limit:+prefs.goal;$('progress').value=timed?round.elapsed:round.count;}
-function success(s){round.count++;round.points+=types[s.k][3];round.hits[s.k]=(round.hits[s.k]||0)+1;
- if($('sound').checked&&audioCtx?.state==='running'){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=s.k==='timed'?880:660;g.gain.setValueAtTime(.07,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.13);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.14);}
- if($('voice').checked&&window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(round.count));u.lang='zh-TW';speechSynthesis.speak(u);}
- const x=s.px,y=s.py;s.el.hidden=true;round.index++;const complete=round.index===stars.length;if(complete&&prefs.game==='sequence')round.groups++;
- if(prefs.challenge==='count'&&round.count>=+prefs.goal){finish();return;}if(complete&&prefs.game==='sequence'){drawLinks();round.nextGroup=.4;}else if(complete)spawn();
- const pop=document.createElement('span');pop.className='pop';pop.textContent=s.k==='timed'?'✦ ✧ ✦':prefs.challenge==='count'&&round.count===Math.ceil(prefs.goal/2)?'完成一半！':'✦';Object.assign(pop.style,{left:x+'px',top:y+'px'});field.append(pop);setTimeout(()=>pop.remove(),550);}
-function finish(){round.done=true;field.replaceChildren();hud();updateCue();$('total').textContent=prefs.challenge==='time'?round.points+' 分':round.count+' / '+prefs.goal+' 次';
- const secs=Math.round(round.elapsed);$('details').textContent=[names[prefs.game],targetName()+'追蹤','完成 '+round.count+' 次','練習時間 '+Math.floor(secs/60)+' 分 '+secs%60+' 秒',prefs.game==='sequence'?'完成 '+round.groups+' 組連線':Object.entries(round.hits).map(([k,v])=>types[k][0]+' '+v+' 顆').join('、')].join('　');$('result').showModal();}
-$('result').oncancel=e=>e.preventDefault();
-function observe(raw){const now=performance.now();if(!raw||!active||round.done||document.hidden||$('config').open||picking){resetLock();return;}
- const p=project(raw);if(previous&&now-previous>650)resetLock();if(!lock)lock=now;
- const dt=previous?(now-previous)/1000:0;previous=now;if(now-lock<1000){$('chipText').textContent='確認穩定追蹤中';return;}
- updateCue();round.elapsed+=dt;if(prefs.challenge==='time'&&round.elapsed>=+prefs.limit){round.elapsed=+prefs.limit;finish();return;}
- if(round.nextGroup>0){round.nextGroup-=dt;if(round.nextGroup<=0)spawn();hud();return;}const s=stars[round.index];if(previewLeft){previewLeft=Math.max(0,previewLeft-dt);updateCue();hud();return;}
- s.age+=dt;if(s.k==='timed'&&s.age>=3){spawn();hud();return;}
- if(s.k==='moving'||s.k==='movingCharge'){const speed=s.k==='moving'?+prefs.speed:.035;
- for(const [coord,vel] of [['x','dx'],['y','dy']]){s[coord]+=s[vel]*dt*speed;if(s[coord]<0||s[coord]>1){s[coord]=Math.max(0,Math.min(1,s[coord]));s[vel]*=-1;}}}
- layout();if(Math.hypot(p.x-s.px,p.y-field.offsetTop-s.py)<=s.radius){if(s.k==='charge'||s.k==='movingCharge'){s.energy+=dt;if(s.energy>=+prefs.hold)success(s);}else success(s);}hud();}
-document.addEventListener('visibilitychange',resetLock);new ResizeObserver(()=>{if(stars.length)layout();}).observe(field);
-document.addEventListener('click',()=>{try{audioCtx??=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});}catch{}},{capture:true});
-const buffer=document.createElement('canvas');buffer.width=96;buffer.height=72;const sample=buffer.getContext('2d',{willReadFrequently:true});
-function pixels(){sample.drawImage(video,0,0,96,72);return sample.getImageData(0,0,96,72).data;}
-$('colorBtn').onclick=()=>{setMode('color');picking=!color;};$('pick').onclick=()=>{picking=true;resetLock();};
-let lastBlob=null;
-$('view').addEventListener('click',e=>{if(mode!=='color'||!picking||!active||!video.videoWidth||!$('startOverlay').hidden)return;const rect=$('view').getBoundingClientRect(),scale=Math.max(rect.width/video.videoWidth,rect.height/video.videoHeight);
- const x=Math.max(0,Math.min(95,Math.floor(96*(.5-(e.clientX-rect.left-rect.width/2)/(scale*video.videoWidth))))),y=Math.max(0,Math.min(71,Math.floor(72*(.5+(e.clientY-rect.top-rect.height/2)/(scale*video.videoHeight)))));
- const data=pixels(),i=4*(y*96+x);color=Array.from(data.slice(i,i+3));lastBlob={x,y};picking=false;});
-function colorFrame(){if(!color||picking){drawClear();$('chipText').textContent='點一下鏡頭畫面中的物品選色';return;}
- const a=pixels(),mask=new Uint8Array(96*72);for(let i=0;i<mask.length;i++){const j=i*4;mask[i]=Math.hypot(a[j]-color[0],a[j+1]-color[1],a[j+2]-color[2])<48;}
- let best=null,rank=0;for(let i=0;i<mask.length;i++){if(!mask[i])continue;const q=[i];mask[i]=0;let x=0,y=0;for(let k=0;k<q.length;k++){const n=q[k],col=n%96;x+=col;y+=Math.floor(n/96);for(const m of [col?n-1:-1,col<95?n+1:-1,n-96,n+96])if(mask[m]){mask[m]=0;q.push(m);}}
- if(q.length<6||q.length>mask.length*.45)continue;x/=q.length;y/=q.length;const score=Math.sqrt(q.length)/(1+Math.hypot(x-lastBlob.x,y-lastBlob.y)/9);if(score>rank){rank=score;best={x,y};}}
- if(best)lastBlob=best;const p=best&&{x:best.x/96,y:best.y/72};observe(p);drawTarget(p,null,'color');$('chipText').textContent=p?'已偵測到物品':'正在尋找選定顏色';}
-loadRange();refreshForm();begin();
+  <!-- 頂部欄：標題、限時倒數（限時模式時顯示）、進度／分數徽章、右上角齒輪設定與全螢幕 -->
+  <header class="top">
+    <div class="brand">
+      <strong id="appTitleText">Motion Sense｜星星收集</strong>
+    </div>
+    <div class="top-right">
+      <div class="timer-badge" id="timerBadge" hidden aria-live="polite" title="剩餘挑戰時間">
+        <span>⏱</span>
+        <span id="timerText">60s</span>
+      </div>
+      <div class="score-badge" id="scoreBadge" aria-live="polite" title="目前進度">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#ffd452" stroke="#ff9f1c" stroke-width="1.5" d="M12 2.4l2.9 6.1 6.7.9-4.9 4.7 1.2 6.7L12 17.6 6.1 20.8l1.2-6.7-4.9-4.7 6.7-.9L12 2.4z"/>
+        </svg>
+        <span id="scoreText">0 / 10</span>
+      </div>
+      <button class="icon-btn" id="openSettingsTop" aria-label="開啟設定與說明" title="遊戲模式與復健設定">⚙</button>
+      <button class="icon-btn" id="fullBtn" aria-label="切換全螢幕" title="切換全螢幕">⛶</button>
+    </div>
+  </header>
 
+  <!-- 三種追蹤模式切換（固定於最上方，不需捲動） -->
+  <nav class="tabs" aria-label="追蹤模式切換">
+    <button class="tab" data-mode="hand" aria-pressed="true">✋ 手部</button>
+    <button class="tab" data-mode="head" aria-pressed="false">🙂 頭部</button>
+    <button class="tab" data-mode="color" aria-pressed="false">🟠 顏色</button>
+  </nav>
+
+  <!-- 遊戲與鏡像前鏡頭主舞台 -->
+  <section class="stage" id="stage" aria-label="復健互動畫面">
+    <video id="video" muted autoplay playsinline></video>
+    <div class="scrim"></div>
+    <canvas id="canvas"></canvas>
+
+    <!-- 左上角追蹤狀態、右上角目前玩法與範圍標示 -->
+    <div class="status-bar" id="statusBar">
+      <span class="pill" id="statusPill">攝影機未開啟</span>
+      <span class="pill info" id="rangePill">星星收集｜左右練習</span>
+    </div>
+
+    <!-- 底部操作與狀態提示文字 -->
+    <div class="bottom-banner" id="messageBanner" aria-live="polite">
+      按下「啟動前鏡頭」開始星星復健練習
+    </div>
+
+    <!-- 啟動與錯誤遮罩 -->
+    <div class="overlay" id="startOverlay">
+      <div class="overlay-card">
+        <h2 id="coverTitle">星星復健遊戲 V2</h2>
+        <p id="coverText">支援「星星收集、星星充能、星星連線」三種玩法，透過手部、頭部或彩色／黑灰物品移動綠色定位環即可互動。無壓力、不扣分。</p>
+        <p class="sub-note">只使用前鏡頭自拍鏡像，影像僅在您的裝置端即時運算。</p>
+        <button id="startBtn" class="mainbtn">啟動前鏡頭</button>
+      </div>
+    </div>
+
+    <!-- 完成練習結算遮罩 -->
+    <div class="overlay" id="completeOverlay" hidden>
+      <div class="overlay-card">
+        <h2 id="completeTitle">🎉 太棒了！完成練習</h2>
+        <p id="completeSummary">您已順利完成本回合星星復健練習！</p>
+        <div class="stats-grid" id="completeStatsGrid"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
+          <button id="playAgainBtn" class="mainbtn">再玩一次</button>
+          <button id="completeSettingsBtn" class="secondary-btn">調整難度設定</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 活動範圍編輯控制列：位於攝影機舞台下方外部，不遮擋任何攝影機畫面與拉框邊界 -->
+  <div class="calib-bar" id="calibPanel" hidden>
+    <p class="calib-guide" id="calibGuideText">
+      拖曳綠色方框四邊／四角調整大小，或按住方框內部移動位置
+    </p>
+    <div class="calib-btn-row">
+      <button type="button" class="calib-btn" id="calibResetDefaultBtn">恢復預設</button>
+      <button type="button" class="calib-btn primary" id="calibApplyBtn">完成套用</button>
+    </div>
+  </div>
+
+  <!-- 底部精簡操作列（僅保留提示、顏色重選與重來，設定統一由右上角齒輪開啟） -->
+  <footer class="footer" id="mainFooter">
+    <span class="hint" id="footerHint">將綠色追蹤環移到星星上即可收集。</span>
+    <span class="swatch" id="colorSwatch" hidden title="目前選取的追蹤顏色"></span>
+    <button class="opt" id="rechooseBtn" hidden>重新選色</button>
+    <button class="opt" id="resetGameBtn" title="重新開始本局進度">重來</button>
+  </footer>
+
+  <!-- 齒輪設定與復健參數抽屜（依遊戲模式與挑戰方式動態顯示對應設定） -->
+  <div class="sheet" id="settingsSheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
+    <article>
+      <div class="sheet-header">
+        <h3 id="settingsTitle">⚙ 遊戲模式與復健設定</h3>
+        <button class="icon-btn" id="closeSettingsTop" aria-label="關閉設定">✕</button>
+      </div>
+
+      <div class="setting-group">
+        <!-- 核心玩法選擇：A. 星星收集 / B. 星星充能 / C. 星星連線 -->
+        <div class="setting-section">
+          <div class="setting-row">
+            <label>1. 選擇遊戲模式</label>
+            <div class="seg-group" role="radiogroup" aria-label="選擇遊戲模式">
+              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="collect" aria-checked="true">⭐ 星星收集</button>
+              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="charge" aria-checked="false">⚡ 星星充能</button>
+              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="connect" aria-checked="false">✨ 星星連線</button>
+            </div>
+          </div>
+
+          <!-- A. 星星收集專屬子設定 -->
+          <div class="setting-row" id="subSettingCollect">
+            <label>特殊星星出現頻率（3秒限時彩虹星／亮青移動星）</label>
+            <div class="seg-group" role="radiogroup" aria-label="特殊星星出現頻率">
+              <button type="button" class="seg-btn" data-setting="specialFreq" data-value="off" aria-checked="false">關閉（純黃星）</button>
+              <button type="button" class="seg-btn" data-setting="specialFreq" data-value="low" aria-checked="true">少量（預設）</button>
+              <button type="button" class="seg-btn" data-setting="specialFreq" data-value="high" aria-checked="false">豐富</button>
+            </div>
+            <small style="color:#9ec0ca;font-size:12px;">
+              限時彩虹星出現 3 秒後會友善退化為普通黃色星星，保留您已移動的進度不落空。
+            </small>
+          </div>
+
+          <!-- B. 星星充能專屬子設定 -->
+          <div class="setting-row" id="subSettingCharge" hidden>
+            <label>充能星星類型与維持秒數</label>
+            <div class="seg-group" role="radiogroup" aria-label="充能星星類型">
+              <button type="button" class="seg-btn" data-setting="chargeTypeMode" data-value="static" aria-checked="false">固定充能（藍）</button>
+              <button type="button" class="seg-btn" data-setting="chargeTypeMode" data-value="moving" aria-checked="false">移動充能（紫）</button>
+              <button type="button" class="seg-btn" data-setting="chargeTypeMode" data-value="mixed" aria-checked="true">混合出現（預設）</button>
+            </div>
+            <div class="seg-group" role="radiogroup" aria-label="充能維持秒數" style="margin-top:4px;">
+              <button type="button" class="seg-btn" data-setting="chargeDurationSec" data-value="1" aria-checked="false">1 秒（輕鬆）</button>
+              <button type="button" class="seg-btn" data-setting="chargeDurationSec" data-value="2" aria-checked="true">2 秒（預設）</button>
+              <button type="button" class="seg-btn" data-setting="chargeDurationSec" data-value="3" aria-checked="false">3 秒（進階）</button>
+            </div>
+            <small style="color:#9ec0ca;font-size:12px;">
+              暫離星星享 0.5 秒寬限期不掉能量；失去鏡頭辨識時 100% 凍結保留進度。
+            </small>
+          </div>
+
+          <!-- C. 星星連線專屬子設定 -->
+          <div class="setting-row" id="subSettingConnect" hidden>
+            <label>星星連線玩法與每組顆數</label>
+            <div class="seg-group" role="radiogroup" aria-label="星星連線模式">
+              <button type="button" class="seg-btn" data-setting="connectSubMode" data-value="number" aria-checked="true">數字提示版</button>
+              <button type="button" class="seg-btn" data-setting="connectSubMode" data-value="memory" aria-checked="false">記憶順序版</button>
+            </div>
+            <div class="seg-group" role="radiogroup" aria-label="每組星星顆數" style="margin-top:4px;">
+              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="2" aria-checked="false">2 顆</button>
+              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="3" aria-checked="true">3 顆（預設）</button>
+              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="4" aria-checked="false">4 顆</button>
+            </div>
+            <div id="subSettingMemoryTime" hidden style="margin-top:4px;">
+              <label style="margin-bottom:4px;">記憶順序版：數字顯示時間</label>
+              <div class="seg-group" role="radiogroup" aria-label="記憶顯示時間">
+                <button type="button" class="seg-btn" data-setting="memoryViewSec" data-value="3" aria-checked="false">3 秒</button>
+                <button type="button" class="seg-btn" data-setting="memoryViewSec" data-value="5" aria-checked="true">5 秒（預設）</button>
+                <button type="button" class="seg-btn" data-setting="memoryViewSec" data-value="0" aria-checked="false">不限時（碰1號隱藏）</button>
+              </div>
+            </div>
+            <small style="color:#9ec0ca;font-size:12px;">
+              碰錯不扣分；記憶版若碰錯或停滯超過 5 秒將自動閃爍提示目標數字。
+            </small>
+          </div>
+        </div>
+
+        <!-- 挑戰方式與計分設定 -->
+        <div class="setting-section">
+          <div class="setting-row">
+            <label>2. 挑戰方式與目標設定</label>
+            <div class="seg-group" role="radiogroup" aria-label="挑戰方式">
+              <button type="button" class="seg-btn" data-setting="challengeType" data-value="count" aria-checked="true">🎯 指定次數（預設）</button>
+              <button type="button" class="seg-btn" data-setting="challengeType" data-value="timed" aria-checked="false">⏱ 限時挑戰（計分）</button>
+            </div>
+          </div>
+
+          <!-- 指定次數選項 -->
+          <div class="setting-row" id="subSettingTargetCount">
+            <label>每回合完成次數（所有星星成功皆算 1 次）</label>
+            <div class="seg-group" role="radiogroup" aria-label="每局收集顆數">
+              <button type="button" class="seg-btn" data-setting="targetCount" data-value="5" aria-checked="false">5 顆</button>
+              <button type="button" class="seg-btn" data-setting="targetCount" data-value="10" aria-checked="true">10 顆（預設）</button>
+              <button type="button" class="seg-btn" data-setting="targetCount" data-value="20" aria-checked="false">20 顆</button>
+            </div>
+          </div>
+
+          <!-- 限時挑戰秒數選項 -->
+          <div class="setting-row" id="subSettingChallengeTime" hidden>
+            <label>限時挑戰時間（普通1分／移動与固定充能2分／限時與移動充能3分）</label>
+            <div class="seg-group" role="radiogroup" aria-label="限時挑戰秒數">
+              <button type="button" class="seg-btn" data-setting="challengeDurationSec" data-value="30" aria-checked="false">30 秒</button>
+              <button type="button" class="seg-btn" data-setting="challengeDurationSec" data-value="60" aria-checked="true">60 秒（預設）</button>
+              <button type="button" class="seg-btn" data-setting="challengeDurationSec" data-value="120" aria-checked="false">120 秒</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 空間範圍與方向設定 -->
+        <div class="setting-section">
+          <div class="setting-row">
+            <label>
+              <span>3. 個人化活動範圍（依追蹤模式分開記憶）</span>
+              <span id="customRangeStatusText" style="color:#70e5ab;font-size:13px;">手部：預設範圍</span>
+            </label>
+            <div class="range-calib-box">
+              <span style="font-size:12.5px;color:#c8dfe6;line-height:1.4;flex:1;min-width:150px;">
+                直接在完整鏡頭畫面上用手指拉框調整大小與位置。
+              </span>
+              <button type="button" class="secondary-btn" id="openRangeCalibBtn" style="background:#1f5c41;border-color:#70e5ab;color:#fff;white-space:nowrap;padding:8px 14px;min-height:40px;">
+                📐 調整活動範圍
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>目標分布方向（三種模式預設皆為左右練習）</label>
+            <div class="seg-group" role="radiogroup" aria-label="練習範圍">
+              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="lr" aria-checked="true">左右練習</button>
+              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="all" aria-checked="false">左右＋上下</button>
+              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="left" aria-checked="false">單側偏左</button>
+              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="right" aria-checked="false">單側偏右</button>
+              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="random" aria-checked="false">自由隨機</button>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label>目標星星大小与碰觸停留（收集／連線模式適用）</label>
+            <div class="seg-group" role="radiogroup" aria-label="目標星星大小">
+              <button type="button" class="seg-btn" data-setting="targetSize" data-value="large" aria-checked="true">大（預設）</button>
+              <button type="button" class="seg-btn" data-setting="targetSize" data-value="medium" aria-checked="false">中</button>
+              <button type="button" class="seg-btn" data-setting="targetSize" data-value="small" aria-checked="false">小</button>
+            </div>
+            <div class="seg-group" role="radiogroup" aria-label="碰觸判定方式" style="margin-top:4px;">
+              <button type="button" class="seg-btn" data-setting="dwellMode" data-value="dwell" aria-checked="true">短暫停留（約 0.3 秒）</button>
+              <button type="button" class="seg-btn" data-setting="dwellMode" data-value="instant" aria-checked="false">立即命中</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 語音報數、音效與顏色容許度 -->
+        <div class="setting-section">
+          <div class="setting-row">
+            <label>4. 語音報數與音效回饋（可分別獨立開關）</label>
+            <div class="seg-group" role="radiogroup" aria-label="中文語音報數">
+              <button type="button" class="seg-btn" data-setting="voiceOn" data-value="true" aria-checked="true">🗣️ 語音報數：開</button>
+              <button type="button" class="seg-btn" data-setting="voiceOn" data-value="false" aria-checked="false">語音報數：關</button>
+            </div>
+            <div class="seg-group" role="radiogroup" aria-label="成功提示音效" style="margin-top:4px;">
+              <button type="button" class="seg-btn" data-setting="soundOn" data-value="true" aria-checked="true">開啟音效</button>
+              <button type="button" class="seg-btn" data-setting="soundOn" data-value="false" aria-checked="false">靜音</button>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label for="toleranceInput">
+              <span>顏色／黑灰物品追蹤容許度</span>
+              <output id="tolText">16</output>
+            </label>
+            <div class="range-row">
+              <input type="range" id="toleranceInput" min="8" max="30" value="16">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notice-box">
+        <strong>臨床與復健使用說明：</strong><br>
+        • <strong>切換模式保護：</strong>每次切換手部、頭部或顏色模式時，會先確認連續穩定追蹤約 1 秒才恢復碰觸與計時，且保留當前進度。<br>
+        • <strong>語音報數：</strong>每次成功完成動作時以繁體中文報出「累積完成次數（一、二、三…）」，每滿 5 次給予里程碑鼓勵。<br>
+        • <strong>免責聲明：</strong>遊戲分數、完成時間、活動範圍與頭部平面位置僅供復健互動激勵參考，<strong>不得直接視為關節活動度（ROM）、軀幹重心轉移或臨床坐姿平衡之客觀評估數值</strong>。
+      </div>
+
+      <div class="sheet-actions">
+        <button class="mainbtn" id="closeSettingsBtn" style="min-height:44px;padding:10px 24px;font-size:16px;min-width:120px;">完成返回</button>
+      </div>
+    </article>
+  </div>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const video = $('video');
+  const stage = $('stage');
+  const canvas = $('canvas');
+  const ctx = canvas.getContext('2d');
+  const work = document.createElement('canvas');
+  const wctx = work.getContext('2d', { willReadFrequently: true });
+
+  const reducedMotionQuery = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : { matches: false };
+
+  // 模式切換後的連續穩定追蹤確認時間（約 1 秒）
+  const MODE_INIT_STABLE_MS = 1000;
+  // 限時彩虹星星持續時間（維持 3 秒，結束後退化為普通星星）
+  const TIMED_STAR_DURATION_MS = 3000;
+  // 充能星星離開圈外時的寬限時間（0.5 秒不掉能量，之後每秒慢速回退 20%）
+  const CHARGE_GRACE_MS = 500;
+  const CHARGE_DECAY_RATE = 0.20;
+
+  // 支援可選的外部透明圖片圖層（PNG/WebP），未設定或載入失敗時自動使用內建高精細 Canvas/SVG 向量星星
+  const customStarAssets = {
+    normal: { url: '', img: null, loaded: false, failed: false },
+    timed: { url: '', img: null, loaded: false, failed: false },
+    moving: { url: '', img: null, loaded: false, failed: false },
+    charge_static: { url: '', img: null, loaded: false, failed: false },
+    charge_moving: { url: '', img: null, loaded: false, failed: false }
+  };
+  window.setCustomStarImage = function (typeOrUrl, maybeUrl) {
+    const type = maybeUrl !== undefined ? typeOrUrl : 'normal';
+    const url = maybeUrl !== undefined ? maybeUrl : typeOrUrl;
+    const slot = customStarAssets[type] || customStarAssets.normal;
+    if (!url) {
+      slot.url = '';
+      slot.img = null;
+      slot.loaded = false;
+      slot.failed = false;
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      slot.img = img;
+      slot.loaded = true;
+      slot.failed = false;
+    };
+    img.onerror = () => {
+      slot.img = null;
+      slot.loaded = false;
+      slot.failed = true;
+    };
+    slot.url = url;
+    img.src = url;
+  };
+
+  // MediaPipe CDN 來源
+  const scriptUrls = {
+    hand: [
+      'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js',
+      'https://unpkg.com/@mediapipe/hands/hands.js'
+    ],
+    head: [
+      'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js',
+      'https://unpkg.com/@mediapipe/face_mesh/face_mesh.js'
+    ]
+  };
+
+  // 系統與遊戲狀態機
+  const state = {
+    appState: 'camera_idle',
+    gameState: 'game_ready',
+    mode: 'hand',
+    active: false,
+    stream: null,
+    handModel: null,
+    headModel: null,
+    loopToken: 0,
+    busy: false,
+    rafId: 0,
+    previousVideoTime: -1,
+    colorTarget: null,
+    lastColorPos: null,
+    lastColorArea: 0,
+    colorLostFrames: 0,
+    tolerance: 16,
+    lastSeenTime: 0,
+    missCount: 0,
+    // 切換模式時的 1 秒穩定初始化狀態
+    modeReady: false,
+    stableMs: 0,
+    lastFrameTs: 0,
+    // 直接拉框調整活動範圍模式狀態
+    calibratingRange: false
+  };
+
+  // 三模式共用的標準化追蹤輸出介面：{found, x, y, mode, timestamp}
+  const trackerOutput = {
+    found: false,
+    x: 0.5,
+    y: 0.5,
+    mode: 'hand',
+    timestamp: 0,
+    colorRadiusPx: 0
+  };
+
+  // V2 復健與遊戲完整設定
+  const config = {
+    gamePlayMode: 'collect',     // 'collect' (星星收集) | 'charge' (星星充能) | 'connect' (星星連線)
+    specialFreq: 'low',          // 'off' | 'low' | 'high'
+    chargeTypeMode: 'mixed',     // 'static' | 'moving' | 'mixed'
+    chargeDurationSec: 2,        // 1 | 2 | 3
+    connectSubMode: 'number',    // 'number' (數字提示版) | 'memory' (記憶順序版)
+    connectStarCount: 3,         // 2 | 3 | 4
+    memoryViewSec: 5,            // 3 | 5 | 0 (0 = 不限時，碰觸第 1 顆後隱藏其餘數字)
+    challengeType: 'count',      // 'count' (指定次數挑戰) | 'timed' (限時挑戰)
+    targetCount: 10,             // 5 | 10 | 20
+    challengeDurationSec: 60,    // 30 | 60 | 120
+    rangeMode: 'lr',             // 'lr' | 'all' | 'left' | 'right' | 'random'
+    targetSize: 'large',         // 'large' | 'medium' | 'small'
+    dwellMode: 'dwell',          // 'dwell' (280ms) | 'instant' (0ms)
+    voiceOn: true,               // 繁體中文語音報數開關
+    soundOn: true                // 遊戲音效開關
+  };
+
+  // 三種追蹤模式各自獨立儲存的「使用者設定活動範圍」
+  const STORAGE_KEY_RANGES = 'motion_sense_mode_ranges_v4';
+  const modeRanges = {
+    hand: { isCustom: false, box: null },
+    head: { isCustom: false, box: null },
+    color: { isCustom: false, box: null }
+  };
+
+  function isValidNormalizedBox(b) {
+    return (
+      b &&
+      Number.isFinite(b.minX) &&
+      Number.isFinite(b.maxX) &&
+      Number.isFinite(b.minY) &&
+      Number.isFinite(b.maxY) &&
+      b.maxX - b.minX >= 0.12 &&
+      b.maxY - b.minY >= 0.10
+    );
+  }
+
+  function loadSavedRanges() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_RANGES);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      ['hand', 'head', 'color'].forEach(m => {
+        const item = parsed?.[m];
+        if (item && typeof item === 'object' && isValidNormalizedBox(item.box)) {
+          modeRanges[m].isCustom = Boolean(item.isCustom);
+          modeRanges[m].box = clampUserBoxToCameraStage(item.box);
+        }
+      });
+    } catch {
+      // 忽略 localStorage 讀取限制
+    }
+  }
+
+  function saveRangesToStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY_RANGES, JSON.stringify(modeRanges));
+    } catch {
+      // 忽略 localStorage 寫入限制
+    }
+  }
+
+  // 直接用手指拉框調整活動範圍的狀態
+  const calibState = {
+    workingBox: null,
+    dragHandle: null,
+    dragStartNorm: null,
+    dragStartBox: null
+  };
+
+  // V2 遊戲執行期狀態
+  const game = {
+    collected: 0,                // 累積完成次數（語音報數依據）
+    score: 0,                    // 限時挑戰總分
+    completedSets: 0,            // 星星連線完成組數
+    elapsedActiveMs: 0,          // 實際有效練習累計毫秒數
+    remainingMs: 60000,          // 限時挑戰剩餘毫秒數
+    countsByType: {
+      normal: 0,
+      timed: 0,
+      moving: 0,
+      charge_static: 0,
+      charge_moving: 0,
+      connect: 0
+    },
+    shuffleBag: [],              // 特殊星星洗牌袋配額
+    targets: [],                 // 當前場上星星陣列（收集/充能為 1 顆，連線為 2~4 顆）
+    connectNextOrder: 1,         // 星星連線目前應觸碰的順序號碼 (1..N)
+    connectMemoryPhase: false,   // 記憶版是否正在展示數字倒數中
+    connectMemoryRemainMs: 0,    // 記憶版展示剩餘毫秒數
+    connectAutoHintRemainMs: 0,  // 記憶版自動容錯閃爍提示剩餘毫秒數
+    connectIdleMs: 0,            // 記憶版未成功觸碰下一顆的停滯毫秒數
+    prevHitPoint: null,
+    nextSpawnAt: 0,
+    lrNextSide: 'left',
+    allStepIndex: 0,
+    particles: [],
+    collectBursts: [],
+    milestoneRipples: [],        // 每 5 次里程碑雙層波紋
+    floatingTexts: [],           // 飄浮加分與狀態文字
+    constellationBurst: null,    // 整組連線完成的星座閃耀特效
+    lastTickTs: 0
+  };
+
+  // ==================== 音效與繁體中文語音報數管理 ====================
+
+  let audioCtx = null;
+  function unlockAudio() {
+    if (config.soundOn) {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          if (!audioCtx) audioCtx = new AudioContextClass();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+      } catch {
+        // 忽略瀏覽器音效限制
+      }
+    }
+    // 預熱語音合成器（解決部分行動瀏覽器首次語音延遲）
+    if (config.voiceOn && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.getVoices();
+      } catch {
+        // 忽略語音限制
+      }
+    }
+  }
+
+  // 播放不同情境的合成音效
+  function playGameSound(kind = 'normal') {
+    if (!config.soundOn) return;
+    try {
+      unlockAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      let notes = [587.33, 880.0];
+      let stepSec = 0.08;
+      let wave = 'sine';
+
+      if (kind === 'bonus') {
+        notes = [587.33, 783.99, 987.77, 1174.66];
+        stepSec = 0.065;
+        wave = 'triangle';
+      } else if (kind === 'charge_done') {
+        notes = [523.25, 659.25, 1046.5];
+        stepSec = 0.075;
+      } else if (kind === 'set_complete') {
+        notes = [523.25, 659.25, 783.99, 1046.5];
+        stepSec = 0.07;
+        wave = 'triangle';
+      } else if (kind === 'final') {
+        notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+        stepSec = 0.085;
+      } else if (kind === 'hint') {
+        notes = [440, 523.25];
+        stepSec = 0.09;
+      }
+
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, now + idx * stepSec);
+        gain.gain.setValueAtTime(0.001, now + idx * stepSec);
+        gain.gain.exponentialRampToValueAtTime(0.15, now + idx * stepSec + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * stepSec + 0.24);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * stepSec);
+        osc.stop(now + idx * stepSec + 0.25);
+      });
+    } catch {
+      // 忽略音效錯誤
+    }
+  }
+
+  // 將正整數轉為自然繁體中文讀音（例如 1 -> 一, 10 -> 十, 12 -> 十二, 25 -> 二十五）
+  function numberToChineseSpeech(n) {
+    const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+    if (n <= 0) return '零';
+    if (n < 10) return digits[n];
+    if (n === 10) return '十';
+    if (n < 20) return '十' + digits[n % 10];
+    if (n < 100) {
+      const tens = Math.floor(n / 10);
+      const ones = n % 10;
+      return digits[tens] + '十' + (ones > 0 ? digits[ones] : '');
+    }
+    if (n < 1000) {
+      const hundreds = Math.floor(n / 100);
+      const rem = n % 100;
+      if (rem === 0) return digits[hundreds] + '百';
+      if (rem < 10) return digits[hundreds] + '百零' + digits[rem];
+      return digits[hundreds] + '百' + numberToChineseSpeech(rem);
+    }
+    return String(n);
+  }
+
+  // 繁體中文語音報數（報累積成功完成次數，每 5 次加入簡短鼓勵，自動 cancel 避免重疊）
+  function speakCompletionCount(count, isRoundEnd = false) {
+    if (!config.voiceOn || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const numText = numberToChineseSpeech(count);
+      let phrase = numText;
+
+      if (isRoundEnd) {
+        phrase = `${numText}，練習完成，太棒了！`;
+      } else if (count > 0 && count % 5 === 0) {
+        const cheers = ['很好！', '太棒了！', '繼續保持！', '做得好！'];
+        phrase = `${numText}，${cheers[(count / 5 - 1) % cheers.length]}`;
+      }
+
+      const utter = new SpeechSynthesisUtterance(phrase);
+      utter.lang = 'zh-TW';
+      utter.rate = 1.08;
+      utter.pitch = 1.02;
+
+      const voices = window.speechSynthesis.getVoices?.() || [];
+      const zhVoice =
+        voices.find(v => v.lang && (v.lang.includes('zh-TW') || v.lang.includes('zh_TW'))) ||
+        voices.find(v => v.lang && (v.lang.includes('zh-HK') || v.lang.includes('zh')));
+      if (zhVoice) utter.voice = zhVoice;
+
+      window.speechSynthesis.speak(utter);
+    } catch {
+      // 若手機不支援語音則靜默降級，依靠畫面大字計數
+    }
+  }
+
+  // ==================== 名稱與狀態輔助函式 ====================
+
+  function modeName(m = state.mode) {
+    return m === 'hand' ? '手部' : m === 'head' ? '頭部' : '顏色';
+  }
+
+  function gamePlayModeName(gm = config.gamePlayMode) {
+    if (gm === 'collect') return '星星收集';
+    if (gm === 'charge') return '星星充能';
+    return config.connectSubMode === 'memory' ? '星星連線（記憶版）' : '星星連線（數字版）';
+  }
+
+  function rangeModeLabel(rm = config.rangeMode) {
+    switch (rm) {
+      case 'lr': return '左右練習';
+      case 'all': return '左右＋上下';
+      case 'left': return '單側偏左';
+      case 'right': return '單側偏右';
+      case 'random': return '自由隨機';
+      default: return '左右練習';
+    }
+  }
+
+  function formatDurationText(ms) {
+    const totalSec = Math.max(1, Math.round(ms / 1000));
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    if (mins <= 0) return `${secs} 秒`;
+    return `${mins} 分 ${secs} 秒`;
+  }
+
+  function getStarRadiusPx() {
+    const minDim = Math.min(stage.clientWidth || 360, stage.clientHeight || 480);
+    const scale = Math.max(0.82, Math.min(1.25, minDim / 420));
+    let base = 44;
+    if (config.targetSize === 'medium') base = 34;
+    else if (config.targetSize === 'small') base = 26;
+
+    // 星星連線模式同時有 3~4 顆星星，若在小範圍內自動微調半徑避免重疊
+    if (config.gamePlayMode === 'connect' && config.connectStarCount >= 4) {
+      base = Math.min(base, 36);
+    }
+    return Math.round(base * scale);
+  }
+
+  function getDwellRequiredMs() {
+    return config.dwellMode === 'instant' ? 0 : 280;
+  }
+
+  function getChargeRequiredMs(isMoving = false) {
+    const baseMs = config.chargeDurationSec * 1000;
+    return isMoving ? Math.round(baseMs * 0.75) : baseMs;
+  }
+
+  function updateStatusUI(pillText, tone = '', bannerText) {
+    const pill = $('statusPill');
+    pill.textContent = pillText;
+    pill.className = 'pill' + (tone ? ' ' + tone : '');
+    if (bannerText !== undefined) {
+      const banner = $('messageBanner');
+      banner.textContent = bannerText;
+      banner.className =
+        'bottom-banner' +
+        (tone === 'good' ? ' good' : tone === 'warn' ? ' warn' : tone === 'info' ? ' info' : '');
+    }
+  }
+
+  function updateCustomRangeLabels() {
+    const m = state.mode;
+    const hasCustom = modeRanges[m].isCustom && isValidNormalizedBox(modeRanges[m].box);
+    const rangeTag = hasCustom
+      ? '自訂範圍'
+      : m === 'head'
+      ? '頭部範圍'
+      : '預設範圍';
+    $('rangePill').textContent = `${gamePlayModeName()}｜${rangeModeLabel(config.rangeMode)}（${rangeTag}）`;
+    $('appTitleText').textContent = `Motion Sense｜${
+      config.gamePlayMode === 'collect'
+        ? '星星收集'
+        : config.gamePlayMode === 'charge'
+        ? '星星充能'
+        : '星星連線'
+    }`;
+
+    const statusEl = $('customRangeStatusText');
+    if (statusEl) {
+      statusEl.textContent = `${modeName(m)}：${hasCustom ? '已設定自訂範圍' : '預設範圍'}`;
+    }
+  }
+
+  function updateScoreAndTimerUI() {
+    const timerBadge = $('timerBadge');
+    if (config.challengeType === 'timed') {
+      timerBadge.hidden = false;
+      const secLeft = Math.max(0, Math.ceil(game.remainingMs / 1000));
+      $('timerText').textContent = `${secLeft}s`;
+      timerBadge.className = 'timer-badge' + (secLeft <= 10 ? ' urgent' : '');
+      $('scoreText').textContent = `${game.score} 分 (${game.collected}次)`;
+    } else {
+      timerBadge.hidden = true;
+      $('scoreText').textContent = `${game.collected} / ${config.targetCount}`;
+    }
+    updateCustomRangeLabels();
+  }
+
+  function syncSettingsVisibility() {
+    $('subSettingCollect').hidden = config.gamePlayMode !== 'collect';
+    $('subSettingCharge').hidden = config.gamePlayMode !== 'charge';
+    $('subSettingConnect').hidden = config.gamePlayMode !== 'connect';
+    $('subSettingMemoryTime').hidden =
+      config.gamePlayMode !== 'connect' || config.connectSubMode !== 'memory';
+
+    $('subSettingTargetCount').hidden = config.challengeType !== 'count';
+    $('subSettingChallengeTime').hidden = config.challengeType !== 'timed';
+  }
+
+  function setAppState(nextState) {
+    state.appState = nextState;
+    stage.dataset.appState = nextState;
+    stage.dataset.gameState = state.gameState;
+  }
+
+  function setGameState(nextGameState) {
+    state.gameState = nextGameState;
+    stage.dataset.gameState = nextGameState;
+  }
+
+  // ==================== 活動範圍與星星安全中心邊界計算 ====================
+
+  function clampUserBoxToCameraStage(box) {
+    const minSpanX = 0.16;
+    const minSpanY = 0.14;
+    let minX = Math.max(0, Math.min(1 - minSpanX, box.minX));
+    let maxX = Math.min(1, Math.max(minX + minSpanX, box.maxX));
+    let minY = Math.max(0, Math.min(1 - minSpanY, box.minY));
+    let maxY = Math.min(1, Math.max(minY + minSpanY, box.maxY));
+    return { minX, maxX, minY, maxY };
+  }
+
+  function getDefaultUserRangeBox(mode = state.mode) {
+    if (mode === 'head') {
+      return {
+        minX: 0.27,
+        maxX: 0.73,
+        minY: 0.34,
+        maxY: 0.66
+      };
+    }
+    return {
+      minX: 0.06,
+      maxX: 0.94,
+      minY: 0.12,
+      maxY: 0.86
+    };
+  }
+
+  function getUserActiveRangeBox(mode = state.mode) {
+    const custom = modeRanges[mode];
+    if (custom && custom.isCustom && isValidNormalizedBox(custom.box)) {
+      return clampUserBoxToCameraStage(custom.box);
+    }
+    return getDefaultUserRangeBox(mode);
+  }
+
+  function getStarCenterHardwareSafeBounds() {
+    const W = Math.max(200, stage.clientWidth || 360);
+    const H = Math.max(200, stage.clientHeight || 480);
+    const starR = getStarRadiusPx();
+    const padPx = starR + 12;
+
+    const statusBarEl = $('statusBar');
+    const bottomBannerEl = $('messageBanner');
+    const topBarPx = statusBarEl && !statusBarEl.hidden ? statusBarEl.offsetTop + statusBarEl.offsetHeight : 8;
+    const bottomBarPx = bottomBannerEl && !bottomBannerEl.hidden ? Math.max(48, H - bottomBannerEl.offsetTop) : 8;
+
+    const minX = Math.min(0.35, Math.max(0.06, padPx / W));
+    const maxX = Math.max(0.65, Math.min(0.94, 1 - padPx / W));
+    const minY = Math.min(0.38, Math.max(0.08, (topBarPx + padPx * 0.85) / H));
+    const maxY = Math.max(0.62, Math.min(0.92, 1 - (bottomBarPx + padPx * 0.85) / H));
+
+    return { minX, maxX, minY, maxY, W, H, starR, padPx };
+  }
+
+  function getEffectiveStarSpawnBounds(mode = state.mode) {
+    const userBox = getUserActiveRangeBox(mode);
+    const hw = getStarCenterHardwareSafeBounds();
+    const rxNorm = (hw.starR * 0.85) / hw.W;
+    const ryNorm = (hw.starR * 0.85) / hw.H;
+
+    const uCx = (userBox.minX + userBox.maxX) * 0.5;
+    const uCy = (userBox.minY + userBox.maxY) * 0.5;
+
+    let minX = Math.min(uCx - 0.04, userBox.minX + rxNorm * 0.5);
+    let maxX = Math.max(uCx + 0.04, userBox.maxX - rxNorm * 0.5);
+    let minY = Math.min(uCy - 0.03, userBox.minY + ryNorm * 0.5);
+    let maxY = Math.max(uCy + 0.03, userBox.maxY - ryNorm * 0.5);
+
+    minX = Math.max(hw.minX, Math.min(hw.maxX - 0.08, minX));
+    maxX = Math.min(hw.maxX, Math.max(minX + 0.08, maxX));
+    minY = Math.max(hw.minY, Math.min(hw.maxY - 0.06, minY));
+    maxY = Math.min(hw.maxY, Math.max(minY + 0.06, maxY));
+
+    return {
+      minX,
+      maxX,
+      minY,
+      maxY,
+      W: hw.W,
+      H: hw.H,
+      starR: hw.starR
+    };
+  }
+
+  // 依據設定的「方向模式（左右／上下左右／偏左／偏右／隨機）」計算目標移動與生成子邊界
+  function getDirectionalSubBounds(mode = state.mode) {
+    const b = getEffectiveStarSpawnBounds(mode);
+    const spanX = Math.max(0.08, b.maxX - b.minX);
+    const spanY = Math.max(0.06, b.maxY - b.minY);
+    const midY = (b.minY + b.maxY) * 0.5;
+
+    if (config.rangeMode === 'left') {
+      return {
+        ...b,
+        minX: b.minX,
+        maxX: b.minX + spanX * 0.48
+      };
+    }
+    if (config.rangeMode === 'right') {
+      return {
+        ...b,
+        minX: b.maxX - spanX * 0.48,
+        maxX: b.maxX
+      };
+    }
+    if (config.rangeMode === 'lr') {
+      const halfBandY = mode === 'head' ? Math.min(0.035, spanY * 0.18) : Math.min(0.06, spanY * 0.22);
+      return {
+        ...b,
+        minY: Math.max(b.minY, midY - halfBandY),
+        maxY: Math.min(b.maxY, midY + halfBandY)
+      };
+    }
+    return b;
+  }
+
+  function ensureCurrentTargetsInsideBounds() {
+    if (!game.targets.length) return;
+    const b = getEffectiveStarSpawnBounds(state.mode);
+    let anyOut = false;
+    for (const t of game.targets) {
+      if (t.x < b.minX - 0.01 || t.x > b.maxX + 0.01 || t.y < b.minY - 0.01 || t.y > b.maxY + 0.01) {
+        anyOut = true;
+        break;
+      }
+    }
+    if (anyOut) {
+      spawnNextTargets(performance.now());
+    }
+  }
+
+  function resizeStage() {
+    const r = stage.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.max(1, Math.round(r.width * dpr));
+    canvas.height = Math.max(1, Math.round(r.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const workScale = Math.min(1, 340 / Math.max(1, r.width), 550 / Math.max(1, r.height));
+    work.width = Math.max(90, Math.round(r.width * workScale));
+    work.height = Math.max(90, Math.round(r.height * workScale));
+
+    const b = getEffectiveStarSpawnBounds(state.mode);
+    game.targets.forEach(t => {
+      t.x = Math.max(b.minX, Math.min(b.maxX, t.x));
+      t.y = Math.max(b.minY, Math.min(b.maxY, t.y));
+    });
+  }
+
+  function normalizeCameraPoint(rawPoint) {
+    if (!rawPoint || !Number.isFinite(rawPoint.x) || !Number.isFinite(rawPoint.y)) return null;
+    const vw = video.videoWidth || 640;
+    const vh = video.videoHeight || 480;
+    const W = Math.max(1, stage.clientWidth);
+    const H = Math.max(1, stage.clientHeight);
+    const s = Math.max(W / vw, H / vh);
+
+    const px = (1 - rawPoint.x) * vw * s - (vw * s - W) / 2;
+    const py = rawPoint.y * vh * s - (vh * s - H) / 2;
+    const nx = px / W;
+    const ny = py / H;
+
+    if (!Number.isFinite(nx) || !Number.isFinite(ny)) return null;
+    if (nx < -0.04 || nx > 1.04 || ny < -0.04 || ny > 1.04) return null;
+
+    return {
+      x: Math.max(0, Math.min(1, nx)),
+      y: Math.max(0, Math.min(1, ny))
+    };
+  }
+
+  function resetModeInitialization() {
+    state.modeReady = false;
+    state.stableMs = 0;
+    state.lastFrameTs = performance.now();
+    trackerOutput.found = false;
+    trackerOutput.colorRadiusPx = 0;
+    // 切換模式或重置追蹤時，清除普通停留，但充能進度凍結保留
+    game.targets.forEach(t => {
+      if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
+        t.dwellMs = 0;
+      }
+    });
+  }
+
+  function publishTrackingState(found, normX, normY, ts = performance.now(), colorRadiusPx = 0) {
+    const dt = state.lastFrameTs ? Math.min(90, Math.max(0, ts - state.lastFrameTs)) : 16;
+    state.lastFrameTs = ts;
+
+    trackerOutput.mode = state.mode;
+    trackerOutput.timestamp = ts;
+    trackerOutput.colorRadiusPx = colorRadiusPx;
+
+    if (found && Number.isFinite(normX) && Number.isFinite(normY)) {
+      trackerOutput.found = true;
+      trackerOutput.x = Math.max(0, Math.min(1, normX));
+      trackerOutput.y = Math.max(0, Math.min(1, normY));
+      setAppState('tracking_found');
+
+      if (!state.modeReady && !state.calibratingRange) {
+        state.stableMs = Math.min(MODE_INIT_STABLE_MS, state.stableMs + dt);
+        if (state.stableMs >= MODE_INIT_STABLE_MS) {
+          state.modeReady = true;
+          ensureCurrentTargetsInsideBounds();
+        }
+      }
+    } else {
+      trackerOutput.found = false;
+      if (!state.modeReady) {
+        state.stableMs = 0;
+      }
+      // 失去追蹤時，一般碰觸停留歸零；充能星星則完全凍結進度不歸零
+      game.targets.forEach(t => {
+        if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
+          t.dwellMs = 0;
+        }
+      });
+      if (
+        state.appState !== 'model_loading' &&
+        state.appState !== 'camera_loading' &&
+        state.appState !== 'error' &&
+        state.appState !== 'camera_idle'
+      ) {
+        setAppState('tracking_search');
+      }
+    }
+  }
+
+  function refreshTrackingBanner(m = state.mode) {
+    if (state.calibratingRange || state.gameState === 'game_complete') return;
+
+    if (m === 'color' && !state.colorTarget) {
+      updateStatusUI(
+        '等待點選物品',
+        'warn',
+        '請點一下畫面中的彩色或黑／灰物品中央取樣，完成後開始遊戲'
+      );
+      return;
+    }
+
+    if (!trackerOutput.found) {
+      updateStatusUI(
+        '正在尋找' + modeName(m),
+        'warn',
+        m === 'color'
+          ? '正在尋找目標物品，請將物品放入畫面內（自動恢復追蹤）'
+          : `正在尋找${modeName(m)}，請將${m === 'hand' ? '手部' : '臉部'}放入鏡頭畫面內`
+      );
+      return;
+    }
+
+    if (!state.modeReady) {
+      const pct = Math.min(99, Math.max(1, Math.round((state.stableMs / MODE_INIT_STABLE_MS) * 100)));
+      updateStatusUI(
+        `追蹤確認中 (${pct}%)`,
+        'info',
+        `追蹤確認中… 請保持${modeName(m)}在畫面內約 1 秒以恢復遊戲`
+      );
+      return;
+    }
+
+    if (config.gamePlayMode === 'connect') {
+      if (game.connectMemoryPhase) {
+        const sec = Math.max(1, Math.ceil(game.connectMemoryRemainMs / 1000));
+        updateStatusUI(
+          `記憶數字位置 (${sec}s)`,
+          'info',
+          `請記住數字 1 ～ ${game.targets.length} 的位置，${sec} 秒後數字將隱藏！`
+        );
+        return;
+      }
+      updateStatusUI(
+        `請碰觸第 ${game.connectNextOrder} 號星`,
+        'good',
+        `● 請依序碰觸第 ${game.connectNextOrder} / ${game.targets.length} 顆星星（已完成 ${game.completedSets} 組）`
+      );
+      return;
+    }
+
+    if (config.gamePlayMode === 'charge') {
+      updateStatusUI(
+        '已準備好｜星星充能',
+        'good',
+        `● 將綠色定位環停留在能量星內直到圓環集滿（已完成 ${game.collected} 次）`
+      );
+      return;
+    }
+
+    updateStatusUI(
+      '已準備好｜正在追蹤' + modeName(m),
+      'good',
+      `● 移動${modeName(m)}碰觸星星（已完成 ${game.collected} 次）`
+    );
+  }
+
+  // ==================== V2 三模式星星生成與洗牌袋配額引擎 ====================
+
+  // 洗牌袋抽取下一顆收集星星種類（確保特殊星星比例穩定公平）
+  function drawNextCollectStarType() {
+    if (config.specialFreq === 'off') return 'normal';
+    if (!game.shuffleBag.length) {
+      const bag =
+        config.specialFreq === 'high'
+          ? ['normal', 'timed', 'timed', 'moving', 'moving']
+          : ['normal', 'normal', 'normal', 'timed', 'moving'];
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      game.shuffleBag = bag;
+    }
+    return game.shuffleBag.pop();
+  }
+
+  function drawNextChargeStarType() {
+    if (config.chargeTypeMode === 'static') return 'charge_static';
+    if (config.chargeTypeMode === 'moving') return 'charge_moving';
+    return game.collected % 2 === 0 ? 'charge_static' : 'charge_moving';
+  }
+
+  // 依據當前方向模式（左右交替、上下左右、單側、隨機）計算單顆星星位置
+  function pickSingleStarPosition(b, avoidX, avoidY) {
+    const midY = (b.minY + b.maxY) * 0.5;
+    const spanX = Math.max(0.08, b.maxX - b.minX);
+    const spanY = Math.max(0.06, b.maxY - b.minY);
+    const minDistNorm = Math.min(
+      Math.max(spanX, spanY) * 0.45,
+      Math.max(0.12, (b.starR * 1.9) / Math.min(b.W, b.H))
+    );
+
+    let cx = (b.minX + b.maxX) * 0.5;
+    let cy = midY;
+
+    if (config.rangeMode === 'lr') {
+      const side = game.lrNextSide;
+      game.lrNextSide = side === 'left' ? 'right' : 'left';
+      const leftZone = b.minX + spanX * (0.06 + Math.random() * 0.16);
+      const rightZone = b.maxX - spanX * (0.06 + Math.random() * 0.16);
+      cx = side === 'left' ? leftZone : rightZone;
+      const yJitter = state.mode === 'head' ? Math.min(0.03, spanY * 0.12) : Math.min(0.07, spanY * 0.15);
+      cy = midY + (Math.random() - 0.5) * yJitter;
+    } else if (config.rangeMode === 'left') {
+      const anchors = [
+        { x: b.minX + spanX * 0.08, y: midY },
+        { x: b.minX + spanX * 0.36, y: midY - spanY * 0.28 },
+        { x: b.minX + spanX * 0.12, y: midY + spanY * 0.28 },
+        { x: b.minX + spanX * 0.38, y: midY }
+      ];
+      const pick = anchors[game.allStepIndex % anchors.length];
+      game.allStepIndex++;
+      cx = pick.x;
+      cy = pick.y;
+    } else if (config.rangeMode === 'right') {
+      const anchors = [
+        { x: b.maxX - spanX * 0.08, y: midY },
+        { x: b.maxX - spanX * 0.36, y: midY - spanY * 0.28 },
+        { x: b.maxX - spanX * 0.12, y: midY + spanY * 0.28 },
+        { x: b.maxX - spanX * 0.38, y: midY }
+      ];
+      const pick = anchors[game.allStepIndex % anchors.length];
+      game.allStepIndex++;
+      cx = pick.x;
+      cy = pick.y;
+    } else if (config.rangeMode === 'all') {
+      const midX = (b.minX + b.maxX) * 0.5;
+      const anchors = [
+        { x: b.minX + spanX * 0.10, y: midY },
+        { x: b.maxX - spanX * 0.10, y: midY },
+        { x: midX, y: b.minY + spanY * 0.10 },
+        { x: midX, y: b.maxY - spanY * 0.10 },
+        { x: b.minX + spanX * 0.18, y: b.minY + spanY * 0.18 },
+        { x: b.maxX - spanX * 0.18, y: b.maxY - spanY * 0.18 }
+      ];
+      let bestPick = anchors[game.allStepIndex % anchors.length];
+      game.allStepIndex++;
+      if (avoidX !== null && Math.hypot(bestPick.x - avoidX, bestPick.y - avoidY) < minDistNorm) {
+        bestPick = anchors[game.allStepIndex % anchors.length];
+        game.allStepIndex++;
+      }
+      cx = bestPick.x;
+      cy = bestPick.y;
+    } else {
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const rx = b.minX + Math.random() * spanX;
+        const ry = b.minY + Math.random() * spanY;
+        cx = rx;
+        cy = ry;
+        if (avoidX === null || Math.hypot(rx - avoidX, ry - avoidY) >= minDistNorm) {
+          break;
+        }
+      }
+    }
+
+    return {
+      x: Math.max(b.minX, Math.min(b.maxX, cx)),
+      y: Math.max(b.minY, Math.min(b.maxY, cy))
+    };
+  }
+
+  // 為移動星星與移動充能星星建立平滑速度向量（限制在當前活動範圍與方向模式內）
+  function createMovingVelocity(type) {
+    const moveBounds = getDirectionalSubBounds(state.mode);
+    const spanX = Math.max(0.08, moveBounds.maxX - moveBounds.minX);
+    const spanY = Math.max(0.04, moveBounds.maxY - moveBounds.minY);
+    // 約 8~10 秒橫越一次活動範圍，移動充能星星再放慢 25%
+    const speedScale = type === 'charge_moving' ? 0.085 : 0.115;
+    const dirX = Math.random() < 0.5 ? 1 : -1;
+    const dirY = Math.random() < 0.5 ? 1 : -1;
+    const vx = spanX * speedScale * dirX;
+    const vy = config.rangeMode === 'lr' ? 0 : spanY * speedScale * 0.65 * dirY;
+    return { vx, vy };
+  }
+
+  // 產生下一顆或下一組星星
+  function spawnNextTargets(now = performance.now()) {
+    if (state.gameState === 'game_complete') return;
+    const b = getEffectiveStarSpawnBounds(state.mode);
+    const avoidX = trackerOutput.found ? trackerOutput.x : (game.prevHitPoint ? game.prevHitPoint.x : null);
+    const avoidY = trackerOutput.found ? trackerOutput.y : (game.prevHitPoint ? game.prevHitPoint.y : null);
+    const hitRadiusPx = b.starR * 1.08;
+
+    // 模式 C：星星連線（一次產生 2～4 顆帶順序的星星，具防重疊最小間距保護）
+    if (config.gamePlayMode === 'connect') {
+      const subB = getDirectionalSubBounds(state.mode);
+      const spanX = Math.max(0.10, subB.maxX - subB.minX);
+      const spanY = Math.max(0.06, subB.maxY - subB.minY);
+      const midX = (subB.minX + subB.maxX) * 0.5;
+      const midY = (subB.minY + subB.maxY) * 0.5;
+
+      // 頭部模式或極窄範圍時最多限制 3 顆，避免碰撞圈重疊死鎖
+      const desiredCount =
+        state.mode === 'head' && config.connectStarCount > 3 ? 3 : config.connectStarCount;
+
+      const positions = [];
+      if (config.rangeMode === 'lr' || spanY < 0.12) {
+        // 水平等距排列後打亂順序
+        for (let i = 0; i < desiredCount; i++) {
+          const ratio = desiredCount === 1 ? 0.5 : i / (desiredCount - 1);
+          const px = subB.minX + spanX * (0.08 + ratio * 0.84);
+          const py = midY + (i % 2 === 0 ? -1 : 1) * Math.min(0.025, spanY * 0.25);
+          positions.push({ x: px, y: py });
+        }
+      } else {
+        // 橢圓／多邊形端點分布，確保每顆星星彼此距離最開
+        const baseAngle = Math.random() * Math.PI * 2;
+        const rx = spanX * 0.40;
+        const ry = spanY * 0.38;
+        for (let i = 0; i < desiredCount; i++) {
+          const ang = baseAngle + (Math.PI * 2 * i) / desiredCount;
+          positions.push({
+            x: Math.max(b.minX, Math.min(b.maxX, midX + Math.cos(ang) * rx)),
+            y: Math.max(b.minY, Math.min(b.maxY, midY + Math.sin(ang) * ry))
+          });
+        }
+      }
+
+      // 洗牌打亂各座標對應的順序號
+      for (let i = positions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [positions[i], positions[j]] = [positions[j], positions[i]];
+      }
+
+      game.targets = positions.map((pos, idx) => {
+        const distToTracker = trackerOutput.found
+          ? Math.hypot((pos.x - trackerOutput.x) * b.W, (pos.y - trackerOutput.y) * b.H)
+          : Infinity;
+        return {
+          id: Date.now() + idx + Math.random(),
+          type: 'connect',
+          order: idx + 1,
+          completed: false,
+          x: pos.x,
+          y: pos.y,
+          vx: 0,
+          vy: 0,
+          trail: [],
+          dwellMs: 0,
+          wrongDwellMs: 0,
+          requiredMs: getDwellRequiredMs(),
+          spawnTime: now,
+          collectedLock: false,
+          mustLeaveFirst: idx === 0 && distToTracker <= hitRadiusPx
+        };
+      });
+
+      game.connectNextOrder = 1;
+      game.connectIdleMs = 0;
+      game.connectAutoHintRemainMs = 0;
+
+      if (config.connectSubMode === 'memory' && config.memoryViewSec > 0) {
+        game.connectMemoryPhase = true;
+        game.connectMemoryRemainMs = config.memoryViewSec * 1000;
+      } else {
+        game.connectMemoryPhase = false;
+        game.connectMemoryRemainMs = 0;
+      }
+
+      if (state.gameState === 'game_ready') {
+        setGameState('game_playing');
+      }
+      refreshTrackingBanner(state.mode);
+      return;
+    }
+
+    // 模式 A（星星收集）與 模式 B（星星充能）：一次產生 1 顆目標星
+    const starType =
+      config.gamePlayMode === 'charge' ? drawNextChargeStarType() : drawNextCollectStarType();
+    const pos = pickSingleStarPosition(b, avoidX, avoidY);
+    const isMoving = starType === 'moving' || starType === 'charge_moving';
+    const isCharge = starType === 'charge_static' || starType === 'charge_moving';
+    const vel = isMoving ? createMovingVelocity(starType) : { vx: 0, vy: 0 };
+
+    const distToTracker = trackerOutput.found
+      ? Math.hypot((pos.x - trackerOutput.x) * b.W, (pos.y - trackerOutput.y) * b.H)
+      : Infinity;
+
+    game.targets = [
+      {
+        id: Date.now() + Math.random(),
+        type: starType,
+        degradedFromTimed: false,
+        x: pos.x,
+        y: pos.y,
+        vx: vel.vx,
+        vy: vel.vy,
+        trail: [],
+        dwellMs: 0,
+        outsideMs: 0,
+        requiredMs: isCharge
+          ? getChargeRequiredMs(starType === 'charge_moving')
+          : getDwellRequiredMs(),
+        ttlMs: starType === 'timed' ? TIMED_STAR_DURATION_MS : 0,
+        maxTtlMs: starType === 'timed' ? TIMED_STAR_DURATION_MS : 0,
+        spawnTime: now,
+        collectedLock: false,
+        mustLeaveFirst: distToTracker <= hitRadiusPx
+      }
+    ];
+
+    if (state.gameState === 'game_ready') {
+      setGameState('game_playing');
+    }
+    refreshTrackingBanner(state.mode);
+  }
+
+  // 重置整回合遊戲
+  function resetGame() {
+    game.collected = 0;
+    game.score = 0;
+    game.completedSets = 0;
+    game.elapsedActiveMs = 0;
+    game.remainingMs = config.challengeDurationSec * 1000;
+    game.countsByType = {
+      normal: 0,
+      timed: 0,
+      moving: 0,
+      charge_static: 0,
+      charge_moving: 0,
+      connect: 0
+    };
+    game.shuffleBag = [];
+    game.targets = [];
+    game.connectNextOrder = 1;
+    game.connectMemoryPhase = false;
+    game.connectMemoryRemainMs = 0;
+    game.connectAutoHintRemainMs = 0;
+    game.connectIdleMs = 0;
+    game.prevHitPoint = null;
+    game.nextSpawnAt = performance.now() + 100;
+    game.lrNextSide = 'left';
+    game.allStepIndex = 0;
+    game.particles = [];
+    game.collectBursts = [];
+    game.milestoneRipples = [];
+    game.floatingTexts = [];
+    game.constellationBurst = null;
+
+    $('completeOverlay').hidden = true;
+    setGameState(state.active ? 'game_playing' : 'game_ready');
+    updateScoreAndTimerUI();
+    if (state.active) {
+      spawnNextTargets(performance.now());
+      refreshTrackingBanner(state.mode);
+    }
+  }
+
+  // 計算單顆星星在限時挑戰中的得分（嚴格遵守確認規格：1～3 分）
+  function getPointsForTarget(target) {
+    switch (target.type) {
+      case 'timed':
+        return 3; // 3 秒內成功收集限時星得 3 分
+      case 'moving':
+        return 2; // 移動星星得 2 分
+      case 'charge_static':
+        return 2; // 固定充能星星得 2 分
+      case 'charge_moving':
+        return 3; // 移動充能星星得 3 分
+      case 'connect':
+        return 1; // 星星連線每顆得 1 分（整組完成另加 2 或 3 分）
+      case 'normal':
+      default:
+        return 1; // 普通星星（含限時退化後）得 1 分
+    }
+  }
+
+  function addFloatingText(x, y, text, color = '#ffe066') {
+    if (reducedMotionQuery.matches) return;
+    game.floatingTexts.push({
+      x,
+      y,
+      text,
+      color,
+      born: performance.now(),
+      duration: 780
+    });
+  }
+
+  function spawnCelebrationParticles(sx, sy, starR, isBigBonus = false, isMilestone = false) {
+    const now = performance.now();
+    const reduced = reducedMotionQuery.matches;
+
+    game.collectBursts.push({
+      x: sx,
+      y: sy,
+      r: starR,
+      born: now,
+      duration: reduced ? 180 : isBigBonus ? 420 : 320,
+      color: isBigBonus ? '#f472b6' : '#70e5ab'
+    });
+
+    if (isMilestone) {
+      game.milestoneRipples.push({
+        x: sx,
+        y: sy,
+        r: starR,
+        born: now,
+        duration: reduced ? 260 : 620
+      });
+    }
+
+    if (!reduced) {
+      const count = isBigBonus ? 20 : isMilestone ? 16 : 11;
+      const palette = isBigBonus
+        ? ['#ff6b6b', '#ffd452', '#4cffb3', '#38bdf8', '#e879f9']
+        : ['#ffe066', '#70e5ab', '#38bdf8'];
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
+        const speed = (isBigBonus ? 2.2 : 1.6) + Math.random() * 2.5;
+        game.particles.push({
+          x: sx,
+          y: sy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: (isBigBonus ? 5 : 4) + Math.random() * 4,
+          color: palette[i % palette.length],
+          born: now,
+          life: (isBigBonus ? 460 : 350) + Math.random() * 140
+        });
+      }
+    }
+  }
+
+  // 建立並顯示回合結算統計畫面
+  function finishRoundAndShowSummary() {
+    setGameState('game_complete');
+    const durationStr = formatDurationText(game.elapsedActiveMs);
+    const grid = $('completeStatsGrid');
+    grid.innerHTML = '';
+
+    const addStat = (label, value, highlight = false, wide = false) => {
+      const div = document.createElement('div');
+      div.className = 'stat-item' + (wide ? ' wide' : '');
+      const l = document.createElement('span');
+      l.className = 'stat-label';
+      l.textContent = label;
+      const v = document.createElement('span');
+      v.className = 'stat-value' + (highlight ? ' highlight' : '');
+      v.textContent = value;
+      div.append(l, v);
+      grid.append(div);
+    };
+
+    if (config.challengeType === 'count') {
+      $('completeTitle').textContent = '🎉 太棒了！完成指定次數練習';
+      $('completeSummary').textContent = `您已順利完成本回合「${gamePlayModeName()}」復健練習！`;
+      addStat('完成次數', `${game.collected} / ${config.targetCount} 次`, true);
+      addStat('總練習時間', durationStr, true);
+      addStat('使用的遊戲模式', gamePlayModeName());
+      addStat('使用的追蹤方式', `${modeName(state.mode)}追蹤`);
+      if (config.gamePlayMode === 'connect') {
+        addStat('完成連線組數', `共完成 ${game.completedSets} 組星座連線`, false, true);
+      }
+    } else {
+      $('completeTitle').textContent = '🏆 時間到！完成限時挑戰';
+      $('completeSummary').textContent = `在 ${config.challengeDurationSec} 秒內您完成了精彩的表現！`;
+      addStat('累積總分', `${game.score} 分`, true);
+      addStat('成功完成次數', `${game.collected} 次`, true);
+      addStat('挑戰時間', `${config.challengeDurationSec} 秒`);
+      addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`);
+
+      const c = game.countsByType;
+      let detailParts = [];
+      if (config.gamePlayMode === 'collect') {
+        detailParts.push(`普通星 ${c.normal} 顆`);
+        if (c.timed > 0 || config.specialFreq !== 'off') detailParts.push(`限時星 ${c.timed} 顆`);
+        if (c.moving > 0 || config.specialFreq !== 'off') detailParts.push(`移動星 ${c.moving} 顆`);
+      } else if (config.gamePlayMode === 'charge') {
+        detailParts.push(`固定充能 ${c.charge_static} 顆`);
+        detailParts.push(`移動充能 ${c.charge_moving} 顆`);
+      } else {
+        detailParts.push(`連線星星 ${c.connect} 顆`);
+        detailParts.push(`完成整組 ${game.completedSets} 組`);
+      }
+      addStat('各類星星完成數', detailParts.join('、'), false, true);
+    }
+
+    updateStatusUI('練習完成！', 'good', `🎉 已完成本回合練習（共 ${game.collected} 次）`);
+    const reduced = reducedMotionQuery.matches;
+    setTimeout(() => {
+      if (state.gameState === 'game_complete') {
+        $('completeOverlay').hidden = false;
+      }
+    }, reduced ? 120 : 360);
+  }
+
+  // 觸發單顆星星成功完成
+  function handleTargetCompleted(target, now) {
+    if (!target || target.collectedLock || state.gameState === 'game_complete') return;
+    target.collectedLock = true;
+
+    const W = stage.clientWidth;
+    const H = stage.clientHeight;
+    const sx = target.x * W;
+    const sy = target.y * H;
+    const starR = getStarRadiusPx();
+
+    game.collected += 1;
+    game.countsByType[target.type] = (game.countsByType[target.type] || 0) + 1;
+    game.prevHitPoint = { x: target.x, y: target.y, rPx: starR * 1.1 };
+
+    const pts = getPointsForTarget(target);
+    game.score += pts;
+
+    const isMilestone = game.collected % 5 === 0;
+    const isBigBonus = target.type === 'timed' || target.type === 'charge_moving';
+
+    // 處理「星星連線」模式的順序推進與整組完成判定
+    let isSetFinished = false;
+    if (config.gamePlayMode === 'connect') {
+      target.completed = true;
+      game.connectIdleMs = 0;
+      game.connectAutoHintRemainMs = 0;
+
+      if (game.connectNextOrder < game.targets.length) {
+        game.connectNextOrder += 1;
+      } else {
+        isSetFinished = true;
+        game.completedSets += 1;
+        const setBonus = config.connectSubMode === 'memory' ? 3 : 2;
+        game.score += setBonus;
+        game.constellationBurst = {
+          points: game.targets.map(t => ({ x: t.x * W, y: t.y * H })),
+          born: now,
+          duration: reducedMotionQuery.matches ? 220 : 520
+        };
+        if (config.challengeType === 'timed') {
+          addFloatingText(W * 0.5, H * 0.35, `✨ 整組連線完成 +${setBonus} 分！`, '#70e5ab');
+        } else {
+          addFloatingText(W * 0.5, H * 0.35, `✨ 完成第 ${game.completedSets} 組連線！`, '#70e5ab');
+        }
+      }
+    } else {
+      game.targets = [];
+    }
+
+    if (config.challengeType === 'timed') {
+      addFloatingText(sx, sy - starR * 0.8, `+${pts} 分`, isBigBonus ? '#f472b6' : '#ffe066');
+    } else if (isMilestone) {
+      addFloatingText(sx, sy - starR * 0.8, `🎯 已完成 ${game.collected} 次！`, '#70e5ab');
+    }
+
+    updateScoreAndTimerUI();
+
+    // 檢查指定次數挑戰是否達到結束條件（星星連線模式需先完成當前整組才結算）
+    const shouldEndCountRound =
+      config.challengeType === 'count' &&
+      game.collected >= config.targetCount &&
+      (config.gamePlayMode !== 'connect' || isSetFinished);
+
+    if (shouldEndCountRound) {
+      playGameSound('final');
+      speakCompletionCount(game.collected, true);
+      spawnCelebrationParticles(sx, sy, starR, true, true);
+      finishRoundAndShowSummary();
+      return;
+    }
+
+    // 播放音效與中文報數
+    if (isSetFinished) {
+      playGameSound('set_complete');
+    } else if (isBigBonus) {
+      playGameSound('bonus');
+    } else if (target.type === 'charge_static') {
+      playGameSound('charge_done');
+    } else {
+      playGameSound('normal');
+    }
+    speakCompletionCount(game.collected, false);
+    spawnCelebrationParticles(sx, sy, starR, isBigBonus, isMilestone);
+
+    if (config.gamePlayMode !== 'connect' || isSetFinished) {
+      game.targets = [];
+      game.nextSpawnAt = now + (reducedMotionQuery.matches ? 180 : 340);
+    }
+
+    refreshTrackingBanner(state.mode);
+  }
+
+  // ==================== V2 遊戲主邏輯更新 ====================
+
+  function updateGameLogic(now) {
+    const dt = game.lastTickTs ? Math.min(80, Math.max(0, now - game.lastTickTs)) : 16;
+    game.lastTickTs = now;
+
+    const settingsOpen = !$('settingsSheet').hidden;
+    if (!state.active || state.gameState === 'game_complete' || state.calibratingRange || settingsOpen) {
+      return;
+    }
+
+    // 只有在完成模式切換 1 秒穩定確認 (state.modeReady) 後，才推進練習計時與遊戲物件
+    if (!state.modeReady) {
+      return;
+    }
+
+    // 累計實際有效練習時間
+    game.elapsedActiveMs += dt;
+
+    // 限時挑戰倒數（在記憶順序版展示數字的倒數期間暫停扣除總挑戰時間，確保公平）
+    if (config.challengeType === 'timed' && !game.connectMemoryPhase) {
+      game.remainingMs = Math.max(0, game.remainingMs - dt);
+      updateScoreAndTimerUI();
+      if (game.remainingMs <= 0) {
+        playGameSound('final');
+        speakCompletionCount(game.collected, true);
+        finishRoundAndShowSummary();
+        return;
+      }
+    }
+
+    // 過場結束後生成下一顆／下一組目標星
+    if (!game.targets.length && now >= game.nextSpawnAt) {
+      spawnNextTargets(now);
+    }
+    if (!game.targets.length) return;
+
+    const W = stage.clientWidth;
+    const H = stage.clientHeight;
+    const starR = getStarRadiusPx();
+    const dtSec = dt / 1000;
+    const moveBounds = getDirectionalSubBounds(state.mode);
+
+    // 處理「星星連線（記憶順序版）」的記憶展示倒數與自動容錯閃爍提示
+    if (config.gamePlayMode === 'connect') {
+      if (game.connectMemoryPhase) {
+        game.connectMemoryRemainMs = Math.max(0, game.connectMemoryRemainMs - dt);
+        if (game.connectMemoryRemainMs <= 0) {
+          game.connectMemoryPhase = false;
+          game.connectIdleMs = 0;
+        }
+        refreshTrackingBanner(state.mode);
+        return; // 記憶展示期間鎖定碰觸判定，避免誤觸
+      }
+
+      if (game.connectAutoHintRemainMs > 0) {
+        game.connectAutoHintRemainMs = Math.max(0, game.connectAutoHintRemainMs - dt);
+      } else if (config.connectSubMode === 'memory' && trackerOutput.found) {
+        // 記憶版若超過 5 秒未觸碰正確目標，自動閃爍提示 1.5 秒
+        game.connectIdleMs += dt;
+        if (game.connectIdleMs >= 5000) {
+          game.connectIdleMs = 0;
+          game.connectAutoHintRemainMs = 1500;
+        }
+      }
+    }
+
+    // 逐一更新場上目標星（移動軌跡、3秒限時退化、碰觸與充能判定）
+    for (let i = 0; i < game.targets.length; i++) {
+      const t = game.targets[i];
+      if (!t || t.completed || t.collectedLock) continue;
+
+      // 1. 限時彩虹星星 3 秒倒數與溫和退化機制
+      if (t.type === 'timed') {
+        t.ttlMs = Math.max(0, t.ttlMs - dt);
+        if (t.ttlMs <= 0) {
+          // 3 秒時間到不消失落空，退化為普通黃色星星並保留當前已累積的停留進度
+          t.type = 'normal';
+          t.degradedFromTimed = true;
+          addFloatingText(t.x * W, t.y * H - starR, '轉為普通星星', '#ffd452');
+        }
+      }
+
+      // 2. 移動星星与移動充能星星的位置更新（靠近追蹤環時自動減速 40%）
+      if (t.type === 'moving' || t.type === 'charge_moving') {
+        let speedFactor = 1.0;
+        if (trackerOutput.found) {
+          const distPx = Math.hypot((trackerOutput.x - t.x) * W, (trackerOutput.y - t.y) * H);
+          if (distPx <= starR * 1.45) {
+            speedFactor = 0.58; // 友善近距減速
+          }
+        }
+
+        t.x += t.vx * speedFactor * dtSec;
+        t.y += t.vy * speedFactor * dtSec;
+
+        if (t.x <= moveBounds.minX) {
+          t.x = moveBounds.minX;
+          t.vx = Math.abs(t.vx);
+        } else if (t.x >= moveBounds.maxX) {
+          t.x = moveBounds.maxX;
+          t.vx = -Math.abs(t.vx);
+        }
+
+        if (t.y <= moveBounds.minY) {
+          t.y = moveBounds.minY;
+          t.vy = Math.abs(t.vy);
+        } else if (t.y >= moveBounds.maxY) {
+          t.y = moveBounds.maxY;
+          t.vy = -Math.abs(t.vy);
+        }
+
+        // 記錄流線尾跡座標
+        t.trail.unshift({ x: t.x, y: t.y });
+        if (t.trail.length > 8) t.trail.pop();
+      }
+
+      // 3. 檢查追蹤定位環是否碰觸目標星
+      if (!trackerOutput.found || !Number.isFinite(trackerOutput.x) || !Number.isFinite(trackerOutput.y)) {
+        // 失去鏡頭追蹤 (found=false)：充能進度 100% 凍結保留；一般碰觸停留歸零
+        if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
+          t.dwellMs = 0;
+        }
+        continue;
+      }
+
+      const tx = trackerOutput.x * W;
+      const ty = trackerOutput.y * H;
+      const sx = t.x * W;
+      const sy = t.y * H;
+      // 移動充能星星給予 1.25 倍較寬容的充能吸引半徑
+      const radiusMult = t.type === 'charge_moving' ? 1.28 : 1.08;
+      const hitRadius = starR * radiusMult + 10;
+      const dist = Math.hypot(tx - sx, ty - sy);
+
+      if (t.mustLeaveFirst) {
+        if (dist > hitRadius * 1.15) {
+          t.mustLeaveFirst = false;
+        } else {
+          t.dwellMs = 0;
+          continue;
+        }
+      }
+
+      // 星星連線模式：檢查是否為當前順序號碼
+      if (config.gamePlayMode === 'connect') {
+        if (t.order !== game.connectNextOrder) {
+          // 碰觸到非當前順序的星星：不扣分、不重來；若在記憶版則自動觸發 1.5 秒數字閃爍提示
+          if (dist <= hitRadius * 0.9) {
+            t.wrongDwellMs = (t.wrongDwellMs || 0) + dt;
+            if (t.wrongDwellMs >= 260) {
+              t.wrongDwellMs = 0;
+              if (config.connectSubMode === 'memory') {
+                game.connectAutoHintRemainMs = 1600;
+              }
+              playGameSound('hint');
+              addFloatingText(sx, sy - starR * 0.85, `請先找 ${game.connectNextOrder} 號星`, '#ffd452');
+            }
+          } else {
+            t.wrongDwellMs = 0;
+          }
+          continue;
+        }
+
+        // 碰觸正確的順序星星
+        t.requiredMs = getDwellRequiredMs();
+        if (dist <= hitRadius) {
+          if (t.requiredMs <= 0) {
+            handleTargetCompleted(t, now);
+            break;
+          } else {
+            t.dwellMs += dt;
+            if (t.dwellMs >= t.requiredMs) {
+              handleTargetCompleted(t, now);
+              break;
+            }
+          }
+        } else {
+          t.dwellMs = 0;
+        }
+        continue;
+      }
+
+      // 星星充能模式：0.5 秒寬限期 + 慢速平滑回退機制
+      if (t.type === 'charge_static' || t.type === 'charge_moving') {
+        t.requiredMs = getChargeRequiredMs(t.type === 'charge_moving');
+        if (dist <= hitRadius) {
+          t.outsideMs = 0;
+          t.dwellMs += dt;
+          if (t.dwellMs >= t.requiredMs) {
+            handleTargetCompleted(t, now);
+            break;
+          }
+        } else {
+          t.outsideMs = (t.outsideMs || 0) + dt;
+          if (t.outsideMs > CHARGE_GRACE_MS && t.dwellMs > 0) {
+            t.dwellMs = Math.max(0, t.dwellMs - dt * CHARGE_DECAY_RATE);
+          }
+        }
+        continue;
+      }
+
+      // 星星收集模式（普通星、限時彩虹星、移動青星）
+      t.requiredMs = getDwellRequiredMs();
+      if (dist <= hitRadius) {
+        if (t.requiredMs <= 0) {
+          handleTargetCompleted(t, now);
+          break;
+        } else {
+          t.dwellMs += dt;
+          if (t.dwellMs >= t.requiredMs) {
+            handleTargetCompleted(t, now);
+            break;
+          }
+        }
+      } else {
+        t.dwellMs = 0;
+      }
+    }
+  }
+
+  // ==================== 活動範圍編輯模式 ====================
+
+  function openRangeCalibration() {
+    $('settingsSheet').hidden = true;
+    $('completeOverlay').hidden = true;
+    state.calibratingRange = true;
+
+    const uBox = getUserActiveRangeBox(state.mode);
+    calibState.workingBox = {
+      minX: uBox.minX,
+      maxX: uBox.maxX,
+      minY: uBox.minY,
+      maxY: uBox.maxY
+    };
+
+    $('statusBar').hidden = true;
+    $('messageBanner').hidden = true;
+    $('mainFooter').hidden = true;
+    $('calibPanel').hidden = false;
+
+    $('calibGuideText').textContent =
+      `【${modeName(state.mode)}】直接拉動綠框四邊／四角可放大至全畫面，或按住框內平移`;
+
+    if (!state.active) {
+      startCamera();
+    } else {
+      renderScene();
+    }
+  }
+
+  function applyRangeAndReturn() {
+    if (calibState.workingBox) {
+      const clamped = clampUserBoxToCameraStage(calibState.workingBox);
+      modeRanges[state.mode] = {
+        isCustom: true,
+        box: clamped
+      };
+      saveRangesToStorage();
+    }
+    closeRangeCalibration(true);
+  }
+
+  function resetCurrentModeRangeToDefault() {
+    modeRanges[state.mode] = {
+      isCustom: false,
+      box: null
+    };
+    saveRangesToStorage();
+
+    const def = getDefaultUserRangeBox(state.mode);
+    calibState.workingBox = {
+      minX: def.minX,
+      maxX: def.maxX,
+      minY: def.minY,
+      maxY: def.maxY
+    };
+
+    updateScoreAndTimerUI();
+    ensureCurrentTargetsInsideBounds();
+    if (state.calibratingRange) {
+      $('calibGuideText').textContent =
+        `已恢復【${modeName(state.mode)}】預設範圍，可繼續拉框或按「完成套用」`;
+    }
+    renderScene();
+  }
+
+  function closeRangeCalibration(applied = false) {
+    state.calibratingRange = false;
+    calibState.dragHandle = null;
+    $('calibPanel').hidden = true;
+    $('mainFooter').hidden = false;
+    $('statusBar').hidden = false;
+    $('messageBanner').hidden = false;
+
+    ensureCurrentTargetsInsideBounds();
+    updateScoreAndTimerUI();
+    if (applied) {
+      $('footerHint').textContent =
+        `已套用${modeName()}活動範圍（更換手機位置或坐姿後可重新拉框）。`;
+    }
+    refreshTrackingBanner(state.mode);
+    renderScene();
+  }
+
+  function hitTestCalibHandle(px, py) {
+    if (!state.calibratingRange || !calibState.workingBox) return null;
+    const W = stage.clientWidth;
+    const H = stage.clientHeight;
+    const b = calibState.workingBox;
+    const x1 = b.minX * W;
+    const x2 = b.maxX * W;
+    const y1 = b.minY * H;
+    const y2 = b.maxY * H;
+    const mx = (x1 + x2) * 0.5;
+    const my = (y1 + y2) * 0.5;
+    const hitR = 32;
+
+    const hx1 = Math.max(11, Math.min(W - 11, x1));
+    const hx2 = Math.max(11, Math.min(W - 11, x2));
+    const hy1 = Math.max(11, Math.min(H - 11, y1));
+    const hy2 = Math.max(11, Math.min(H - 11, y2));
+
+    const handles = [
+      { id: 'tl', x: hx1, y: hy1 },
+      { id: 'tr', x: hx2, y: hy1 },
+      { id: 'bl', x: hx1, y: hy2 },
+      { id: 'br', x: hx2, y: hy2 },
+      { id: 'top', x: mx, y: hy1 },
+      { id: 'bottom', x: mx, y: hy2 },
+      { id: 'left', x: hx1, y: my },
+      { id: 'right', x: hx2, y: my }
+    ];
+
+    for (const h of handles) {
+      if (Math.hypot(px - h.x, py - h.y) <= hitR) return h.id;
+    }
+
+    if (py >= y1 - hitR && py <= y2 + hitR) {
+      if (Math.abs(px - x1) <= hitR) return 'left';
+      if (Math.abs(px - x2) <= hitR) return 'right';
+    }
+    if (px >= x1 - hitR && px <= x2 + hitR) {
+      if (Math.abs(py - y1) <= hitR) return 'top';
+      if (Math.abs(py - y2) <= hitR) return 'bottom';
+    }
+
+    if (px > x1 && px < x2 && py > y1 && py < y2) {
+      return 'move';
+    }
+    return null;
+  }
+
+  function updateCalibDrag(nx, ny) {
+    if (!calibState.dragHandle || !calibState.dragStartBox || !calibState.dragStartNorm) return;
+    const minSpanX = 0.16;
+    const minSpanY = 0.14;
+    const dx = nx - calibState.dragStartNorm.x;
+    const dy = ny - calibState.dragStartNorm.y;
+    const s = calibState.dragStartBox;
+    let { minX, maxX, minY, maxY } = s;
+    const h = calibState.dragHandle;
+
+    if (h === 'move') {
+      const w = maxX - minX;
+      const ht = maxY - minY;
+      minX = Math.max(0, Math.min(1 - w, minX + dx));
+      maxX = minX + w;
+      minY = Math.max(0, Math.min(1 - ht, minY + dy));
+      maxY = minY + ht;
+    } else {
+      if (h.includes('l') || h === 'left') {
+        minX = Math.max(0, Math.min(maxX - minSpanX, s.minX + dx));
+      }
+      if (h.includes('r') || h === 'right') {
+        maxX = Math.min(1, Math.max(minX + minSpanX, s.maxX + dx));
+      }
+      if (h.includes('t') || h === 'top') {
+        minY = Math.max(0, Math.min(maxY - minSpanY, s.minY + dy));
+      }
+      if (h.includes('b') || h === 'bottom') {
+        maxY = Math.min(1, Math.max(minY + minSpanY, s.maxY + dy));
+      }
+    }
+
+    calibState.workingBox = { minX, maxX, minY, maxY };
+    renderScene();
+  }
+
+  // ==================== V2 五種星星專屬美術與視覺渲染 ====================
+
+  function traceStarPath(context, cx, cy, outerR, innerR, points = 5, rotationOffset = 0) {
+    context.beginPath();
+    const step = Math.PI / points;
+    for (let i = 0; i < points * 2; i++) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      const angle = i * step - Math.PI / 2 + rotationOffset;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      if (i === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    }
+    context.closePath();
+  }
+
+  function tracePolygonPath(context, cx, cy, radius, sides = 6, rotationOffset = 0) {
+    context.beginPath();
+    for (let i = 0; i < sides; i++) {
+      const angle = (Math.PI * 2 * i) / sides - Math.PI / 2 + rotationOffset;
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius;
+      if (i === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    }
+    context.closePath();
+  }
+
+  // 繪製移動星星／移動充能星星的柔和流線彗星尾跡
+  function drawMotionTrail(target, W, H, r, colorRgb) {
+    if (!target.trail || target.trail.length < 2) return;
+    ctx.save();
+    for (let i = target.trail.length - 1; i >= 1; i--) {
+      const pt = target.trail[i];
+      const ratio = 1 - i / target.trail.length;
+      const tx = pt.x * W;
+      const ty = pt.y * H;
+      ctx.beginPath();
+      ctx.arc(tx, ty, r * (0.28 + ratio * 0.42), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${colorRgb}, ${ratio * 0.28})`;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // 繪製單顆目標星星（依五種星星造型、倒數外圈、充能核心、連線數字徽章）
+  function drawTargetEntity(target, W, H, baseR, now, isReady = true) {
+    const cx = target.x * W;
+    const cy = target.y * H;
+
+    // 若為星星連線中已完成的星星，繪製為小巧的金色星座錨點（不阻擋視線與路徑）
+    if (target.completed) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, 13, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 212, 82, 0.9)';
+      ctx.shadowColor = '#ffd452';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.font = '900 13px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#091820';
+      ctx.fillText(String(target.order), cx, cy + 0.5);
+      ctx.restore();
+      return;
+    }
+
+    const reduced = reducedMotionQuery.matches;
+    const pulse = reduced ? 1 : 1 + Math.sin(now * 0.0048) * 0.045;
+    const r = baseR * pulse;
+    const type = target.type;
+    const dwellProgress =
+      isReady && target.requiredMs > 0 ? Math.min(1, Math.max(0, target.dwellMs / target.requiredMs)) : 0;
+
+    // 1. 若為移動類星星，先畫流線彗星尾跡
+    if (type === 'moving') {
+      drawMotionTrail(target, W, H, r, '56, 189, 248');
+    } else if (type === 'charge_moving') {
+      drawMotionTrail(target, W, H, r, '168, 85, 247');
+    }
+
+    ctx.save();
+    if (!isReady) {
+      ctx.globalAlpha = 0.55;
+    }
+
+    // 2. 深色對比底襯光暈（確保在任何複雜前鏡頭衣服或亮背景前都清晰可辨）
+    const darkBackdrop = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 1.45);
+    darkBackdrop.addColorStop(0, 'rgba(6, 18, 26, 0.55)');
+    darkBackdrop.addColorStop(1, 'rgba(6, 18, 26, 0)');
+    ctx.fillStyle = darkBackdrop;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.45, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. 彩色外發光暈
+    let glowColorInner = 'rgba(255, 224, 102, 0.55)';
+    let glowColorMid = 'rgba(255, 184, 48, 0.22)';
+    if (type === 'timed') {
+      glowColorInner = 'rgba(244, 114, 182, 0.62)';
+      glowColorMid = 'rgba(56, 189, 248, 0.28)';
+    } else if (type === 'moving') {
+      glowColorInner = 'rgba(56, 189, 248, 0.58)';
+      glowColorMid = 'rgba(14, 165, 233, 0.22)';
+    } else if (type === 'charge_static') {
+      glowColorInner = 'rgba(59, 130, 246, 0.62)';
+      glowColorMid = 'rgba(37, 99, 235, 0.25)';
+    } else if (type === 'charge_moving') {
+      glowColorInner = 'rgba(168, 85, 247, 0.62)';
+      glowColorMid = 'rgba(126, 34, 206, 0.25)';
+    }
+
+    const glowGrad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.75);
+    glowGrad.addColorStop(0, glowColorInner);
+    glowGrad.addColorStop(0.58, glowColorMid);
+    glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.75, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4. 充能星星專屬外圍能量護盾框
+    if (type === 'charge_static' || type === 'charge_moving') {
+      const shieldRot = reduced ? 0 : now * 0.0008;
+      tracePolygonPath(ctx, cx, cy, r * 1.16, 6, shieldRot);
+      ctx.strokeStyle =
+        type === 'charge_static' ? 'rgba(147, 197, 253, 0.65)' : 'rgba(216, 180, 254, 0.68)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    // 5. 繪製星星本體（優先檢查對應類別是否有設定外部透明圖層，否則使用專屬向量設計）
+    const slotKey = customStarAssets[type] ? type : 'normal';
+    const customSlot = customStarAssets[slotKey];
+
+    if (customSlot.loaded && customSlot.img && !customSlot.failed) {
+      const size = r * 2.1;
+      ctx.drawImage(customSlot.img, cx - size / 2, cy - size / 2, size, size);
+    } else {
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      if (type === 'timed') {
+        // 限時星星：彩虹漸層八角閃耀星芒
+        const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+        grad.addColorStop(0, '#ff6b8b');
+        grad.addColorStop(0.35, '#ffd452');
+        grad.addColorStop(0.7, '#4cffb3');
+        grad.addColorStop(1, '#60a5fa');
+
+        ctx.shadowColor = 'rgba(244, 114, 182, 0.7)';
+        ctx.shadowBlur = 14;
+        traceStarPath(ctx, cx, cy, r * 1.04, r * 0.54, 8, reduced ? 0 : now * 0.0012);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.lineWidth = Math.max(2.5, r * 0.09);
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // 中心白色閃光紋章
+        ctx.shadowBlur = 0;
+        traceStarPath(ctx, cx, cy, r * 0.45, r * 0.16, 4, 0);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fill();
+      } else if (type === 'moving') {
+        // 移動星星：亮青色流線五角彗星（帶微幅運動傾角）
+        const tilt = target.vx >= 0 ? 0.18 : -0.18;
+        const grad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
+        grad.addColorStop(0, '#bae6fd');
+        grad.addColorStop(0.5, '#38bdf8');
+        grad.addColorStop(1, '#0284c7');
+
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.7)';
+        ctx.shadowBlur = 13;
+        traceStarPath(ctx, cx, cy, r, r * 0.48, 5, tilt);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.lineWidth = Math.max(2.5, r * 0.09);
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // 內部流線高光
+        ctx.shadowBlur = 0;
+        traceStarPath(ctx, cx, cy - r * 0.05, r * 0.55, r * 0.26, 5, tilt);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
+        ctx.fill();
+      } else if (type === 'charge_static' || type === 'charge_moving') {
+        // 固定充能（寶石藍）与移動充能（極光紫）星星
+        const isPurple = type === 'charge_moving';
+        const tilt = isPurple ? (target.vx >= 0 ? 0.15 : -0.15) : 0;
+        const grad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
+        if (isPurple) {
+          grad.addColorStop(0, '#e9d5ff');
+          grad.addColorStop(0.5, '#a855f7');
+          grad.addColorStop(1, '#6b21a8');
+        } else {
+          grad.addColorStop(0, '#bfdbfe');
+          grad.addColorStop(0.5, '#3b82f6');
+          grad.addColorStop(1, '#1d4ed8');
+        }
+
+        ctx.shadowColor = isPurple ? 'rgba(168, 85, 247, 0.7)' : 'rgba(59, 130, 246, 0.7)';
+        ctx.shadowBlur = 14;
+        traceStarPath(ctx, cx, cy, r, r * 0.50, 5, tilt);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.lineWidth = Math.max(2.5, r * 0.09);
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // 中心隨充能進度膨脹發亮的「能量核心」
+        ctx.shadowBlur = 0;
+        const coreScale = 0.24 + dwellProgress * 0.38;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * coreScale, 0, Math.PI * 2);
+        ctx.fillStyle = dwellProgress > 0.02 ? '#ffffff' : 'rgba(255, 255, 255, 0.65)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = isPurple ? '#f0abfc' : '#93c5fd';
+        ctx.stroke();
+      } else {
+        // 普通星星（金黃色）與星星連線星體
+        const starGrad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
+        starGrad.addColorStop(0, '#fff394');
+        starGrad.addColorStop(0.55, '#ffd23f');
+        starGrad.addColorStop(1, '#f59e0b');
+
+        ctx.shadowColor = 'rgba(255, 196, 37, 0.65)';
+        ctx.shadowBlur = 14;
+        traceStarPath(ctx, cx, cy, r, r * 0.48, 5, 0);
+        ctx.fillStyle = starGrad;
+        ctx.fill();
+
+        ctx.lineWidth = Math.max(2.5, r * 0.09);
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        traceStarPath(ctx, cx, cy - r * 0.06, r * 0.62, r * 0.3, 5, 0);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+        ctx.fill();
+      }
+    }
+
+    // 6. 限時星星專屬：外圈 3 秒順時針倒數光環
+    if (type === 'timed' && target.maxTtlMs > 0) {
+      const ttlRatio = Math.min(1, Math.max(0, target.ttlMs / target.maxTtlMs));
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 1.32, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = ttlRatio > 0.35 ? '#ffd452' : '#fb7185';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 1.32, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ttlRatio);
+      ctx.stroke();
+    }
+
+    // 7. 星星連線專屬：高對比中心數字徽章（或記憶版隱藏後的問號／閃爍提示）
+    if (type === 'connect') {
+      const isCurrentTarget = target.order === game.connectNextOrder;
+      // 決定是否顯示數字：
+      // (a) 數字提示版永遠顯示
+      // (b) 記憶順序版在記憶倒數階段顯示
+      // (c) 記憶順序版選「不限時 (memoryViewSec === 0)」時，在尚未完成第 1 顆前顯示所有數字，碰完第 1 顆後隱藏其餘數字
+      // (d) 記憶順序版觸發自動容錯提示 (connectAutoHintRemainMs > 0) 時，顯示當前目標數字
+      const showNumber =
+        config.connectSubMode === 'number' ||
+        game.connectMemoryPhase ||
+        (config.connectSubMode === 'memory' && config.memoryViewSec === 0 && game.connectNextOrder === 1) ||
+        (game.connectAutoHintRemainMs > 0 && isCurrentTarget);
+
+      // 當前應觸碰的目標星（在數字版或自動提示時）加上柔和呼吸提示外圈
+      if (isCurrentTarget && (config.connectSubMode === 'number' || game.connectAutoHintRemainMs > 0)) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * 1.18, 0, Math.PI * 2);
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 5]);
+        ctx.strokeStyle = '#70e5ab';
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.shadowBlur = 0;
+      const badgeR = Math.max(14, r * 0.44);
+      ctx.beginPath();
+      ctx.arc(cx, cy, badgeR, 0, Math.PI * 2);
+      ctx.fillStyle = showNumber ? 'rgba(9, 24, 32, 0.9)' : 'rgba(25, 48, 62, 0.85)';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = showNumber && isCurrentTarget ? '#70e5ab' : '#ffd452';
+      ctx.stroke();
+
+      ctx.font = `900 ${Math.round(badgeR * 1.25)}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = showNumber ? '#ffffff' : '#9ec0ca';
+      ctx.fillText(showNumber ? String(target.order) : '?', cx, cy + 1);
+    }
+
+    // 8. 碰觸停留或充能進度外環
+    if (isReady && (dwellProgress > 0.01 || type === 'charge_static' || type === 'charge_moving')) {
+      const ringR = r * 1.24;
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = type.startsWith('charge_') ? 7 : 6;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (dwellProgress > 0.01) {
+        ctx.strokeStyle =
+          type === 'charge_moving'
+            ? '#e879f9'
+            : type === 'charge_static'
+            ? '#60a5fa'
+            : '#4cffb3';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(cx, cy, ringR, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * dwellProgress);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // 繪製星星連線模式的已連星座線條
+  function drawConstellationLines(W, H) {
+    if (config.gamePlayMode !== 'connect' || game.targets.length < 2) return;
+    const sorted = [...game.targets].sort((a, b) => a.order - b.order);
+    const completedList = sorted.filter(t => t.completed);
+
+    if (completedList.length >= 1) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 212, 82, 0.85)';
+      ctx.lineWidth = 4;
+      ctx.shadowColor = '#ffd452';
+      ctx.shadowBlur = 10;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (completedList.length >= 2) {
+        ctx.beginPath();
+        completedList.forEach((pt, idx) => {
+          if (idx === 0) ctx.moveTo(pt.x * W, pt.y * H);
+          else ctx.lineTo(pt.x * W, pt.y * H);
+        });
+        ctx.stroke();
+      }
+
+      // 從最後一顆已完成星連向使用者當前追蹤點的動態引導虛線
+      if (trackerOutput.found && state.modeReady) {
+        const lastPt = completedList[completedList.length - 1];
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = 'rgba(112, 229, 171, 0.55)';
+        ctx.setLineDash([7, 6]);
+        ctx.beginPath();
+        ctx.moveTo(lastPt.x * W, lastPt.y * H);
+        ctx.lineTo(trackerOutput.x * W, trackerOutput.y * H);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  // 繪製特效（收集放大、每 5 次里程碑雙層波紋、星座完成閃耀、粒子、飄字）
+  function drawEffects(now) {
+    // 1. 整組星座連線完成閃耀線
+    if (game.constellationBurst) {
+      const cb = game.constellationBurst;
+      const t = (now - cb.born) / cb.duration;
+      if (t >= 1) {
+        game.constellationBurst = null;
+      } else if (cb.points.length >= 2) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - t);
+        ctx.strokeStyle = '#70e5ab';
+        ctx.lineWidth = 6 * (1 - t * 0.4);
+        ctx.shadowColor = '#4cffb3';
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        cb.points.forEach((pt, idx) => {
+          if (idx === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // 2. 每 5 次里程碑雙層金色波紋
+    for (let i = game.milestoneRipples.length - 1; i >= 0; i--) {
+      const rp = game.milestoneRipples[i];
+      const t = (now - rp.born) / rp.duration;
+      if (t >= 1) {
+        game.milestoneRipples.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, (1 - t) * 0.75);
+      ctx.strokeStyle = '#ffd452';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(rp.x, rp.y, rp.r * (1 + t * 2.2), 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (t > 0.15) {
+        ctx.strokeStyle = '#70e5ab';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(rp.x, rp.y, rp.r * (0.8 + (t - 0.15) * 2.0), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 3. 星星收集放大淡出光環
+    for (let i = game.collectBursts.length - 1; i >= 0; i--) {
+      const b = game.collectBursts[i];
+      const t = (now - b.born) / b.duration;
+      if (t >= 1) {
+        game.collectBursts.splice(i, 1);
+        continue;
+      }
+      const scale = 1 + t * 0.65;
+      const alpha = Math.max(0, 1 - t);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      traceStarPath(ctx, b.x, b.y, b.r * scale, b.r * scale * 0.5, 5);
+      ctx.fillStyle = '#fff5b8';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = b.color || '#70e5ab';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 4. 閃亮粒子
+    for (let i = game.particles.length - 1; i >= 0; i--) {
+      const p = game.particles[i];
+      const age = now - p.born;
+      if (age >= p.life) {
+        game.particles.splice(i, 1);
+        continue;
+      }
+      p.x += p.vx;
+      p.y += p.vy;
+      const alpha = Math.max(0, 1 - age / p.life);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 5. 飄浮加分與提示文字
+    for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = game.floatingTexts[i];
+      const t = (now - ft.born) / ft.duration;
+      if (t >= 1) {
+        game.floatingTexts.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - t);
+      ctx.font = '900 18px system-ui, -apple-system, "Noto Sans TC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const yPos = ft.y - t * 28;
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(6, 18, 26, 0.88)';
+      ctx.strokeText(ft.text, ft.x, yPos);
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, yPos);
+      ctx.restore();
+    }
+  }
+
+  function drawSubtleActiveRangeGuide(W, H) {
+    const hasCustom = modeRanges[state.mode].isCustom;
+    if (!hasCustom && state.mode !== 'head') return;
+    const b = getUserActiveRangeBox(state.mode);
+    const x = b.minX * W;
+    const y = b.minY * H;
+    const w = (b.maxX - b.minX) * W;
+    const h = (b.maxY - b.minY) * H;
+
+    ctx.save();
+    ctx.strokeStyle = hasCustom ? 'rgba(112, 229, 171, 0.34)' : 'rgba(107, 194, 232, 0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 6]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
+  }
+
+  function drawRangeCalibrationOverlay(W, H) {
+    if (!calibState.workingBox) return;
+    const wb = calibState.workingBox;
+    const x1 = wb.minX * W;
+    const y1 = wb.minY * H;
+    const x2 = wb.maxX * W;
+    const y2 = wb.maxY * H;
+    const rw = x2 - x1;
+    const rh = y2 - y1;
+    const mx = (x1 + x2) * 0.5;
+    const my = (y1 + y2) * 0.5;
+
+    ctx.save();
+
+    ctx.fillStyle = 'rgba(6, 18, 25, 0.45)';
+    ctx.fillRect(0, 0, W, y1);
+    ctx.fillRect(0, y2, W, H - y2);
+    ctx.fillRect(0, y1, x1, rh);
+    ctx.fillRect(x2, y1, W - x2, rh);
+
+    ctx.fillStyle = 'rgba(112, 229, 171, 0.13)';
+    ctx.fillRect(x1, y1, rw, rh);
+
+    ctx.strokeStyle = '#70e5ab';
+    ctx.lineWidth = 3.5;
+    ctx.strokeRect(
+      Math.max(1.75, x1),
+      Math.max(1.75, y1),
+      Math.min(W - 3.5, rw),
+      Math.min(H - 3.5, rh)
+    );
+
+    ctx.strokeStyle = 'rgba(112, 229, 171, 0.38)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(mx - 18, my);
+    ctx.lineTo(mx + 18, my);
+    ctx.moveTo(mx, my - 18);
+    ctx.lineTo(mx, my + 18);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font = '800 14px system-ui, -apple-system, "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const labelW = Math.min(rw - 16, 182);
+    if (labelW > 80 && rh > 54) {
+      ctx.fillStyle = 'rgba(9, 24, 32, 0.78)';
+      ctx.fillRect(mx - labelW / 2, my - 15, labelW, 30);
+      ctx.fillStyle = '#d8fff0';
+      ctx.fillText(`${modeName(state.mode)}活動範圍（可拖移）`, mx, my);
+    }
+
+    const hx1 = Math.max(11, Math.min(W - 11, x1));
+    const hx2 = Math.max(11, Math.min(W - 11, x2));
+    const hy1 = Math.max(11, Math.min(H - 11, y1));
+    const hy2 = Math.max(11, Math.min(H - 11, y2));
+
+    const handles = [
+      [hx1, hy1], [hx2, hy1], [hx1, hy2], [hx2, hy2],
+      [mx, hy1], [mx, hy2], [hx1, my], [hx2, my]
+    ];
+    handles.forEach(([hx, hy]) => {
+      ctx.beginPath();
+      ctx.arc(hx, hy, 11, 0, Math.PI * 2);
+      ctx.fillStyle = '#091820';
+      ctx.fill();
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = '#70e5ab';
+      ctx.stroke();
+    });
+
+    ctx.restore();
+  }
+
+  function drawTrackerRing(x, y, colorRadiusPx = 0) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    ctx.save();
+
+    if (state.mode === 'color' && colorRadiusPx > 26) {
+      ctx.strokeStyle = 'rgba(88, 245, 180, 0.45)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.arc(x, y, colorRadiusPx, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = 'rgba(5, 24, 18, 0.85)';
+    ctx.stroke();
+
+    ctx.shadowColor = '#2ce695';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = state.modeReady || state.calibratingRange ? '#58f5b4' : '#6bc2e8';
+    ctx.stroke();
+
+    if (!state.modeReady && !state.calibratingRange && state.stableMs > 0) {
+      const ratio = Math.min(1, Math.max(0, state.stableMs / MODE_INIT_STABLE_MS));
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(x, y, 29, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio);
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#ffd452';
+      ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(x, y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(5, 24, 18, 0.9)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#4cffb3';
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function renderScene(now = performance.now()) {
+    const W = stage.clientWidth;
+    const H = stage.clientHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    if (state.calibratingRange) {
+      drawRangeCalibrationOverlay(W, H);
+    } else {
+      drawSubtleActiveRangeGuide(W, H);
+
+      if (state.gameState !== 'game_complete') {
+        drawConstellationLines(W, H);
+        const starR = getStarRadiusPx();
+        for (let i = 0; i < game.targets.length; i++) {
+          const t = game.targets[i];
+          if (t && !t.collectedLock) {
+            drawTargetEntity(t, W, H, starR, now, state.modeReady);
+          }
+        }
+      }
+
+      drawEffects(now);
+    }
+
+    // 永遠將高對比綠色追蹤定位環繪製在最頂層，不被任何星星遮蔽
+    if (trackerOutput.found) {
+      drawTrackerRing(
+        trackerOutput.x * W,
+        trackerOutput.y * H,
+        trackerOutput.colorRadiusPx
+      );
+    }
+  }
+
+  // ==================== 追蹤模式切換與 MediaPipe / 彩色黑灰辨識核心 ====================
+
+  function setMode(m) {
+    if (m === state.mode) return;
+    state.mode = m;
+    state.loopToken++;
+    cancelAnimationFrame(state.rafId);
+    state.previousVideoTime = -1;
+    state.lastSeenTime = 0;
+    state.missCount = 0;
+    state.busy = false;
+
+    resetModeInitialization();
+
+    document.querySelectorAll('[data-mode]').forEach(b => {
+      b.setAttribute('aria-pressed', String(b.dataset.mode === m));
+    });
+
+    $('rechooseBtn').hidden = m !== 'color';
+    $('colorSwatch').hidden = m !== 'color';
+
+    const hasCustom = modeRanges[m].isCustom;
+    $('footerHint').textContent =
+      m === 'color'
+        ? state.colorTarget
+          ? '已沿用儲存的物品色彩樣本，確認穩定追蹤約 1 秒後自動繼續遊戲。'
+          : '請點選畫面中的彩色或黑／灰物品中央取樣，完成後確認穩定追蹤。'
+        : m === 'hand'
+        ? `手部模式（${hasCustom ? '自訂活動範圍' : '預設大活動範圍'}）：確認穩定追蹤 1 秒後繼續。`
+        : `頭部模式（${hasCustom ? '自訂活動範圍' : '中心舒適小範圍'}）：確認穩定追蹤 1 秒後繼續。`;
+
+    updateScoreAndTimerUI();
+    ensureCurrentTargetsInsideBounds();
+
+    if (state.calibratingRange) {
+      openRangeCalibration();
+    }
+
+    if (state.active) {
+      startLoop();
+    } else {
+      setAppState('camera_idle');
+      updateStatusUI('攝影機未開啟', '', '按下「啟動前鏡頭」開始星星復健練習');
+      renderScene();
+    }
+  }
+
+  document.querySelectorAll('[data-mode]').forEach(b => {
+    b.addEventListener('click', () => {
+      unlockAudio();
+      setMode(b.dataset.mode);
+    });
+  });
+
+  function loadScript(url) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.crossOrigin = 'anonymous';
+      s.onload = resolve;
+      s.onerror = () => {
+        s.remove();
+        reject(new Error('模型腳本下載失敗'));
+      };
+      document.head.append(s);
+    });
+  }
+
+  async function ensureModel(m) {
+    if (m === 'hand' && state.handModel) return state.handModel;
+    if (m === 'head' && state.headModel) return state.headModel;
+
+    const symbol = m === 'hand' ? 'Hands' : 'FaceMesh';
+    if (!window[symbol]) {
+      try {
+        await loadScript(scriptUrls[m][0]);
+      } catch {
+        await loadScript(scriptUrls[m][1]);
+      }
+    }
+    if (!window[symbol]) {
+      throw new Error('無法載入 ' + modeName(m) + ' 辨識模型');
+    }
+
+    const base = m === 'hand' ? 'hands' : 'face_mesh';
+    const inst = new window[symbol]({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/${base}/${f}`
+    });
+
+    if (m === 'hand') {
+      inst.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.45,
+        minTrackingConfidence: 0.4
+      });
+      inst.onResults(r => onMediaPipeResults('hand', r));
+      state.handModel = inst;
+    } else {
+      inst.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.45
+      });
+      inst.onResults(r => onMediaPipeResults('head', r));
+      state.headModel = inst;
+    }
+    return inst;
+  }
+
+  function onMediaPipeResults(m, r) {
+    if (m !== state.mode || !state.active) return;
+    const now = performance.now();
+    const landmarks = m === 'hand' ? r.multiHandLandmarks?.[0] : r.multiFaceLandmarks?.[0];
+    let rawPoint = null;
+
+    if (landmarks) {
+      if (m === 'hand') {
+        const ids = [0, 5, 9, 13, 17].filter(i => landmarks[i]);
+        if (ids.length) {
+          rawPoint = {
+            x: ids.reduce((sum, i) => sum + landmarks[i].x, 0) / ids.length,
+            y: ids.reduce((sum, i) => sum + landmarks[i].y, 0) / ids.length
+          };
+        }
+      } else {
+        rawPoint = landmarks[1] || landmarks[4];
+      }
+    }
+
+    const norm = normalizeCameraPoint(rawPoint);
+    if (norm) {
+      state.missCount = 0;
+      state.lastSeenTime = now;
+      publishTrackingState(true, norm.x, norm.y, now, 0);
+      refreshTrackingBanner(m);
+    } else {
+      state.missCount++;
+      if (state.missCount >= 2 || now - state.lastSeenTime > 240) {
+        publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
+        refreshTrackingBanner(m);
+      }
+    }
+  }
+
+  function drawCameraToWorkCanvas() {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    const W = work.width;
+    const H = work.height;
+    if (!vw || !vh || !W || !H) return false;
+    const s = Math.max(W / vw, H / vh);
+    const sw = W / s;
+    const sh = H / s;
+    wctx.save();
+    wctx.translate(W, 0);
+    wctx.scale(-1, 1);
+    wctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, W, H);
+    wctx.restore();
+    return true;
+  }
+
+  function rgbToHsv(r, g, b) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const mx = Math.max(r, g, b);
+    const mn = Math.min(r, g, b);
+    const d = mx - mn;
+    let h = 0;
+    if (d) {
+      switch (mx) {
+        case r: h = ((g - b) / d) % 6; break;
+        case g: h = (b - r) / d + 2; break;
+        default: h = (r - g) / d + 4;
+      }
+      h = (h * 60 + 360) % 360;
+    }
+    return [h, mx ? d / mx : 0, mx];
+  }
+
+  const hueDiff = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+
+  function isLikelySkinPixel(r, g, b, s, luma) {
+    return (
+      luma > 0.20 &&
+      luma < 0.88 &&
+      s > 0.15 &&
+      s < 0.62 &&
+      r > g + 13 &&
+      g > b + 4 &&
+      r - b > 24
+    );
+  }
+
+  function matchesTargetPixel(r, g, b, target, tol) {
+    const v = rgbToHsv(r, g, b);
+    if (target.kind === 'chromatic') {
+      return (
+        hueDiff(v[0], target.h) <= tol &&
+        v[1] >= Math.max(0.20, target.s - 0.34) &&
+        v[2] >= Math.max(0.13, target.v - 0.44) &&
+        v[2] <= Math.min(1, target.v + 0.44)
+      );
+    }
+
+    const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    const tolScale = Math.max(0.65, Math.min(1.45, tol / 16));
+
+    const maxAllowedS = target.luma < 0.16
+      ? Math.min(0.42, Math.max(0.24, target.s + 0.16 * tolScale))
+      : Math.min(0.30, Math.max(0.16, target.s + 0.11 * tolScale));
+    if (v[1] > maxAllowedS) return false;
+
+    if (target.rgDiff < 0.055 && isLikelySkinPixel(r, g, b, v[1], luma)) {
+      return false;
+    }
+
+    const lumaTol = (target.luma < 0.20 ? 0.082 : 0.095) * tolScale;
+    if (Math.abs(luma - target.luma) > lumaTol) return false;
+    if (Math.abs(v[2] - target.v) > lumaTol * 1.15) return false;
+
+    const rg = (r - g) / 255;
+    const gb = (g - b) / 255;
+    const tintDist = Math.abs(rg - target.rgDiff) + Math.abs(gb - target.gbDiff);
+    if (tintDist > 0.105 * tolScale) return false;
+
+    return true;
+  }
+
+  function selectColorAtWorkCoord(wx, wy) {
+    if (!drawCameraToWorkCanvas()) return;
+    const W = work.width;
+    const H = work.height;
+    const p = wctx.getImageData(0, 0, W, H).data;
+
+    const patchAll = [];
+    const patchChromatic = [];
+
+    for (let yy = Math.max(0, wy - 7); yy <= Math.min(H - 1, wy + 7); yy += 1) {
+      for (let xx = Math.max(0, wx - 7); xx <= Math.min(W - 1, wx + 7); xx += 1) {
+        const k = (yy * W + xx) * 4;
+        const r = p[k];
+        const g = p[k + 1];
+        const b = p[k + 2];
+        const c = rgbToHsv(r, g, b);
+        const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        const sample = { h: c[0], s: c[1], v: c[2], luma, r, g, b, rgb: [r, g, b] };
+        patchAll.push(sample);
+        if (c[1] > 0.21 && c[2] > 0.15) {
+          patchChromatic.push(sample);
+        }
+      }
+    }
+
+    if (patchAll.length < 16) return;
+
+    if (patchChromatic.length >= Math.max(12, patchAll.length * 0.40)) {
+      const bins = Array(36).fill(0);
+      patchChromatic.forEach(o => bins[Math.floor(o.h / 10) % 36]++);
+      let bestBin = 0;
+      let highest = -1;
+      for (let i = 0; i < 36; i++) {
+        const score = bins[(i + 35) % 36] + bins[i] + bins[(i + 1) % 36];
+        if (score > highest) {
+          highest = score;
+          bestBin = i;
+        }
+      }
+
+      let selected = patchChromatic.filter(o => hueDiff(o.h, bestBin * 10 + 5) < 22);
+      if (!selected.length) selected = patchChromatic;
+      selected.sort((a, b) => a.s - b.s);
+      const mid = selected[Math.floor(selected.length / 2)];
+
+      let cx = 0;
+      let cy = 0;
+      for (const o of selected) {
+        cx += Math.cos((o.h * Math.PI) / 180);
+        cy += Math.sin((o.h * Math.PI) / 180);
+      }
+
+      state.colorTarget = {
+        kind: 'chromatic',
+        h: ((Math.atan2(cy, cx) * 180) / Math.PI + 360) % 360,
+        s: mid.s,
+        v: mid.v,
+        luma: mid.luma,
+        r: mid.r,
+        g: mid.g,
+        b: mid.b,
+        rgDiff: (mid.r - mid.g) / 255,
+        gbDiff: (mid.g - mid.b) / 255,
+        refArea: 0
+      };
+      state.lastColorPos = { x: wx, y: wy };
+      state.colorLostFrames = 0;
+      resetModeInitialization();
+      $('colorSwatch').style.background = `rgb(${mid.rgb.join(',')})`;
+
+      if (!state.calibratingRange) {
+        updateStatusUI('已選取彩色物品｜確認中…', 'info', '已取色！請保持彩色物品在畫面內約 1 秒以確認穩定追蹤');
+      }
+      detectColorFrame(performance.now(), true);
+      return;
+    }
+
+    const sortedByLuma = [...patchAll].sort((a, b) => a.luma - b.luma);
+    const startIdx = Math.floor(sortedByLuma.length * 0.2);
+    const endIdx = Math.max(startIdx + 1, Math.floor(sortedByLuma.length * 0.8));
+    const core = sortedByLuma.slice(startIdx, endIdx);
+    const mid = core[Math.floor(core.length / 2)];
+
+    const candidateTarget = {
+      kind: 'achromatic',
+      h: mid.h,
+      s: mid.s,
+      v: mid.v,
+      luma: mid.luma,
+      r: mid.r,
+      g: mid.g,
+      b: mid.b,
+      rgDiff: (mid.r - mid.g) / 255,
+      gbDiff: (mid.g - mid.b) / 255,
+      subType: mid.luma < 0.22 ? 'black' : 'gray',
+      refArea: 0
+    };
+
+    let ringTotal = 0;
+    let ringSame = 0;
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+      for (const rad of [26, 38]) {
+        const rx = Math.round(wx + Math.cos(angle) * rad);
+        const ry = Math.round(wy + Math.sin(angle) * rad);
+        if (rx < 0 || rx >= W || ry < 0 || ry >= H) continue;
+        ringTotal++;
+        const k = (ry * W + rx) * 4;
+        if (matchesTargetPixel(p[k], p[k + 1], p[k + 2], candidateTarget, state.tolerance)) {
+          ringSame++;
+        }
+      }
+    }
+
+    const step = 3;
+    const gw = Math.ceil(W / step);
+    const gh = Math.ceil(H / step);
+    let globalMatched = 0;
+    for (let gy = 0; gy < gh; gy++) {
+      for (let gx = 0; gx < gw; gx++) {
+        const x = Math.min(W - 1, gx * step + 1);
+        const y = Math.min(H - 1, gy * step + 1);
+        const k = (y * W + x) * 4;
+        if (matchesTargetPixel(p[k], p[k + 1], p[k + 2], candidateTarget, state.tolerance)) {
+          globalMatched++;
+        }
+      }
+    }
+
+    if (globalMatched > gw * gh * 0.28 || (ringTotal >= 12 && ringSame / ringTotal > 0.82 && globalMatched > gw * gh * 0.16)) {
+      resetModeInitialization();
+      updateStatusUI(
+        '背景對比不足',
+        'warn',
+        '黑／灰物品與周圍背景太相似，請在對比較明顯的背景前點選物品中央'
+      );
+      return;
+    }
+
+    state.colorTarget = candidateTarget;
+    state.lastColorPos = { x: wx, y: wy };
+    state.lastColorArea = 0;
+    state.colorLostFrames = 0;
+    resetModeInitialization();
+    $('colorSwatch').style.background = `rgb(${mid.rgb.join(',')})`;
+
+    if (!state.calibratingRange) {
+      const labelType = candidateTarget.subType === 'black' ? '深黑物品' : '灰色物品';
+      updateStatusUI(
+        `已選取${labelType}｜確認中…`,
+        'info',
+        `已取樣${labelType}！請保持物品在畫面內約 1 秒以確認穩定追蹤`
+      );
+    }
+    detectColorFrame(performance.now(), true);
+  }
+
+  function computeComponentBoundaryContrast(im, W, H, minx, miny, maxx, maxy, step, targetLuma) {
+    let sumDiff = 0;
+    let count = 0;
+    const pad = 2;
+    const xLeft = Math.max(0, (minx - pad) * step);
+    const xRight = Math.min(W - 1, (maxx + pad) * step);
+    const yTop = Math.max(0, (miny - pad) * step);
+    const yBottom = Math.min(H - 1, (maxy + pad) * step);
+
+    const sampleCoords = [
+      [xLeft, Math.floor(((miny + maxy) * 0.5) * step)],
+      [xRight, Math.floor(((miny + maxy) * 0.5) * step)],
+      [Math.floor(((minx + maxx) * 0.5) * step), yTop],
+      [Math.floor(((minx + maxx) * 0.5) * step), yBottom],
+      [xLeft, yTop],
+      [xRight, yTop],
+      [xLeft, yBottom],
+      [xRight, yBottom]
+    ];
+
+    for (const [sx, sy] of sampleCoords) {
+      if (sx < 0 || sx >= W || sy < 0 || sy >= H) continue;
+      const k = (sy * W + sx) * 4;
+      const extLuma = (0.299 * im[k] + 0.587 * im[k + 1] + 0.114 * im[k + 2]) / 255;
+      sumDiff += Math.abs(extLuma - targetLuma);
+      count++;
+    }
+    return count > 0 ? sumDiff / count : 0;
+  }
+
+  function detectColorFrame(now = performance.now(), isInitialSeed = false) {
+    if (!state.colorTarget) {
+      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
+      refreshTrackingBanner('color');
+      return;
+    }
+    if (!drawCameraToWorkCanvas()) return;
+
+    const W = work.width;
+    const H = work.height;
+    const im = wctx.getImageData(0, 0, W, H).data;
+    const c = state.colorTarget;
+    const step = 3;
+    const gw = Math.ceil(W / step);
+    const gh = Math.ceil(H / step);
+    const totalCells = gw * gh;
+    const mask = new Uint8Array(totalCells);
+    let totalMatched = 0;
+
+    for (let gy = 0; gy < gh; gy++) {
+      for (let gx = 0; gx < gw; gx++) {
+        const x = Math.min(W - 1, gx * step + 1);
+        const y = Math.min(H - 1, gy * step + 1);
+        const k = (y * W + x) * 4;
+        if (matchesTargetPixel(im[k], im[k + 1], im[k + 2], c, state.tolerance)) {
+          mask[gy * gw + gx] = 1;
+          totalMatched++;
+        }
+      }
+    }
+
+    const maxBgFraction = c.kind === 'achromatic' ? 0.28 : 0.38;
+    if (totalMatched > totalCells * maxBgFraction) {
+      state.lastColorPos = null;
+      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
+      updateStatusUI(
+        '背景與物品過於相似',
+        'warn',
+        c.kind === 'achromatic'
+          ? '背景有太多相近黑／灰或深色區域，請改善背景對比或點「重新選色」'
+          : '背景有太多相近顏色導致辨識不可靠，請避開同色背景或點「重新選色」'
+      );
+      return;
+    }
+
+    const vis = new Uint8Array(mask.length);
+    const candidates = [];
+    const minCells = Math.max(5, Math.round(totalCells * 0.0007));
+    const maxCells = c.kind === 'achromatic' ? totalCells * 0.16 : totalCells * 0.28;
+    const diag = Math.hypot(W, H);
+
+    for (let i = 0; i < mask.length; i++) {
+      if (!mask[i] || vis[i]) continue;
+      const q = [i];
+      let head = 0;
+      let n = 0;
+      let sx = 0;
+      let sy = 0;
+      let minx = gw;
+      let miny = gh;
+      let maxx = 0;
+      let maxy = 0;
+      let borderTouches = 0;
+      vis[i] = 1;
+
+      while (head < q.length) {
+        const idx = q[head++];
+        const x = idx % gw;
+        const y = Math.floor(idx / gw);
+        n++;
+        sx += x;
+        sy += y;
+        if (x < minx) minx = x;
+        if (y < miny) miny = y;
+        if (x > maxx) maxx = x;
+        if (y > maxy) maxy = y;
+        if (x === 0 || x === gw - 1 || y === 0 || y === gh - 1) {
+          borderTouches++;
+        }
+
+        const neighbors = [
+          [x - 1, y],
+          [x + 1, y],
+          [x, y - 1],
+          [x, y + 1]
+        ];
+        for (let nb = 0; nb < 4; nb++) {
+          const nx = neighbors[nb][0];
+          const ny = neighbors[nb][1];
+          if (nx < 0 || nx >= gw || ny < 0 || ny >= gh) continue;
+          const ni = ny * gw + nx;
+          if (mask[ni] && !vis[ni]) {
+            vis[ni] = 1;
+            q.push(ni);
+          }
+        }
+      }
+
+      if (n < minCells || n > maxCells) continue;
+
+      const bw = maxx - minx + 1;
+      const bh = maxy - miny + 1;
+      const fillRatio = n / Math.max(1, bw * bh);
+      const aspect = Math.max(bw, bh) / Math.max(1, Math.min(bw, bh));
+      const px = (sx / n + 0.5) * step;
+      const py = (sy / n + 0.5) * step;
+
+      if (c.kind === 'achromatic') {
+        if (aspect > 5.8 || fillRatio < 0.17) continue;
+        if (bw > gw * 0.72 || bh > gh * 0.72) continue;
+
+        const extContrast = computeComponentBoundaryContrast(im, W, H, minx, miny, maxx, maxy, step, c.luma);
+        if (extContrast < 0.055) continue;
+
+        const touchesBottom = maxy >= gh - 2 && bw > gw * 0.32;
+        if (touchesBottom && (!state.lastColorPos || Math.hypot(px - state.lastColorPos.x, py - state.lastColorPos.y) > diag * 0.16)) {
+          continue;
+        }
+      }
+
+      let continuityWeight = 1.0;
+      let distNorm = 1.0;
+      if (state.lastColorPos) {
+        distNorm = Math.hypot(px - state.lastColorPos.x, py - state.lastColorPos.y) / diag;
+        if (distNorm <= 0.22) {
+          continuityWeight = 1.2 + (1 - distNorm / 0.22) * 2.2;
+        } else if (distNorm <= 0.36) {
+          continuityWeight = 0.75;
+        } else {
+          continuityWeight = state.colorLostFrames >= 4 ? 0.85 : 0.20;
+        }
+      }
+
+      let areaWeight = 1.0;
+      if (c.refArea > 0) {
+        const ratio = n / c.refArea;
+        if (ratio >= 0.30 && ratio <= 3.2) {
+          areaWeight = 1.25;
+        } else if (ratio < 0.15 || ratio > 5.5) {
+          areaWeight = 0.45;
+        }
+      }
+
+      const borderPenalty = borderTouches > n * 0.35 ? 0.6 : 1.0;
+      const compactnessBonus = 0.75 + Math.min(0.5, fillRatio * 0.6);
+      const score = n * continuityWeight * areaWeight * borderPenalty * compactnessBonus;
+
+      candidates.push({
+        x: px,
+        y: py,
+        n,
+        score,
+        distNorm,
+        w: bw * step,
+        h: bh * step
+      });
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+    const best = candidates[0] || null;
+
+    if (
+      best &&
+      c.kind === 'achromatic' &&
+      !isInitialSeed &&
+      best.distNorm > 0.25 &&
+      candidates.length >= 3 &&
+      candidates[1].score > best.score * 0.78 &&
+      candidates[2].score > best.score * 0.65
+    ) {
+      state.colorLostFrames++;
+      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
+      updateStatusUI(
+        '背景有相近深色干擾',
+        'warn',
+        '畫面中有多處相近的黑／灰區域（如衣服、頭髮或陰影），請讓物品靠近鏡頭或改善背景對比'
+      );
+      return;
+    }
+
+    if (best) {
+      if (isInitialSeed || !c.refArea) {
+        c.refArea = best.n;
+      } else if (best.distNorm < 0.15) {
+        c.refArea = c.refArea * 0.85 + best.n * 0.15;
+      }
+      state.lastColorPos = { x: best.x, y: best.y };
+      state.colorLostFrames = 0;
+
+      const normX = best.x / W;
+      const normY = best.y / H;
+      const radiusPx = Math.max(
+        22,
+        Math.min(
+          105,
+          Math.max((best.w / W) * stage.clientWidth, (best.h / H) * stage.clientHeight) * 0.55
+        )
+      );
+      publishTrackingState(true, normX, normY, now, radiusPx);
+      refreshTrackingBanner('color');
+    } else {
+      state.colorLostFrames++;
+      if (state.colorLostFrames >= 5) {
+        state.lastColorPos = null;
+      }
+      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
+      refreshTrackingBanner('color');
+    }
+  }
+
+  // ==================== 相機與主迴圈控制 ====================
+
+  async function startCamera() {
+    unlockAudio();
+    const btn = $('startBtn');
+    btn.disabled = true;
+    setAppState('camera_loading');
+    updateStatusUI('啟動鏡頭中…', '', '首次使用請允許瀏覽器使用前鏡頭權限');
+
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('此環境不支援相機 API，請使用 HTTPS 網址並以 Safari 或 Chrome 開啟');
+      }
+      if (!state.stream) {
+        state.stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: 'user',
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 24, max: 30 }
+          }
+        });
+        video.srcObject = state.stream;
+        await video.play();
+      }
+      state.active = true;
+      resizeStage();
+      $('startOverlay').hidden = true;
+      resetModeInitialization();
+      if (!game.targets.length && state.gameState !== 'game_complete') {
+        setGameState('game_playing');
+        spawnNextTargets(performance.now());
+      }
+      startLoop();
+    } catch (e) {
+      state.active = false;
+      setAppState('error');
+      $('coverTitle').textContent = '無法啟動前鏡頭';
+      $('coverText').textContent =
+        e.name === 'NotAllowedError'
+          ? '請在瀏覽器網址列或系統設定中允許攝影機權限，再按下方按鈕重試。'
+          : e.message || String(e);
+      btn.textContent = '重新嘗試啟動';
+      $('startOverlay').hidden = false;
+      updateStatusUI('鏡頭啟動失敗', 'warn', '請檢查相機權限與 HTTPS 連線');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function handleModelError(e) {
+    state.loopToken++;
+    cancelAnimationFrame(state.rafId);
+    publishTrackingState(false, 0.5, 0.5);
+    setAppState('error');
+    const msg = e?.message || String(e);
+    updateStatusUI('模型載入失敗', 'warn', msg);
+    $('coverTitle').textContent = '辨識模型載入失敗';
+    $('coverText').textContent = msg + '。請確認網路連線正常，或先切換至「🟠 顏色」模式練習。';
+    $('startBtn').textContent = '重新嘗試';
+    $('startOverlay').hidden = false;
+  }
+
+  function startLoop() {
+    const token = ++state.loopToken;
+    cancelAnimationFrame(state.rafId);
+    state.previousVideoTime = -1;
+    state.missCount = 0;
+    resetModeInitialization();
+
+    if (state.mode === 'color') {
+      setAppState('tracking_search');
+      refreshTrackingBanner('color');
+    } else {
+      setAppState('model_loading');
+      updateStatusUI('正在載入' + modeName() + '模型…', 'info', '首次使用需載入辨識模型，請稍候…');
+    }
+
+    (async () => {
+      let detector = null;
+      try {
+        if (state.mode !== 'color') {
+          detector = await ensureModel(state.mode);
+        }
+        if (token !== state.loopToken || !state.active) return;
+
+        if (detector) {
+          setAppState('tracking_search');
+          refreshTrackingBanner(state.mode);
+        }
+
+        let lastColorCheck = 0;
+        const frameLoop = async ts => {
+          if (token !== state.loopToken || !state.active) return;
+
+          if (!document.hidden && video.readyState >= 2) {
+            if (state.mode === 'color') {
+              if (ts - lastColorCheck > 55) {
+                lastColorCheck = ts;
+                if (state.colorTarget) {
+                  detectColorFrame(ts);
+                } else {
+                  refreshTrackingBanner('color');
+                }
+              }
+            } else if (!state.busy && video.currentTime !== state.previousVideoTime) {
+              state.previousVideoTime = video.currentTime;
+              state.busy = true;
+              try {
+                await detector.send({ image: video });
+              } catch (err) {
+                state.busy = false;
+                if (token === state.loopToken) handleModelError(err);
+                return;
+              } finally {
+                state.busy = false;
+              }
+            }
+
+            updateGameLogic(ts);
+            renderScene(ts);
+          }
+
+          state.rafId = requestAnimationFrame(frameLoop);
+        };
+
+        state.rafId = requestAnimationFrame(frameLoop);
+      } catch (err) {
+        if (token === state.loopToken) handleModelError(err);
+      }
+    })();
+  }
+
+  // ==================== 事件綁定 ====================
+
+  $('startBtn').addEventListener('click', () => {
+    if (state.active) {
+      $('startOverlay').hidden = true;
+      startLoop();
+    } else {
+      startCamera();
+    }
+  });
+
+  $('playAgainBtn').addEventListener('click', () => {
+    unlockAudio();
+    resetGame();
+  });
+
+  $('completeSettingsBtn').addEventListener('click', () => {
+    updateCustomRangeLabels();
+    syncSettingsVisibility();
+    $('settingsSheet').hidden = false;
+  });
+
+  $('resetGameBtn').addEventListener('click', () => {
+    unlockAudio();
+    resetGame();
+  });
+
+  stage.addEventListener('pointerdown', e => {
+    unlockAudio();
+    if (!$('startOverlay').hidden || !$('completeOverlay').hidden || !$('settingsSheet').hidden) {
+      return;
+    }
+
+    const r = stage.getBoundingClientRect();
+    const px = e.clientX - r.left;
+    const py = e.clientY - r.top;
+    const nx = Math.max(0, Math.min(1, px / Math.max(1, r.width)));
+    const ny = Math.max(0, Math.min(1, py / Math.max(1, r.height)));
+
+    if (state.calibratingRange) {
+      const handle = hitTestCalibHandle(px, py);
+      if (handle) {
+        calibState.dragHandle = handle;
+        calibState.dragStartNorm = { x: nx, y: ny };
+        calibState.dragStartBox = { ...calibState.workingBox };
+        try {
+          stage.setPointerCapture(e.pointerId);
+        } catch {
+          // 忽略 pointerCapture 限制
+        }
+        return;
+      }
+    }
+
+    if (state.mode === 'color' && state.active && !state.calibratingRange) {
+      const wx = Math.max(0, Math.min(work.width - 1, Math.floor(nx * work.width)));
+      const wy = Math.max(0, Math.min(work.height - 1, Math.floor(ny * work.height)));
+      selectColorAtWorkCoord(wx, wy);
+    }
+  });
+
+  stage.addEventListener('pointermove', e => {
+    if (!state.calibratingRange || !calibState.dragHandle) return;
+    const r = stage.getBoundingClientRect();
+    const nx = Math.max(0, Math.min(1, (e.clientX - r.left) / Math.max(1, r.width)));
+    const ny = Math.max(0, Math.min(1, (e.clientY - r.top) / Math.max(1, r.height)));
+    updateCalibDrag(nx, ny);
+  });
+
+  function endCalibDrag() {
+    calibState.dragHandle = null;
+    calibState.dragStartNorm = null;
+    calibState.dragStartBox = null;
+  }
+  stage.addEventListener('pointerup', endCalibDrag);
+  stage.addEventListener('pointercancel', endCalibDrag);
+
+  $('rechooseBtn').addEventListener('click', () => {
+    state.colorTarget = null;
+    state.lastColorPos = null;
+    state.lastColorArea = 0;
+    state.colorLostFrames = 0;
+    $('colorSwatch').style.background = '#546c78';
+    resetModeInitialization();
+    refreshTrackingBanner('color');
+    renderScene();
+  });
+
+  $('openRangeCalibBtn').addEventListener('click', openRangeCalibration);
+  $('calibResetDefaultBtn').addEventListener('click', resetCurrentModeRangeToDefault);
+  $('calibApplyBtn').addEventListener('click', applyRangeAndReturn);
+
+  function openSettings() {
+    updateCustomRangeLabels();
+    syncSettingsVisibility();
+    $('settingsSheet').hidden = false;
+  }
+  function closeSettings() {
+    $('settingsSheet').hidden = true;
+    game.lastTickTs = performance.now();
+  }
+  $('openSettingsTop').addEventListener('click', openSettings);
+  $('closeSettingsBtn').addEventListener('click', closeSettings);
+  $('closeSettingsTop').addEventListener('click', closeSettings);
+  $('settingsSheet').addEventListener('click', e => {
+    if (e.target === $('settingsSheet')) closeSettings();
+  });
+
+  document.querySelectorAll('.seg-btn[data-setting]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      unlockAudio();
+      const key = btn.dataset.setting;
+      const val = btn.dataset.value;
+
+      document.querySelectorAll(`.seg-btn[data-setting="${key}"]`).forEach(b => {
+        b.setAttribute('aria-checked', String(b === btn));
+      });
+
+      let needRespawnReset = false;
+
+      if (key === 'gamePlayMode') {
+        config.gamePlayMode = val;
+        needRespawnReset = true;
+      } else if (key === 'specialFreq') {
+        config.specialFreq = val;
+        game.shuffleBag = [];
+      } else if (key === 'chargeTypeMode') {
+        config.chargeTypeMode = val;
+        needRespawnReset = true;
+      } else if (key === 'chargeDurationSec') {
+        config.chargeDurationSec = Number(val);
+      } else if (key === 'connectSubMode') {
+        config.connectSubMode = val;
+        needRespawnReset = true;
+      } else if (key === 'connectStarCount') {
+        config.connectStarCount = Number(val);
+        needRespawnReset = true;
+      } else if (key === 'memoryViewSec') {
+        config.memoryViewSec = Number(val);
+        needRespawnReset = true;
+      } else if (key === 'challengeType') {
+        config.challengeType = val;
+        needRespawnReset = true;
+      } else if (key === 'targetCount') {
+        config.targetCount = Number(val);
+        if (config.challengeType === 'count' && game.collected >= config.targetCount) {
+          needRespawnReset = true;
+        }
+      } else if (key === 'challengeDurationSec') {
+        config.challengeDurationSec = Number(val);
+        if (config.challengeType === 'timed') {
+          needRespawnReset = true;
+        }
+      } else if (key === 'rangeMode') {
+        config.rangeMode = val;
+        if (state.active && state.gameState !== 'game_complete') {
+          spawnNextTargets(performance.now());
+        }
+      } else if (key === 'targetSize') {
+        config.targetSize = val;
+        ensureCurrentTargetsInsideBounds();
+      } else if (key === 'dwellMode') {
+        config.dwellMode = val;
+      } else if (key === 'voiceOn') {
+        config.voiceOn = val === 'true';
+        if (!config.voiceOn && 'speechSynthesis' in window) {
+          try { window.speechSynthesis.cancel(); } catch {}
+        }
+      } else if (key === 'soundOn') {
+        config.soundOn = val === 'true';
+      }
+
+      syncSettingsVisibility();
+      updateScoreAndTimerUI();
+      if (needRespawnReset) {
+        resetGame();
+      } else {
+        renderScene();
+      }
+    });
+  });
+
+  $('toleranceInput').addEventListener('input', e => {
+    state.tolerance = Number(e.target.value);
+    $('tolText').textContent = e.target.value;
+  });
+
+  $('fullBtn').addEventListener('click', async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        updateStatusUI('不支援全螢幕', 'warn', '此瀏覽器不支援直接切換全螢幕，可將網頁加入主畫面');
+      }
+    } catch {
+      updateStatusUI('不支援全螢幕', 'warn', '請使用瀏覽器選單的全螢幕或加入主畫面功能');
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    resizeStage();
+    renderScene();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.active) {
+      state.busy = false;
+      game.lastTickTs = performance.now();
+      startLoop();
+    }
+  });
+
+  window.addEventListener('pagehide', () => {
+    state.stream?.getTracks().forEach(t => t.stop());
+    state.active = false;
+    state.loopToken++;
+    cancelAnimationFrame(state.rafId);
+  });
+
+  // 初始化載入已存範圍、同步設定介面並渲染初始畫面
+  loadSavedRanges();
+  syncSettingsVisibility();
+  resizeStage();
+  updateScoreAndTimerUI();
+  spawnNextTargets(performance.now());
+  setGameState('game_ready');
+  renderScene();
 })();
 </script>
-</body></html>
+</body>
+</html>
