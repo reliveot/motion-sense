@@ -265,45 +265,42 @@ button:disabled {
   color: #e3f6ff;
 }
 
-/* 極簡直覺的「直接拉框調整範圍」底部雙按鈕控制列 */
-.calib-panel {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  background: rgba(10, 27, 36, 0.94);
-  border: 1.5px solid #70e5ab;
-  border-radius: 15px;
-  padding: 10px 12px;
+/* 活動範圍編輯列：移出攝影機舞台區域外（位於下方 footer 區），完全不遮擋攝影機畫面與四邊控制點 */
+.calib-bar {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  z-index: 5;
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+  min-height: 44px;
+  padding: 4px 8px;
+  background: #132c38;
+  border: 1.5px solid #70e5ab;
+  border-radius: 12px;
+  flex-shrink: 0;
 }
 .calib-guide {
-  font-size: clamp(13px, 3.5vw, 15px);
+  flex: 1;
+  font-size: clamp(12px, 3.2vw, 14px);
   font-weight: 800;
   color: #e9f7f2;
-  text-align: center;
+  line-height: 1.3;
   margin: 0;
 }
 .calib-btn-row {
   display: flex;
-  gap: 10px;
-  justify-content: center;
+  gap: 7px;
+  flex-shrink: 0;
 }
 .calib-btn {
-  border-radius: 12px;
-  padding: 10px 16px;
-  min-height: 44px;
+  border-radius: 10px;
+  padding: 8px 13px;
+  min-height: 38px;
   font-weight: 900;
-  font-size: clamp(15px, 3.8vw, 17px);
+  font-size: clamp(13px, 3.5vw, 15px);
   border: 1.5px solid #4c7285;
   background: #1d3c4b;
   color: #f3fafb;
-  flex: 1 1 0;
-  max-width: 200px;
+  white-space: nowrap;
 }
 .calib-btn.primary {
   background: #6ee7ac;
@@ -383,12 +380,12 @@ button:disabled {
   min-height: 44px;
 }
 
-/* 底部精簡操作列 */
+/* 底部精簡操作列（已移除重複的設定按鈕，釋放手機空間） */
 .footer {
   display: flex;
   gap: 7px;
   align-items: center;
-  min-height: 42px;
+  min-height: 40px;
   flex-shrink: 0;
 }
 .footer .hint {
@@ -412,8 +409,8 @@ button:disabled {
   border: 1.5px solid #466675;
   border-radius: 11px;
   color: #ffffff;
-  padding: 8px 12px;
-  min-height: 42px;
+  padding: 8px 13px;
+  min-height: 40px;
   font-weight: 800;
   font-size: 14px;
   white-space: nowrap;
@@ -558,15 +555,14 @@ button:disabled {
     bottom: 6px;
     font-size: 14px;
   }
-  .calib-panel {
-    padding: 7px 10px;
-    bottom: 6px;
-    gap: 5px;
+  .calib-bar {
+    min-height: 36px;
+    padding: 3px 8px;
   }
   .calib-btn {
-    min-height: 36px;
-    padding: 6px 12px;
-    font-size: 14px;
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: 13px;
   }
   .status-bar {
     top: 6px;
@@ -598,7 +594,7 @@ button:disabled {
 </head>
 <body>
 <main class="app">
-  <!-- 頂部欄：只顯示標題、清楚進度 3/10 與必要工具 -->
+  <!-- 頂部欄：只顯示標題、清楚進度 3/10 與右上角設定／全螢幕 -->
   <header class="top">
     <div class="brand">
       <strong>Motion Sense｜星星收集</strong>
@@ -628,33 +624,22 @@ button:disabled {
     <div class="scrim"></div>
     <canvas id="canvas"></canvas>
 
-    <!-- 左上角追蹤狀態、右上角目前難度與範圍標示 -->
-    <div class="status-bar">
+    <!-- 左上角追蹤狀態、右上角目前難度與範圍標示（編輯活動範圍時自動隱藏，避免遮擋邊角） -->
+    <div class="status-bar" id="statusBar">
       <span class="pill" id="statusPill">攝影機未開啟</span>
       <span class="pill info" id="rangePill">左右練習</span>
     </div>
 
-    <!-- 底部操作與狀態提示文字 -->
+    <!-- 底部操作與狀態提示文字（編輯活動範圍時自動隱藏，避免遮擋下邊界） -->
     <div class="bottom-banner" id="messageBanner" aria-live="polite">
       按下「啟動前鏡頭」開始星星收集練習
-    </div>
-
-    <!-- 極簡「直接手指拉框」底部控制列：只留「恢復預設」與「完成套用」兩個按鈕 -->
-    <div class="calib-panel" id="calibPanel" hidden>
-      <p class="calib-guide" id="calibGuideText">
-        直接用手指拉動綠色方框邊緣調整大小，或按住方框中央移動位置
-      </p>
-      <div class="calib-btn-row">
-        <button type="button" class="calib-btn" id="calibResetDefaultBtn">恢復預設</button>
-        <button type="button" class="calib-btn primary" id="calibApplyBtn">完成套用</button>
-      </div>
     </div>
 
     <!-- 啟動與錯誤遮罩 -->
     <div class="overlay" id="startOverlay">
       <div class="overlay-card">
         <h2 id="coverTitle">星星收集復健練習</h2>
-        <p id="coverText">透過手部、頭部或彩色物品移動綠色定位環，碰到畫面上的黃色星星即可收集。無時間壓力、不扣分。</p>
+        <p id="coverText">透過手部、頭部或彩色／黑灰物品移動綠色定位環，碰到畫面上的黃色星星即可收集。無時間壓力、不扣分。</p>
         <p class="sub-note">只使用前鏡頭自拍鏡像，影像僅在您的裝置端即時運算。</p>
         <button id="startBtn" class="mainbtn">啟動前鏡頭</button>
       </div>
@@ -673,13 +658,23 @@ button:disabled {
     </div>
   </section>
 
-  <!-- 底部精簡操作列 -->
-  <footer class="footer">
+  <!-- 活動範圍編輯控制列：位於攝影機舞台下方外部，不遮擋任何攝影機畫面與拉框邊界 -->
+  <div class="calib-bar" id="calibPanel" hidden>
+    <p class="calib-guide" id="calibGuideText">
+      拖曳綠色方框四邊／四角調整大小，或按住方框內部移動位置
+    </p>
+    <div class="calib-btn-row">
+      <button type="button" class="calib-btn" id="calibResetDefaultBtn">恢復預設</button>
+      <button type="button" class="calib-btn primary" id="calibApplyBtn">完成套用</button>
+    </div>
+  </div>
+
+  <!-- 底部精簡操作列（已移除與右上角重複的設定按鈕） -->
+  <footer class="footer" id="mainFooter">
     <span class="hint" id="footerHint">將綠色追蹤環移到星星上即可收集。</span>
     <span class="swatch" id="colorSwatch" hidden title="目前選取的追蹤顏色"></span>
     <button class="opt" id="rechooseBtn" hidden>重新選色</button>
     <button class="opt" id="resetGameBtn" title="重新開始本局進度">重來</button>
-    <button class="opt" id="openSettingsBtn" aria-label="設定與說明">⚙ 設定</button>
   </footer>
 
   <!-- 齒輪設定與復健參數抽屜 -->
@@ -691,7 +686,7 @@ button:disabled {
       </div>
 
       <div class="setting-group">
-        <!-- 各模式獨立的「調整活動範圍」入口（直接用手指拉框） -->
+        <!-- 各模式獨立的「調整活動範圍」入口 -->
         <div class="setting-row">
           <label>
             <span>星星出現活動範圍（依模式分開記憶）</span>
@@ -699,7 +694,7 @@ button:disabled {
           </label>
           <div class="range-calib-box">
             <span style="font-size:13px;color:#c8dfe6;line-height:1.4;flex:1;min-width:160px;">
-              直接在鏡頭畫面上用手指拉動方框調整大小與位置（更換手機位置或坐姿後建議重調）。
+              直接在完整鏡頭畫面上用手指拉動方框調整大小與位置（更換手機位置或坐姿後建議重調）。
             </span>
             <button type="button" class="secondary-btn" id="openRangeCalibBtn" style="background:#1f5c41;border-color:#70e5ab;color:#fff;white-space:nowrap;">
               📐 調整活動範圍
@@ -760,10 +755,10 @@ button:disabled {
           </div>
         </div>
 
-        <!-- 6. 顏色追蹤容許範圍 -->
+        <!-- 6. 顏色／黑灰追蹤容許範圍 -->
         <div class="setting-row">
           <label for="toleranceInput">
-            <span>顏色追蹤容許範圍（色相誤差）</span>
+            <span>顏色／黑灰追蹤容許度</span>
             <output id="tolText">16</output>
           </label>
           <div class="range-row">
@@ -775,7 +770,7 @@ button:disabled {
       <div class="notice-box">
         <strong>使用與臨床注意事項：</strong><br>
         • <strong>切換模式穩定確認：</strong>每次切換手部、頭部或顏色模式時，系統會先暫停碰觸判定，待連續穩定追蹤約 1 秒後自動恢復遊戲，且不會清除已收集的星星進度。<br>
-        • <strong>顏色模式：</strong>未選色時須先點選畫面中的鮮明物品取色；若已選過顏色會自動沿用樣本並重新確認穩定追蹤。此模式追蹤的是<strong>相近顏色區域</strong>，非辨識特定實體物品。<br>
+        • <strong>彩色與黑／灰物品追蹤：</strong>直接點選物品中央取樣，系統會自動判斷高飽和度彩色或低飽和度黑／灰物品（如 3D 列印復健輔具）；請在與物品有對比的背景前使用，此模式追蹤的是<strong>顏色／明度區域</strong>而非辨識特定實體物品。<br>
         • <strong>臨床聲明：</strong>本工具設定之「活動範圍」僅為畫面上的遊戲控制範圍，且頭部模式僅追蹤臉部／鼻尖於畫面中之平面位置，<strong>均不得宣稱為關節活動度（ROM）、軀幹重心轉移或坐姿平衡之臨床測量數值</strong>。
       </div>
 
@@ -848,7 +843,7 @@ button:disabled {
     ]
   };
 
-  // 明確定義系統與遊戲狀態機
+  // 系統與遊戲狀態機
   const state = {
     appState: 'camera_idle',
     gameState: 'game_ready',
@@ -863,7 +858,8 @@ button:disabled {
     previousVideoTime: -1,
     colorTarget: null,
     lastColorPos: null,
-    colorBgWarning: false,
+    lastColorArea: 0,
+    colorLostFrames: 0,
     tolerance: 16,
     lastSeenTime: 0,
     missCount: 0,
@@ -894,8 +890,8 @@ button:disabled {
     soundOn: true
   };
 
-  // 三種追蹤模式各自獨立儲存的活動範圍設定
-  const STORAGE_KEY_RANGES = 'motion_sense_mode_ranges_v3';
+  // 三種追蹤模式各自獨立儲存的「使用者設定活動範圍」（正規化座標可達完整攝影機畫面 [0, 1]）
+  const STORAGE_KEY_RANGES = 'motion_sense_mode_ranges_v4';
   const modeRanges = {
     hand: { isCustom: false, box: null },
     head: { isCustom: false, box: null },
@@ -909,8 +905,8 @@ button:disabled {
       Number.isFinite(b.maxX) &&
       Number.isFinite(b.minY) &&
       Number.isFinite(b.maxY) &&
-      b.maxX - b.minX >= 0.10 &&
-      b.maxY - b.minY >= 0.08
+      b.maxX - b.minX >= 0.12 &&
+      b.maxY - b.minY >= 0.10
     );
   }
 
@@ -923,7 +919,7 @@ button:disabled {
         const item = parsed?.[m];
         if (item && typeof item === 'object' && isValidNormalizedBox(item.box)) {
           modeRanges[m].isCustom = Boolean(item.isCustom);
-          modeRanges[m].box = { ...item.box };
+          modeRanges[m].box = clampUserBoxToCameraStage(item.box);
         }
       });
     } catch {
@@ -941,7 +937,7 @@ button:disabled {
 
   // 直接用手指拉框調整活動範圍的狀態
   const calibState = {
-    workingBox: null,       // { minX, maxX, minY, maxY }
+    workingBox: null,       // { minX, maxX, minY, maxY }，可擴展至完整可見攝影機邊界 [0, 1]
     dragHandle: null,       // 'left' | 'right' | 'top' | 'bottom' | 'tl' | 'tr' | 'bl' | 'br' | 'move' | null
     dragStartNorm: null,
     dragStartBox: null
@@ -1072,84 +1068,106 @@ button:disabled {
     stage.dataset.gameState = nextGameState;
   }
 
-  // 計算舞台硬體安全邊界（避開上方膠囊列、下方提示列與左右邊緣）
-  function getStageSafeBounds() {
-    const W = Math.max(200, stage.clientWidth || 360);
-    const H = Math.max(200, stage.clientHeight || 480);
-    const starR = getStarRadiusPx();
-    const marginPx = starR + 18;
+  // ==================== 嚴格區分「使用者設定的活動範圍」與「星星中心可出現的安全範圍」 ====================
 
-    const statusBarEl = document.querySelector('.status-bar');
-    const bottomBannerEl = $('messageBanner');
-    const topOccupied = statusBarEl ? statusBarEl.offsetTop + statusBarEl.offsetHeight : 48;
-    const bottomOccupied = bottomBannerEl && !bottomBannerEl.hidden ? Math.max(54, H - bottomBannerEl.offsetTop) : 64;
-
-    const minX = Math.min(0.35, Math.max(0.11, marginPx / W));
-    const maxX = Math.max(0.65, Math.min(0.89, 1 - marginPx / W));
-    const minY = Math.min(0.38, Math.max(0.15, (topOccupied + marginPx) / H));
-    const maxY = Math.max(0.62, Math.min(0.83, 1 - (bottomOccupied + marginPx) / H));
-
-    return { minX, maxX, minY, maxY, W, H, starR };
-  }
-
-  // 取得各追蹤模式的預設活動範圍：
-  // 頭部模式：限制於中心附近適合頭部小幅移動的區域（上下挑戰、單側、隨機均遵守此範圍，不沿用手部大範圍）
-  // 手部與顏色模式：保留較大的左右與上下活動範圍
-  function getDefaultModeBounds(mode = state.mode) {
-    const safe = getStageSafeBounds();
-    if (mode === 'head') {
-      const midX = 0.5;
-      const midY = (safe.minY + safe.maxY) * 0.5;
-      const safeSpanX = safe.maxX - safe.minX;
-      const safeSpanY = safe.maxY - safe.minY;
-      const halfW = Math.min(0.21, safeSpanX * 0.32);
-      const halfH = Math.min(0.125, safeSpanY * 0.24);
-      return {
-        minX: Math.max(safe.minX, midX - halfW),
-        maxX: Math.min(safe.maxX, midX + halfW),
-        minY: Math.max(safe.minY, midY - halfH),
-        maxY: Math.min(safe.maxY, midY + halfH),
-        W: safe.W,
-        H: safe.H,
-        starR: safe.starR
-      };
-    }
-    return safe;
-  }
-
-  function clampBoxToSafe(box, safe = getStageSafeBounds()) {
-    const minSpanX = 0.14;
-    const minSpanY = 0.12;
-    let minX = Math.max(safe.minX, Math.min(safe.maxX - minSpanX, box.minX));
-    let maxX = Math.min(safe.maxX, Math.max(minX + minSpanX, box.maxX));
-    let minY = Math.max(safe.minY, Math.min(safe.maxY - minSpanY, box.minY));
-    let maxY = Math.min(safe.maxY, Math.max(minY + minSpanY, box.maxY));
+  // 1. 使用者設定的活動範圍邊界：可擴展至完整可見的攝影機畫面邊界 [0, 1] x [0, 1]
+  function clampUserBoxToCameraStage(box) {
+    const minSpanX = 0.16;
+    const minSpanY = 0.14;
+    let minX = Math.max(0, Math.min(1 - minSpanX, box.minX));
+    let maxX = Math.min(1, Math.max(minX + minSpanX, box.maxX));
+    let minY = Math.max(0, Math.min(1 - minSpanY, box.minY));
+    let maxY = Math.min(1, Math.max(minY + minSpanY, box.maxY));
     return { minX, maxX, minY, maxY };
   }
 
-  // 取得目前模式實際生效的星星活動範圍
-  function getEffectiveActiveBounds(mode = state.mode) {
-    const safe = getStageSafeBounds();
-    const custom = modeRanges[mode];
-    if (custom && custom.isCustom && isValidNormalizedBox(custom.box)) {
-      const b = clampBoxToSafe(custom.box, safe);
+  // 各模式的預設「使用者活動範圍」（未自訂時使用）
+  function getDefaultUserRangeBox(mode = state.mode) {
+    if (mode === 'head') {
+      // 頭部模式預設：限制於畫面中心附近適合小幅移動的舒適區域
       return {
-        minX: b.minX,
-        maxX: b.maxX,
-        minY: b.minY,
-        maxY: b.maxY,
-        W: safe.W,
-        H: safe.H,
-        starR: safe.starR
+        minX: 0.27,
+        maxX: 0.73,
+        minY: 0.34,
+        maxY: 0.66
       };
     }
-    return getDefaultModeBounds(mode);
+    // 手部與顏色模式預設：較大的活動範圍（可隨時在編輯器拉到 0 ~ 1 全滿）
+    return {
+      minX: 0.06,
+      maxX: 0.94,
+      minY: 0.12,
+      maxY: 0.86
+    };
   }
 
-  // 確保目前場上的星星位於當前模式的有效活動範圍內
+  // 取得目前模式的「使用者活動範圍框」（用於畫面顯示與編輯器拉框）
+  function getUserActiveRangeBox(mode = state.mode) {
+    const custom = modeRanges[mode];
+    if (custom && custom.isCustom && isValidNormalizedBox(custom.box)) {
+      return clampUserBoxToCameraStage(custom.box);
+    }
+    return getDefaultUserRangeBox(mode);
+  }
+
+  // 2. 星星中心可出現的硬體安全範圍：保留整顆星星半徑與光暈邊距，確保整顆星星完整顯示在畫面內
+  function getStarCenterHardwareSafeBounds() {
+    const W = Math.max(200, stage.clientWidth || 360);
+    const H = Math.max(200, stage.clientHeight || 480);
+    const starR = getStarRadiusPx();
+    const padPx = starR + 10; // 確保整顆星星完整顯示不切邊
+
+    const statusBarEl = $('statusBar');
+    const bottomBannerEl = $('messageBanner');
+    const topBarPx = statusBarEl && !statusBarEl.hidden ? statusBarEl.offsetTop + statusBarEl.offsetHeight : 8;
+    const bottomBarPx = bottomBannerEl && !bottomBannerEl.hidden ? Math.max(48, H - bottomBannerEl.offsetTop) : 8;
+
+    const minX = Math.min(0.35, Math.max(0.06, padPx / W));
+    const maxX = Math.max(0.65, Math.min(0.94, 1 - padPx / W));
+    const minY = Math.min(0.38, Math.max(0.08, (topBarPx + padPx * 0.85) / H));
+    const maxY = Math.max(0.62, Math.min(0.92, 1 - (bottomBarPx + padPx * 0.85) / H));
+
+    return { minX, maxX, minY, maxY, W, H, starR, padPx };
+  }
+
+  // 3. 計算最終「星星中心可出現的安全範圍」：
+  // 將「使用者設定的活動範圍 userBox」內縮星星半徑（確保整顆星星落在活動範圍內），並與硬體安全邊界取交集
+  function getEffectiveStarSpawnBounds(mode = state.mode) {
+    const userBox = getUserActiveRangeBox(mode);
+    const hw = getStarCenterHardwareSafeBounds();
+    const rxNorm = (hw.starR * 0.85) / hw.W;
+    const ryNorm = (hw.starR * 0.85) / hw.H;
+
+    const uCx = (userBox.minX + userBox.maxX) * 0.5;
+    const uCy = (userBox.minY + userBox.maxY) * 0.5;
+
+    // 在使用者活動範圍內預留星星自身半徑，若使用者把框拉得很小則退回以框中心向左右展開最小安全距離
+    let minX = Math.min(uCx - 0.04, userBox.minX + rxNorm * 0.5);
+    let maxX = Math.max(uCx + 0.04, userBox.maxX - rxNorm * 0.5);
+    let minY = Math.min(uCy - 0.03, userBox.minY + ryNorm * 0.5);
+    let maxY = Math.max(uCy + 0.03, userBox.maxY - ryNorm * 0.5);
+
+    // 確保星星中心不會超出畫面導致切邊或被上下狀態文字完全蓋住
+    minX = Math.max(hw.minX, Math.min(hw.maxX - 0.08, minX));
+    maxX = Math.min(hw.maxX, Math.max(minX + 0.08, maxX));
+    minY = Math.max(hw.minY, Math.min(hw.maxY - 0.06, minY));
+    maxY = Math.min(hw.maxY, Math.max(minY + 0.06, maxY));
+
+    return {
+      minX,
+      maxX,
+      minY,
+      maxY,
+      W: hw.W,
+      H: hw.H,
+      starR: hw.starR
+    };
+  }
+
+  // 確保目前場上的星星位於當前模式的有效生成範圍內
   function ensureCurrentStarInsideBounds() {
     if (!game.star) return;
-    const b = getEffectiveActiveBounds(state.mode);
+    const b = getEffectiveStarSpawnBounds(state.mode);
     const outOfBounds =
       game.star.x < b.minX - 0.005 ||
       game.star.x > b.maxX + 0.005 ||
@@ -1179,7 +1197,7 @@ button:disabled {
     work.height = Math.max(90, Math.round(r.height * workScale));
 
     if (game.star) {
-      const b = getEffectiveActiveBounds(state.mode);
+      const b = getEffectiveStarSpawnBounds(state.mode);
       game.star.x = Math.max(b.minX, Math.min(b.maxX, game.star.x));
       game.star.y = Math.max(b.minY, Math.min(b.maxY, game.star.y));
     }
@@ -1208,7 +1226,6 @@ button:disabled {
     };
   }
 
-  // 重置模式切換初始化狀態（暫停遊戲碰觸判定、清除上一模式追蹤點與停留進度）
   function resetModeInitialization() {
     state.modeReady = false;
     state.stableMs = 0;
@@ -1220,7 +1237,6 @@ button:disabled {
     }
   }
 
-  // 統一更新追蹤輸出介面 `{found, x, y, mode, timestamp}`，並處理 1 秒連續穩定追蹤確認
   function publishTrackingState(found, normX, normY, ts = performance.now(), colorRadiusPx = 0) {
     const dt = state.lastFrameTs ? Math.min(90, Math.max(0, ts - state.lastFrameTs)) : 16;
     state.lastFrameTs = ts;
@@ -1235,7 +1251,6 @@ button:disabled {
       trackerOutput.y = Math.max(0, Math.min(1, normY));
       setAppState('tracking_found');
 
-      // 若尚未完成模式切換後的 1 秒穩定確認，累積穩定時間
       if (!state.modeReady && !state.calibratingRange) {
         state.stableMs = Math.min(MODE_INIT_STABLE_MS, state.stableMs + dt);
         if (state.stableMs >= MODE_INIT_STABLE_MS) {
@@ -1245,7 +1260,6 @@ button:disabled {
       }
     } else {
       trackerOutput.found = false;
-      // 如果在尚未完成 1 秒穩定初始化時中途辨識失敗，重新累積穩定追蹤時間
       if (!state.modeReady) {
         state.stableMs = 0;
       }
@@ -1263,15 +1277,14 @@ button:disabled {
     }
   }
 
-  // 根據追蹤狀態與 1 秒穩定確認進度更新畫面文字
   function refreshTrackingBanner(m = state.mode) {
     if (state.calibratingRange || state.gameState === 'game_complete') return;
 
     if (m === 'color' && !state.colorTarget) {
       updateStatusUI(
-        '等待選擇顏色',
+        '等待點選物品',
         'warn',
-        '請先點一下畫面中的鮮明彩色物品取色，完成後再開始收集星星'
+        '請點一下畫面中的彩色或黑／灰物品中央取樣，完成後開始收集星星'
       );
       return;
     }
@@ -1281,7 +1294,7 @@ button:disabled {
         '正在尋找' + modeName(m),
         'warn',
         m === 'color'
-          ? '正在尋找指定顏色物品，請將物品放入畫面內'
+          ? '正在尋找目標物品，請將物品放入畫面內（自動恢復追蹤）'
           : `正在尋找${modeName(m)}，請將${m === 'hand' ? '手部' : '臉部'}放入鏡頭畫面內`
       );
       return;
@@ -1298,20 +1311,24 @@ button:disabled {
     }
 
     const customNote = modeRanges[m].isCustom ? '｜自訂活動範圍' : '';
+    const subTag =
+      m === 'color' && state.colorTarget?.kind === 'achromatic'
+        ? '（黑／灰物品）'
+        : '';
     updateStatusUI(
-      '已準備好｜正在追蹤' + modeName(m),
+      '已準備好｜正在追蹤' + modeName(m) + subTag,
       'good',
       `● 已準備好！移動${modeName(m)}碰觸星星（${game.collected}/${config.targetCount}${customNote}）`
     );
   }
 
-  // 產生下一顆星星的位置（嚴格遵守當前模式的有效活動範圍 getEffectiveActiveBounds）
+  // 產生下一顆星星的位置（嚴格落在 getEffectiveStarSpawnBounds 星星中心安全範圍內）
   function spawnNextStar(now = performance.now()) {
     if (state.gameState === 'game_complete') return;
-    const b = getEffectiveActiveBounds(state.mode);
+    const b = getEffectiveStarSpawnBounds(state.mode);
     const midY = (b.minY + b.maxY) * 0.5;
     const spanX = Math.max(0.08, b.maxX - b.minX);
-    const spanY = Math.max(0.08, b.maxY - b.minY);
+    const spanY = Math.max(0.06, b.maxY - b.minY);
 
     let candidateX = (b.minX + b.maxX) * 0.5;
     let candidateY = midY;
@@ -1551,7 +1568,7 @@ button:disabled {
     }
   }
 
-  // ==================== 極簡直覺「直接手指拉框」調整活動範圍 ====================
+  // ==================== 活動範圍編輯模式（移出攝影機區域、支援拉滿 0~1 全畫面） ====================
 
   function openRangeCalibration() {
     $('settingsSheet').hidden = true;
@@ -1559,19 +1576,22 @@ button:disabled {
     state.calibratingRange = true;
     if (game.star) game.star.dwellMs = 0;
 
-    const eff = getEffectiveActiveBounds(state.mode);
+    const uBox = getUserActiveRangeBox(state.mode);
     calibState.workingBox = {
-      minX: eff.minX,
-      maxX: eff.maxX,
-      minY: eff.minY,
-      maxY: eff.maxY
+      minX: uBox.minX,
+      maxX: uBox.maxX,
+      minY: uBox.minY,
+      maxY: uBox.maxY
     };
 
-    $('calibPanel').hidden = false;
+    // 隱藏攝影機舞台內的狀態列與底部橫幅，並將底部一般 footer 切換為舞台外的編輯控制列
+    $('statusBar').hidden = true;
     $('messageBanner').hidden = true;
+    $('mainFooter').hidden = true;
+    $('calibPanel').hidden = false;
+
     $('calibGuideText').textContent =
-      `【${modeName(state.mode)}模式】直接用手指拉動綠色方框邊緣調整大小，或按住方框中央移動位置`;
-    updateStatusUI(`調整${modeName(state.mode)}活動範圍`, 'info');
+      `【${modeName(state.mode)}】直接拉動綠框四邊／四角可放大至全畫面，或按住框內平移`;
 
     if (!state.active) {
       startCamera();
@@ -1582,8 +1602,7 @@ button:disabled {
 
   function applyRangeAndReturn() {
     if (calibState.workingBox) {
-      const safe = getStageSafeBounds();
-      const clamped = clampBoxToSafe(calibState.workingBox, safe);
+      const clamped = clampUserBoxToCameraStage(calibState.workingBox);
       modeRanges[state.mode] = {
         isCustom: true,
         box: clamped
@@ -1600,7 +1619,7 @@ button:disabled {
     };
     saveRangesToStorage();
 
-    const def = getDefaultModeBounds(state.mode);
+    const def = getDefaultUserRangeBox(state.mode);
     calibState.workingBox = {
       minX: def.minX,
       maxX: def.maxX,
@@ -1612,7 +1631,7 @@ button:disabled {
     ensureCurrentStarInsideBounds();
     if (state.calibratingRange) {
       $('calibGuideText').textContent =
-        `已恢復【${modeName(state.mode)}模式】預設範圍，可直接拖曳微調或按「完成套用」`;
+        `已恢復【${modeName(state.mode)}】預設範圍，可繼續拉框或按「完成套用」`;
     }
     renderScene();
   }
@@ -1621,6 +1640,8 @@ button:disabled {
     state.calibratingRange = false;
     calibState.dragHandle = null;
     $('calibPanel').hidden = true;
+    $('mainFooter').hidden = false;
+    $('statusBar').hidden = false;
     $('messageBanner').hidden = false;
 
     ensureCurrentStarInsideBounds();
@@ -1633,7 +1654,7 @@ button:disabled {
     renderScene();
   }
 
-  // 檢查手指或滑鼠是否點中綠色方框的四邊、四角或內部平移區
+  // 檢查手指或滑鼠是否點中綠色方框的四邊、四角或內部平移區（支援拉到最邊緣時的內縮控制點）
   function hitTestCalibHandle(px, py) {
     if (!state.calibratingRange || !calibState.workingBox) return null;
     const W = stage.clientWidth;
@@ -1645,17 +1666,23 @@ button:disabled {
     const y2 = b.maxY * H;
     const mx = (x1 + x2) * 0.5;
     const my = (y1 + y2) * 0.5;
-    const hitR = 30;
+    const hitR = 32;
+
+    // 與繪圖一致的視覺控制點位置（貼齊畫面邊界時微幅內縮 11px 確保永遠好按）
+    const hx1 = Math.max(11, Math.min(W - 11, x1));
+    const hx2 = Math.max(11, Math.min(W - 11, x2));
+    const hy1 = Math.max(11, Math.min(H - 11, y1));
+    const hy2 = Math.max(11, Math.min(H - 11, y2));
 
     const handles = [
-      { id: 'tl', x: x1, y: y1 },
-      { id: 'tr', x: x2, y: y1 },
-      { id: 'bl', x: x1, y: y2 },
-      { id: 'br', x: x2, y: y2 },
-      { id: 'top', x: mx, y: y1 },
-      { id: 'bottom', x: mx, y: y2 },
-      { id: 'left', x: x1, y: my },
-      { id: 'right', x: x2, y: my }
+      { id: 'tl', x: hx1, y: hy1 },
+      { id: 'tr', x: hx2, y: hy1 },
+      { id: 'bl', x: hx1, y: hy2 },
+      { id: 'br', x: hx2, y: hy2 },
+      { id: 'top', x: mx, y: hy1 },
+      { id: 'bottom', x: mx, y: hy2 },
+      { id: 'left', x: hx1, y: my },
+      { id: 'right', x: hx2, y: my }
     ];
 
     for (const h of handles) {
@@ -1677,11 +1704,11 @@ button:disabled {
     return null;
   }
 
+  // 拖曳更新活動範圍框：可直接拉到完整可見攝影機畫面邊界 [0, 1] x [0, 1]
   function updateCalibDrag(nx, ny) {
     if (!calibState.dragHandle || !calibState.dragStartBox || !calibState.dragStartNorm) return;
-    const safe = getStageSafeBounds();
-    const minSpanX = 0.14;
-    const minSpanY = 0.12;
+    const minSpanX = 0.16;
+    const minSpanY = 0.14;
     const dx = nx - calibState.dragStartNorm.x;
     const dy = ny - calibState.dragStartNorm.y;
     const s = calibState.dragStartBox;
@@ -1691,22 +1718,22 @@ button:disabled {
     if (h === 'move') {
       const w = maxX - minX;
       const ht = maxY - minY;
-      minX = Math.max(safe.minX, Math.min(safe.maxX - w, minX + dx));
+      minX = Math.max(0, Math.min(1 - w, minX + dx));
       maxX = minX + w;
-      minY = Math.max(safe.minY, Math.min(safe.maxY - ht, minY + dy));
+      minY = Math.max(0, Math.min(1 - ht, minY + dy));
       maxY = minY + ht;
     } else {
       if (h.includes('l') || h === 'left') {
-        minX = Math.max(safe.minX, Math.min(maxX - minSpanX, s.minX + dx));
+        minX = Math.max(0, Math.min(maxX - minSpanX, s.minX + dx));
       }
       if (h.includes('r') || h === 'right') {
-        maxX = Math.min(safe.maxX, Math.max(minX + minSpanX, s.maxX + dx));
+        maxX = Math.min(1, Math.max(minX + minSpanX, s.maxX + dx));
       }
       if (h.includes('t') || h === 'top') {
-        minY = Math.max(safe.minY, Math.min(maxY - minSpanY, s.minY + dy));
+        minY = Math.max(0, Math.min(maxY - minSpanY, s.minY + dy));
       }
       if (h.includes('b') || h === 'bottom') {
-        maxY = Math.min(safe.maxY, Math.max(minY + minSpanY, s.maxY + dy));
+        maxY = Math.min(1, Math.max(minY + minSpanY, s.maxY + dy));
       }
     }
 
@@ -1837,25 +1864,25 @@ button:disabled {
     }
   }
 
-  // 繪製遊戲中的微弱活動範圍參考框
+  // 繪製遊戲中的微弱使用者活動範圍參考框
   function drawSubtleActiveRangeGuide(W, H) {
     const hasCustom = modeRanges[state.mode].isCustom;
     if (!hasCustom && state.mode !== 'head') return;
-    const b = getEffectiveActiveBounds(state.mode);
+    const b = getUserActiveRangeBox(state.mode);
     const x = b.minX * W;
     const y = b.minY * H;
     const w = (b.maxX - b.minX) * W;
     const h = (b.maxY - b.minY) * H;
 
     ctx.save();
-    ctx.strokeStyle = hasCustom ? 'rgba(112, 229, 171, 0.32)' : 'rgba(107, 194, 232, 0.25)';
+    ctx.strokeStyle = hasCustom ? 'rgba(112, 229, 171, 0.34)' : 'rgba(107, 194, 232, 0.25)';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([6, 6]);
     ctx.strokeRect(x, y, w, h);
     ctx.restore();
   }
 
-  // 繪製「直接用手指拉框」的綠色方框與 8 個大型觸控圓點
+  // 繪製「直接用手指拉框」的綠色方框與 8 個大型觸控圓點（可拉至全畫面邊界且圓點不超出畫面）
   function drawRangeCalibrationOverlay(W, H) {
     if (!calibState.workingBox) return;
     const wb = calibState.workingBox;
@@ -1870,23 +1897,28 @@ button:disabled {
 
     ctx.save();
 
-    // 方框外部稍微加深遮罩，突顯星星會出現的方框範圍
-    ctx.fillStyle = 'rgba(6, 18, 25, 0.42)';
+    // 方框外部稍微加深遮罩
+    ctx.fillStyle = 'rgba(6, 18, 25, 0.45)';
     ctx.fillRect(0, 0, W, y1);
     ctx.fillRect(0, y2, W, H - y2);
     ctx.fillRect(0, y1, x1, rh);
     ctx.fillRect(x2, y1, W - x2, rh);
 
     // 方框內部柔和填色與高對比邊框
-    ctx.fillStyle = 'rgba(112, 229, 171, 0.14)';
+    ctx.fillStyle = 'rgba(112, 229, 171, 0.13)';
     ctx.fillRect(x1, y1, rw, rh);
 
     ctx.strokeStyle = '#70e5ab';
     ctx.lineWidth = 3.5;
-    ctx.strokeRect(x1, y1, rw, rh);
+    ctx.strokeRect(
+      Math.max(1.75, x1),
+      Math.max(1.75, y1),
+      Math.min(W - 3.5, rw),
+      Math.min(H - 3.5, rh)
+    );
 
-    // 方框中央提示標籤与十字準線
-    ctx.strokeStyle = 'rgba(112, 229, 171, 0.35)';
+    // 方框中央提示標籤與十字準線
+    ctx.strokeStyle = 'rgba(112, 229, 171, 0.38)';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
@@ -1900,18 +1932,23 @@ button:disabled {
     ctx.font = '800 14px system-ui, -apple-system, "Noto Sans TC", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(9, 24, 32, 0.78)';
-    const labelW = Math.min(rw - 12, 168);
+    const labelW = Math.min(rw - 16, 182);
     if (labelW > 80 && rh > 54) {
-      ctx.fillRect(mx - labelW / 2, my - 14, labelW, 28);
+      ctx.fillStyle = 'rgba(9, 24, 32, 0.78)';
+      ctx.fillRect(mx - labelW / 2, my - 15, labelW, 30);
       ctx.fillStyle = '#d8fff0';
-      ctx.fillText(`${modeName(state.mode)}星星範圍（可拖移）`, mx, my);
+      ctx.fillText(`${modeName(state.mode)}活動範圍（可拖移）`, mx, my);
     }
 
-    // 四角與四邊中點的大型觸控控制圓點
+    // 四角與四邊中點的大型觸控控制圓點（貼齊邊界時內縮 11px 確保永遠完整顯示且好拉）
+    const hx1 = Math.max(11, Math.min(W - 11, x1));
+    const hx2 = Math.max(11, Math.min(W - 11, x2));
+    const hy1 = Math.max(11, Math.min(H - 11, y1));
+    const hy2 = Math.max(11, Math.min(H - 11, y2));
+
     const handles = [
-      [x1, y1], [x2, y1], [x1, y2], [x2, y2],
-      [mx, y1], [mx, y2], [x1, my], [x2, my]
+      [hx1, hy1], [hx2, hy1], [hx1, hy2], [hx2, hy2],
+      [mx, hy1], [mx, hy2], [hx1, my], [hx2, my]
     ];
     handles.forEach(([hx, hy]) => {
       ctx.beginPath();
@@ -2036,8 +2073,8 @@ button:disabled {
     $('footerHint').textContent =
       m === 'color'
         ? state.colorTarget
-          ? '已沿用儲存的顏色樣本，確認穩定追蹤約 1 秒後自動繼續遊戲。'
-          : '請點選畫面中的鮮明彩色物品取色，完成後確認穩定追蹤。'
+          ? '已沿用儲存的物品色彩樣本，確認穩定追蹤約 1 秒後自動繼續遊戲。'
+          : '請點選畫面中的彩色或黑／灰物品中央取樣，完成後確認穩定追蹤。'
         : m === 'hand'
         ? `手部模式（${hasCustom ? '自訂活動範圍' : '預設大活動範圍'}）：確認穩定追蹤 1 秒後繼續。`
         : `頭部模式（${hasCustom ? '自訂活動範圍' : '中心舒適小範圍'}）：確認穩定追蹤 1 秒後繼續。`;
@@ -2157,6 +2194,8 @@ button:disabled {
     }
   }
 
+  // ==================== 彩色與黑／灰 3D 列印工具自適應追蹤核心 ====================
+
   function drawCameraToWorkCanvas() {
     const vw = video.videoWidth;
     const vh = video.videoHeight;
@@ -2195,69 +2234,255 @@ button:disabled {
 
   const hueDiff = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
 
+  // 判斷像素是否屬於典型人體膚色（用於保護黑／灰低飽和物品追蹤時不誤吸手部或臉部皮膚）
+  function isLikelySkinPixel(r, g, b, s, luma) {
+    return (
+      luma > 0.20 &&
+      luma < 0.88 &&
+      s > 0.15 &&
+      s < 0.62 &&
+      r > g + 13 &&
+      g > b + 4 &&
+      r - b > 24
+    );
+  }
+
+  // 根據目標特徵判斷單一像素是否匹配（自動區分高飽和度彩色 HSV 與低飽和度黑／灰物品）
+  function matchesTargetPixel(r, g, b, target, tol) {
+    const v = rgbToHsv(r, g, b);
+    if (target.kind === 'chromatic') {
+      return (
+        hueDiff(v[0], target.h) <= tol &&
+        v[1] >= Math.max(0.20, target.s - 0.34) &&
+        v[2] >= Math.max(0.13, target.v - 0.44) &&
+        v[2] <= Math.min(1, target.v + 0.44)
+      );
+    }
+
+    // 低飽和度黑／灰物品（achromatic）：結合明度距離、飽和度上限、RGB 色偏一致性與膚色排除
+    const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    const tolScale = Math.max(0.65, Math.min(1.45, tol / 16));
+
+    // 1. 飽和度上限保護（黑／灰物品飽和度低，若點選的是極深黑則因暗部雜訊略放寬 s 上限）
+    const maxAllowedS = target.luma < 0.16
+      ? Math.min(0.42, Math.max(0.24, target.s + 0.16 * tolScale))
+      : Math.min(0.30, Math.max(0.16, target.s + 0.11 * tolScale));
+    if (v[1] > maxAllowedS) return false;
+
+    // 2. 若取樣的黑／灰工具本身不帶暖膚色偏，排除明顯皮膚像素
+    if (target.rgDiff < 0.055 && isLikelySkinPixel(r, g, b, v[1], luma)) {
+      return false;
+    }
+
+    // 3. 明度（Luminance）與 HSV Value 距離門檻
+    const lumaTol = (target.luma < 0.20 ? 0.082 : 0.095) * tolScale;
+    if (Math.abs(luma - target.luma) > lumaTol) return false;
+    if (Math.abs(v[2] - target.v) > lumaTol * 1.15) return false;
+
+    // 4. RGB 相對色偏一致性（確保冷灰、暖灰或中性黑一致，不亂跳到其他淺色背景）
+    const rg = (r - g) / 255;
+    const gb = (g - b) / 255;
+    const tintDist = Math.abs(rg - target.rgDiff) + Math.abs(gb - target.gbDiff);
+    if (tintDist > 0.105 * tolScale) return false;
+
+    return true;
+  }
+
+  // 點選畫面中的物品取樣：自動判斷「高飽和度彩色物品」或「黑色／灰色低飽和度物品」
   function selectColorAtWorkCoord(wx, wy) {
     if (!drawCameraToWorkCanvas()) return;
     const W = work.width;
     const H = work.height;
     const p = wctx.getImageData(0, 0, W, H).data;
-    const items = [];
 
-    for (let yy = Math.max(0, wy - 7); yy <= Math.min(H - 1, wy + 7); yy += 2) {
-      for (let xx = Math.max(0, wx - 7); xx <= Math.min(W - 1, wx + 7); xx += 2) {
+    const patchAll = [];
+    const patchChromatic = [];
+
+    for (let yy = Math.max(0, wy - 7); yy <= Math.min(H - 1, wy + 7); yy += 1) {
+      for (let xx = Math.max(0, wx - 7); xx <= Math.min(W - 1, wx + 7); xx += 1) {
         const k = (yy * W + xx) * 4;
-        const c = rgbToHsv(p[k], p[k + 1], p[k + 2]);
-        if (c[1] > 0.18 && c[2] > 0.14) {
-          items.push({ h: c[0], s: c[1], v: c[2], rgb: [p[k], p[k + 1], p[k + 2]] });
+        const r = p[k];
+        const g = p[k + 1];
+        const b = p[k + 2];
+        const c = rgbToHsv(r, g, b);
+        const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        const sample = { h: c[0], s: c[1], v: c[2], luma, r, g, b, rgb: [r, g, b] };
+        patchAll.push(sample);
+        if (c[1] > 0.21 && c[2] > 0.15) {
+          patchChromatic.push(sample);
         }
       }
     }
 
-    if (items.length < 8) {
+    if (patchAll.length < 16) return;
+
+    // 若取樣區內超過 40% 像素為高飽和度彩色，採用原有 HSV 色相演算法
+    if (patchChromatic.length >= Math.max(12, patchAll.length * 0.40)) {
+      const bins = Array(36).fill(0);
+      patchChromatic.forEach(o => bins[Math.floor(o.h / 10) % 36]++);
+      let bestBin = 0;
+      let highest = -1;
+      for (let i = 0; i < 36; i++) {
+        const score = bins[(i + 35) % 36] + bins[i] + bins[(i + 1) % 36];
+        if (score > highest) {
+          highest = score;
+          bestBin = i;
+        }
+      }
+
+      let selected = patchChromatic.filter(o => hueDiff(o.h, bestBin * 10 + 5) < 22);
+      if (!selected.length) selected = patchChromatic;
+      selected.sort((a, b) => a.s - b.s);
+      const mid = selected[Math.floor(selected.length / 2)];
+
+      let cx = 0;
+      let cy = 0;
+      for (const o of selected) {
+        cx += Math.cos((o.h * Math.PI) / 180);
+        cy += Math.sin((o.h * Math.PI) / 180);
+      }
+
+      state.colorTarget = {
+        kind: 'chromatic',
+        h: ((Math.atan2(cy, cx) * 180) / Math.PI + 360) % 360,
+        s: mid.s,
+        v: mid.v,
+        luma: mid.luma,
+        r: mid.r,
+        g: mid.g,
+        b: mid.b,
+        rgDiff: (mid.r - mid.g) / 255,
+        gbDiff: (mid.g - mid.b) / 255,
+        refArea: 0
+      };
+      state.lastColorPos = { x: wx, y: wy };
+      state.colorLostFrames = 0;
       resetModeInitialization();
-      updateStatusUI('選色失敗', 'warn', '請點選顏色較鮮明、不反光或過暗的物品中央');
+      $('colorSwatch').style.background = `rgb(${mid.rgb.join(',')})`;
+
+      if (!state.calibratingRange) {
+        updateStatusUI('已選取彩色物品｜確認中…', 'info', '已取色！請保持彩色物品在畫面內約 1 秒以確認穩定追蹤');
+      }
+      detectColorFrame(performance.now(), true);
       return;
     }
 
-    const bins = Array(36).fill(0);
-    items.forEach(o => bins[Math.floor(o.h / 10) % 36]++);
-    let bestBin = 0;
-    let highest = -1;
-    for (let i = 0; i < 36; i++) {
-      const score = bins[(i + 35) % 36] + bins[i] + bins[(i + 1) % 36];
-      if (score > highest) {
-        highest = score;
-        bestBin = i;
+    // 否則進入「低飽和度黑色／灰色物品（如 3D 列印輔具）」取樣模式
+    // 先取明度中位數附近的中央 60% 像素，排除反光亮點或邊緣陰影
+    const sortedByLuma = [...patchAll].sort((a, b) => a.luma - b.luma);
+    const startIdx = Math.floor(sortedByLuma.length * 0.2);
+    const endIdx = Math.max(startIdx + 1, Math.floor(sortedByLuma.length * 0.8));
+    const core = sortedByLuma.slice(startIdx, endIdx);
+    const mid = core[Math.floor(core.length / 2)];
+
+    const candidateTarget = {
+      kind: 'achromatic',
+      h: mid.h,
+      s: mid.s,
+      v: mid.v,
+      luma: mid.luma,
+      r: mid.r,
+      g: mid.g,
+      b: mid.b,
+      rgDiff: (mid.r - mid.g) / 255,
+      gbDiff: (mid.g - mid.b) / 255,
+      subType: mid.luma < 0.22 ? 'black' : 'gray',
+      refArea: 0
+    };
+
+    // 檢查點擊處外圍環狀背景（半徑 24 ~ 42px）與全畫面的對比度，避免使用者點到整片背景牆或與背景完全同色的區域
+    let ringTotal = 0;
+    let ringSame = 0;
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+      for (const rad of [26, 38]) {
+        const rx = Math.round(wx + Math.cos(angle) * rad);
+        const ry = Math.round(wy + Math.sin(angle) * rad);
+        if (rx < 0 || rx >= W || ry < 0 || ry >= H) continue;
+        ringTotal++;
+        const k = (ry * W + rx) * 4;
+        if (matchesTargetPixel(p[k], p[k + 1], p[k + 2], candidateTarget, state.tolerance)) {
+          ringSame++;
+        }
       }
     }
 
-    let selected = items.filter(o => hueDiff(o.h, bestBin * 10 + 5) < 22);
-    if (!selected.length) selected = items;
-    selected.sort((a, b) => a.s - b.s);
-    const mid = selected[Math.floor(selected.length / 2)];
-
-    let cx = 0;
-    let cy = 0;
-    for (const o of selected) {
-      cx += Math.cos((o.h * Math.PI) / 180);
-      cy += Math.sin((o.h * Math.PI) / 180);
+    // 同時檢查全畫面網格匹配比例
+    const step = 3;
+    const gw = Math.ceil(W / step);
+    const gh = Math.ceil(H / step);
+    let globalMatched = 0;
+    for (let gy = 0; gy < gh; gy++) {
+      for (let gx = 0; gx < gw; gx++) {
+        const x = Math.min(W - 1, gx * step + 1);
+        const y = Math.min(H - 1, gy * step + 1);
+        const k = (y * W + x) * 4;
+        if (matchesTargetPixel(p[k], p[k + 1], p[k + 2], candidateTarget, state.tolerance)) {
+          globalMatched++;
+        }
+      }
     }
 
-    state.colorTarget = {
-      h: ((Math.atan2(cy, cx) * 180) / Math.PI + 360) % 360,
-      s: mid.s,
-      v: mid.v
-    };
-    state.lastColorPos = null;
+    if (globalMatched > gw * gh * 0.28 || (ringTotal >= 12 && ringSame / ringTotal > 0.82 && globalMatched > gw * gh * 0.16)) {
+      resetModeInitialization();
+      updateStatusUI(
+        '背景對比不足',
+        'warn',
+        '黑／灰物品與周圍背景太相似，請在對比較明顯的背景前點選物品中央'
+      );
+      return;
+    }
+
+    state.colorTarget = candidateTarget;
+    state.lastColorPos = { x: wx, y: wy };
+    state.lastColorArea = 0;
+    state.colorLostFrames = 0;
     resetModeInitialization();
     $('colorSwatch').style.background = `rgb(${mid.rgb.join(',')})`;
 
     if (!state.calibratingRange) {
-      updateStatusUI('已選擇顏色｜確認中…', 'info', '已取色！請保持彩色物品在畫面內約 1 秒以確認穩定追蹤');
+      const labelType = candidateTarget.subType === 'black' ? '深黑物品' : '灰色物品';
+      updateStatusUI(
+        `已選取${labelType}｜確認中…`,
+        'info',
+        `已取樣${labelType}！請保持物品在畫面內約 1 秒以確認穩定追蹤`
+      );
     }
-    detectColorFrame(performance.now());
+    detectColorFrame(performance.now(), true);
   }
 
-  function detectColorFrame(now = performance.now()) {
+  // 計算連通區域外圍緊鄰像素與區域內部的平均明度對比（用於防護黑／灰模式誤抓均勻陰影或桌面）
+  function computeComponentBoundaryContrast(im, W, H, minx, miny, maxx, maxy, step, targetLuma) {
+    let sumDiff = 0;
+    let count = 0;
+    const pad = 2;
+    const xLeft = Math.max(0, (minx - pad) * step);
+    const xRight = Math.min(W - 1, (maxx + pad) * step);
+    const yTop = Math.max(0, (miny - pad) * step);
+    const yBottom = Math.min(H - 1, (maxy + pad) * step);
+
+    const sampleCoords = [
+      [xLeft, Math.floor(((miny + maxy) * 0.5) * step)],
+      [xRight, Math.floor(((miny + maxy) * 0.5) * step)],
+      [Math.floor(((minx + maxx) * 0.5) * step), yTop],
+      [Math.floor(((minx + maxx) * 0.5) * step), yBottom],
+      [xLeft, yTop],
+      [xRight, yTop],
+      [xLeft, yBottom],
+      [xRight, yBottom]
+    ];
+
+    for (const [sx, sy] of sampleCoords) {
+      if (sx < 0 || sx >= W || sy < 0 || sy >= H) continue;
+      const k = (sy * W + sx) * 4;
+      const extLuma = (0.299 * im[k] + 0.587 * im[k + 1] + 0.114 * im[k + 2]) / 255;
+      sumDiff += Math.abs(extLuma - targetLuma);
+      count++;
+    }
+    return count > 0 ? sumDiff / count : 0;
+  }
+
+  // 彩色與黑／灰物品連通區域分析與位置連續性追蹤
+  function detectColorFrame(now = performance.now(), isInitialSeed = false) {
     if (!state.colorTarget) {
       publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
       refreshTrackingBanner('color');
@@ -2272,7 +2497,8 @@ button:disabled {
     const step = 3;
     const gw = Math.ceil(W / step);
     const gh = Math.ceil(H / step);
-    const mask = new Uint8Array(gw * gh);
+    const totalCells = gw * gh;
+    const mask = new Uint8Array(totalCells);
     let totalMatched = 0;
 
     for (let gy = 0; gy < gh; gy++) {
@@ -2280,28 +2506,33 @@ button:disabled {
         const x = Math.min(W - 1, gx * step + 1);
         const y = Math.min(H - 1, gy * step + 1);
         const k = (y * W + x) * 4;
-        const v = rgbToHsv(im[k], im[k + 1], im[k + 2]);
-        if (
-          hueDiff(v[0], c.h) <= state.tolerance &&
-          v[1] >= Math.max(0.21, c.s - 0.34) &&
-          v[2] >= Math.max(0.13, c.v - 0.44) &&
-          v[2] <= Math.min(1, c.v + 0.44)
-        ) {
+        if (matchesTargetPixel(im[k], im[k + 1], im[k + 2], c, state.tolerance)) {
           mask[gy * gw + gx] = 1;
           totalMatched++;
         }
       }
     }
 
-    if (totalMatched > gw * gh * 0.38) {
+    // 全域背景相似干擾檢查：黑／灰物品門檻較嚴（28%），彩色物品（38%）
+    const maxBgFraction = c.kind === 'achromatic' ? 0.28 : 0.38;
+    if (totalMatched > totalCells * maxBgFraction) {
       state.lastColorPos = null;
       publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
-      updateStatusUI('背景同色干擾', 'warn', '背景有太多相近顏色導致辨識不可靠，請避開同色背景或點「重新選色」');
+      updateStatusUI(
+        '背景與物品過於相似',
+        'warn',
+        c.kind === 'achromatic'
+          ? '背景有太多相近黑／灰或深色區域，請改善背景對比或點「重新選色」'
+          : '背景有太多相近顏色導致辨識不可靠，請避開同色背景或點「重新選色」'
+      );
       return;
     }
 
     const vis = new Uint8Array(mask.length);
-    let best = null;
+    const candidates = [];
+    const minCells = Math.max(5, Math.round(totalCells * 0.0007));
+    const maxCells = c.kind === 'achromatic' ? totalCells * 0.16 : totalCells * 0.28;
+    const diag = Math.hypot(W, H);
 
     for (let i = 0; i < mask.length; i++) {
       if (!mask[i] || vis[i]) continue;
@@ -2314,6 +2545,7 @@ button:disabled {
       let miny = gh;
       let maxx = 0;
       let maxy = 0;
+      let borderTouches = 0;
       vis[i] = 1;
 
       while (head < q.length) {
@@ -2327,6 +2559,9 @@ button:disabled {
         if (y < miny) miny = y;
         if (x > maxx) maxx = x;
         if (y > maxy) maxy = y;
+        if (x === 0 || x === gw - 1 || y === 0 || y === gh - 1) {
+          borderTouches++;
+        }
 
         const neighbors = [
           [x - 1, y],
@@ -2346,28 +2581,104 @@ button:disabled {
         }
       }
 
-      if (n < Math.max(5, gw * gh * 0.0007)) continue;
+      if (n < minCells || n > maxCells) continue;
 
+      const bw = maxx - minx + 1;
+      const bh = maxy - miny + 1;
+      const fillRatio = n / Math.max(1, bw * bh);
+      const aspect = Math.max(bw, bh) / Math.max(1, Math.min(bw, bh));
       const px = (sx / n + 0.5) * step;
       const py = (sy / n + 0.5) * step;
-      const continuity = state.lastColorPos
-        ? Math.max(0, 1 - Math.hypot(px - state.lastColorPos.x, py - state.lastColorPos.y) / (Math.max(W, H) * 0.5)) * 0.4
-        : 0;
-      const score = n * (1 + continuity);
 
-      if (!best || score > best.score) {
-        best = {
-          x: px,
-          y: py,
-          score,
-          w: (maxx - minx + 1) * step,
-          h: (maxy - miny + 1) * step
-        };
+      // 黑／灰低飽和度物品專屬防護：排除細長桌面陰影、大片邊界衣服或對比過低的暗影
+      if (c.kind === 'achromatic') {
+        if (aspect > 5.8 || fillRatio < 0.17) continue;
+        if (bw > gw * 0.72 || bh > gh * 0.72) continue;
+
+        // 檢查該區域與外圍背景的局部明度對比，排除缺乏邊界對比的漸層陰影
+        const extContrast = computeComponentBoundaryContrast(im, W, H, minx, miny, maxx, maxy, step, c.luma);
+        if (extContrast < 0.055) continue;
+
+        // 若大幅貼齊畫面最底部邊緣（常見為深色上衣領口或桌面邊緣），且並非上一幀追蹤點所在處，予以抑制
+        const touchesBottom = maxy >= gh - 2 && bw > gw * 0.32;
+        if (touchesBottom && (!state.lastColorPos || Math.hypot(px - state.lastColorPos.x, py - state.lastColorPos.y) > diag * 0.16)) {
+          continue;
+        }
       }
+
+      // 計算綜合評分：整合位置連續性、初始面積相似性與形狀緊湊度
+      let continuityWeight = 1.0;
+      let distNorm = 1.0;
+      if (state.lastColorPos) {
+        distNorm = Math.hypot(px - state.lastColorPos.x, py - state.lastColorPos.y) / diag;
+        if (distNorm <= 0.22) {
+          // 距離上一幀位置越近，連續性加權越高（最高可達 3.4 倍），防止移動時跳到背景同色區域
+          continuityWeight = 1.2 + (1 - distNorm / 0.22) * 2.2;
+        } else if (distNorm <= 0.36) {
+          continuityWeight = 0.75;
+        } else {
+          // 距離上一幀過遠的跳點大幅降權（除非已連續多幀失去目標正在重新搜尋）
+          continuityWeight = state.colorLostFrames >= 4 ? 0.85 : 0.20;
+        }
+      }
+
+      let areaWeight = 1.0;
+      if (c.refArea > 0) {
+        const ratio = n / c.refArea;
+        if (ratio >= 0.30 && ratio <= 3.2) {
+          areaWeight = 1.25;
+        } else if (ratio < 0.15 || ratio > 5.5) {
+          areaWeight = 0.45;
+        }
+      }
+
+      const borderPenalty = borderTouches > n * 0.35 ? 0.6 : 1.0;
+      const compactnessBonus = 0.75 + Math.min(0.5, fillRatio * 0.6);
+      const score = n * continuityWeight * areaWeight * borderPenalty * compactnessBonus;
+
+      candidates.push({
+        x: px,
+        y: py,
+        n,
+        score,
+        distNorm,
+        w: bw * step,
+        h: bh * step
+      });
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+    const best = candidates[0] || null;
+
+    // 在黑／灰模式下，若剛失去追蹤或無明確連續目標，但畫面同時出現多個面積相近的深色區塊（如頭髮＋衣服＋陰影），提示改善背景對比而不亂跳
+    if (
+      best &&
+      c.kind === 'achromatic' &&
+      !isInitialSeed &&
+      best.distNorm > 0.25 &&
+      candidates.length >= 3 &&
+      candidates[1].score > best.score * 0.78 &&
+      candidates[2].score > best.score * 0.65
+    ) {
+      state.colorLostFrames++;
+      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
+      updateStatusUI(
+        '背景有相近深色干擾',
+        'warn',
+        '畫面中有多處相近的黑／灰區域（如衣服、頭髮或陰影），請讓物品靠近鏡頭或改善背景對比'
+      );
+      return;
     }
 
     if (best) {
+      if (isInitialSeed || !c.refArea) {
+        c.refArea = best.n;
+      } else if (best.distNorm < 0.15) {
+        c.refArea = c.refArea * 0.85 + best.n * 0.15;
+      }
       state.lastColorPos = { x: best.x, y: best.y };
+      state.colorLostFrames = 0;
+
       const normX = best.x / W;
       const normY = best.y / H;
       const radiusPx = Math.max(
@@ -2380,11 +2691,17 @@ button:disabled {
       publishTrackingState(true, normX, normY, now, radiusPx);
       refreshTrackingBanner('color');
     } else {
-      state.lastColorPos = null;
+      state.colorLostFrames++;
+      // 若連續數幀未偵測到，釋放舊座標鎖定，讓物品從任何位置重新進入畫面都能自動找回
+      if (state.colorLostFrames >= 5) {
+        state.lastColorPos = null;
+      }
       publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
       refreshTrackingBanner('color');
     }
   }
+
+  // ==================== 相機與主迴圈控制 ====================
 
   async function startCamera() {
     unlockAudio();
@@ -2482,7 +2799,7 @@ button:disabled {
 
           if (!document.hidden && video.readyState >= 2) {
             if (state.mode === 'color') {
-              if (ts - lastColorCheck > 60) {
+              if (ts - lastColorCheck > 55) {
                 lastColorCheck = ts;
                 if (state.colorTarget) {
                   detectColorFrame(ts);
@@ -2544,13 +2861,12 @@ button:disabled {
     resetGame();
   });
 
-  // 舞台 Pointer 事件：處理「直接手指拉框」的邊界拖曳微調，以及顏色模式的點擊取色
+  // 舞台 Pointer 事件：處理「直接手指拉框」的邊界拖曳微調，以及顏色／黑灰模式的點擊取樣
   stage.addEventListener('pointerdown', e => {
     unlockAudio();
     if (!$('startOverlay').hidden || !$('completeOverlay').hidden || !$('settingsSheet').hidden) {
       return;
     }
-    if (e.target.closest('#calibPanel')) return;
 
     const r = stage.getBoundingClientRect();
     const px = e.clientX - r.left;
@@ -2574,8 +2890,8 @@ button:disabled {
       }
     }
 
-    // 顏色模式下點擊舞台取色
-    if (state.mode === 'color' && state.active) {
+    // 顏色模式下點擊舞台取樣（支援彩色與黑／灰物品）
+    if (state.mode === 'color' && state.active && !state.calibratingRange) {
       const wx = Math.max(0, Math.min(work.width - 1, Math.floor(nx * work.width)));
       const wy = Math.max(0, Math.min(work.height - 1, Math.floor(ny * work.height)));
       selectColorAtWorkCoord(wx, wy);
@@ -2601,18 +2917,20 @@ button:disabled {
   $('rechooseBtn').addEventListener('click', () => {
     state.colorTarget = null;
     state.lastColorPos = null;
+    state.lastColorArea = 0;
+    state.colorLostFrames = 0;
     $('colorSwatch').style.background = '#546c78';
     resetModeInitialization();
     refreshTrackingBanner('color');
     renderScene();
   });
 
-  // 極簡「直接手指拉框」雙按鈕事件
+  // 舞台外下方「恢復預設」與「完成套用」雙按鈕事件
   $('openRangeCalibBtn').addEventListener('click', openRangeCalibration);
   $('calibResetDefaultBtn').addEventListener('click', resetCurrentModeRangeToDefault);
   $('calibApplyBtn').addEventListener('click', applyRangeAndReturn);
 
-  // 齒輪設定抽屜開關與選項綁定
+  // 右上角齒輪設定抽屜開關與選項綁定
   function openSettings() {
     updateCustomRangeLabels();
     $('settingsSheet').hidden = false;
@@ -2620,7 +2938,6 @@ button:disabled {
   function closeSettings() {
     $('settingsSheet').hidden = true;
   }
-  $('openSettingsBtn').addEventListener('click', openSettings);
   $('openSettingsTop').addEventListener('click', openSettings);
   $('closeSettingsBtn').addEventListener('click', closeSettings);
   $('closeSettingsTop').addEventListener('click', closeSettings);
