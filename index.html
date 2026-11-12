@@ -265,14 +265,14 @@ button:disabled {
   color: #e3f6ff;
 }
 
-/* 活動範圍記錄與微調專屬控制面板（浮於舞台底部，保留中央即時鏡頭與追蹤點） */
+/* 極簡直覺的「直接拉框調整範圍」底部雙按鈕控制列 */
 .calib-panel {
   position: absolute;
   left: 10px;
   right: 10px;
   bottom: 10px;
-  background: rgba(11, 29, 38, 0.94);
-  border: 1.5px solid #6bc2e8;
+  background: rgba(10, 27, 36, 0.94);
+  border: 1.5px solid #70e5ab;
   border-radius: 15px;
   padding: 10px 12px;
   display: flex;
@@ -281,72 +281,37 @@ button:disabled {
   z-index: 5;
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
 }
-.calib-top-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.calib-title {
-  font-size: clamp(14px, 3.6vw, 16px);
-  font-weight: 900;
-  color: #d4f2ff;
-}
 .calib-guide {
-  font-size: clamp(13px, 3.3vw, 14px);
-  color: #e6f4f7;
-  line-height: 1.4;
-  margin: 0;
-}
-.calib-scale-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(20, 48, 62, 0.75);
-  padding: 5px 10px;
-  border-radius: 10px;
-  font-size: 13px;
+  font-size: clamp(13px, 3.5vw, 15px);
   font-weight: 800;
-  color: #d6eaef;
-}
-.calib-scale-row input[type="range"] {
-  flex: 1;
-  accent-color: #70e5ab;
-  height: 24px;
+  color: #e9f7f2;
+  text-align: center;
+  margin: 0;
 }
 .calib-btn-row {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
 }
 .calib-btn {
-  border-radius: 11px;
-  padding: 8px 13px;
-  min-height: 40px;
+  border-radius: 12px;
+  padding: 10px 16px;
+  min-height: 44px;
   font-weight: 900;
-  font-size: 14px;
+  font-size: clamp(15px, 3.8vw, 17px);
   border: 1.5px solid #4c7285;
   background: #1d3c4b;
   color: #f3fafb;
-  flex: 1 1 auto;
-  max-width: 170px;
+  flex: 1 1 0;
+  max-width: 200px;
 }
 .calib-btn.primary {
   background: #6ee7ac;
   color: #062919;
   border-color: #6ee7ac;
 }
-.calib-btn.record {
-  background: #ffd452;
-  color: #2b1d00;
-  border-color: #ffaa2b;
-}
-.calib-subnote {
-  font-size: 12px;
-  color: #9ec0ca;
-  text-align: center;
+.calib-btn:active {
+  transform: scale(0.98);
 }
 
 /* 覆蓋層（啟動前鏡頭、錯誤提示、完成畫面） */
@@ -538,14 +503,9 @@ button:disabled {
   border-radius: 12px;
   padding: 10px 12px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.range-calib-row {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
   flex-wrap: wrap;
 }
 .range-row {
@@ -604,9 +564,9 @@ button:disabled {
     gap: 5px;
   }
   .calib-btn {
-    min-height: 34px;
-    padding: 5px 10px;
-    font-size: 13px;
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 14px;
   }
   .status-bar {
     top: 6px;
@@ -679,30 +639,14 @@ button:disabled {
       按下「啟動前鏡頭」開始星星收集練習
     </div>
 
-    <!-- 活動範圍記錄與微調互動面板（僅在「設定活動範圍」時顯示於舞台下方，保留鏡頭與追蹤點） -->
+    <!-- 極簡「直接手指拉框」底部控制列：只留「恢復預設」與「完成套用」兩個按鈕 -->
     <div class="calib-panel" id="calibPanel" hidden>
-      <div class="calib-top-row">
-        <span class="calib-title" id="calibTitle">📐 設定活動範圍（手部模式）</span>
-        <span class="pill info" id="calibStatusBadge" style="padding:3px 10px;font-size:12px;">準備記錄</span>
-      </div>
       <p class="calib-guide" id="calibGuideText">
-        請在舒適姿勢下準備移動。按下「開始記錄」後，盡量在可及範圍內上下左右移動，系統將描繪軌跡。
+        直接用手指拉動綠色方框邊緣調整大小，或按住方框中央移動位置
       </p>
-      <div class="calib-scale-row" id="calibScaleRow" hidden>
-        <label for="calibScaleInput">實際星星範圍比例</label>
-        <input type="range" id="calibScaleInput" min="50" max="100" step="5" value="80">
-        <output id="calibScaleText">80%</output>
-      </div>
       <div class="calib-btn-row">
-        <button type="button" class="calib-btn record" id="calibStartRecBtn">開始記錄</button>
-        <button type="button" class="calib-btn primary" id="calibFinishRecBtn" hidden>完成記錄</button>
-        <button type="button" class="calib-btn primary" id="calibApplyBtn" hidden>套用並返回</button>
-        <button type="button" class="calib-btn" id="calibRestartBtn" hidden>重新記錄</button>
         <button type="button" class="calib-btn" id="calibResetDefaultBtn">恢復預設</button>
-        <button type="button" class="calib-btn" id="calibCancelBtn">返回遊戲</button>
-      </div>
-      <div class="calib-subnote">
-        提示：完成記錄後可直接拖曳綠色框線或四角圓點微調；若更換手機位置、鏡頭距離或坐姿，建議重新設定。
+        <button type="button" class="calib-btn primary" id="calibApplyBtn">完成套用</button>
       </div>
     </div>
 
@@ -747,33 +691,23 @@ button:disabled {
       </div>
 
       <div class="setting-group">
-        <!-- 新增：各模式獨立的「設定活動範圍」入口 -->
+        <!-- 各模式獨立的「調整活動範圍」入口（直接用手指拉框） -->
         <div class="setting-row">
           <label>
-            <span>個人化活動範圍（依模式分開儲存）</span>
+            <span>星星出現活動範圍（依模式分開記憶）</span>
             <span id="customRangeStatusText" style="color:#70e5ab;font-size:13px;">手部：預設範圍</span>
           </label>
           <div class="range-calib-box">
-            <div class="range-calib-row">
-              <span style="font-size:13px;color:#c8dfe6;line-height:1.45;flex:1;">
-                可記錄手部、頭部或彩色物品的實際舒適移動軌跡，自動過濾異常跳點並取 80% 作為星星出現區域（支援拖曳微調）。
-              </span>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button type="button" class="secondary-btn" id="openRangeCalibBtn" style="flex:1;background:#1f5c41;border-color:#70e5ab;color:#fff;">
-                📐 設定活動範圍
-              </button>
-              <button type="button" class="secondary-btn" id="quickResetRangeBtn" style="padding:8px 14px;font-size:13px;">
-                恢復此模式預設範圍
-              </button>
-            </div>
-            <small style="color:#ffd479;font-size:12px;line-height:1.4;">
-              ※ 更換手機架設位置、鏡頭距離或患者坐姿後，請重新設定活動範圍。
-            </small>
+            <span style="font-size:13px;color:#c8dfe6;line-height:1.4;flex:1;min-width:160px;">
+              直接在鏡頭畫面上用手指拉動方框調整大小與位置（更換手機位置或坐姿後建議重調）。
+            </span>
+            <button type="button" class="secondary-btn" id="openRangeCalibBtn" style="background:#1f5c41;border-color:#70e5ab;color:#fff;white-space:nowrap;">
+              📐 調整活動範圍
+            </button>
           </div>
         </div>
 
-        <!-- 1. 星星出現範圍模式 -->
+        <!-- 1. 星星出現方向模式 -->
         <div class="setting-row">
           <label>練習方向模式（三種模式預設皆為左右練習）</label>
           <div class="seg-group" role="radiogroup" aria-label="練習範圍">
@@ -937,7 +871,7 @@ button:disabled {
     modeReady: false,
     stableMs: 0,
     lastFrameTs: 0,
-    // 活動範圍設定模式狀態
+    // 直接拉框調整活動範圍模式狀態
     calibratingRange: false
   };
 
@@ -961,14 +895,25 @@ button:disabled {
   };
 
   // 三種追蹤模式各自獨立儲存的活動範圍設定
-  const STORAGE_KEY_RANGES = 'motion_sense_mode_ranges_v2';
+  const STORAGE_KEY_RANGES = 'motion_sense_mode_ranges_v3';
   const modeRanges = {
-    hand: { isCustom: false, rawBox: null, scalePct: 80, box: null },
-    head: { isCustom: false, rawBox: null, scalePct: 80, box: null },
-    color: { isCustom: false, rawBox: null, scalePct: 80, box: null }
+    hand: { isCustom: false, box: null },
+    head: { isCustom: false, box: null },
+    color: { isCustom: false, box: null }
   };
 
-  // 讀取已儲存的各模式活動範圍（包裹於 try/catch 確保沙盒安全）
+  function isValidNormalizedBox(b) {
+    return (
+      b &&
+      Number.isFinite(b.minX) &&
+      Number.isFinite(b.maxX) &&
+      Number.isFinite(b.minY) &&
+      Number.isFinite(b.maxY) &&
+      b.maxX - b.minX >= 0.10 &&
+      b.maxY - b.minY >= 0.08
+    );
+  }
+
   function loadSavedRanges() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_RANGES);
@@ -976,11 +921,9 @@ button:disabled {
       const parsed = JSON.parse(raw);
       ['hand', 'head', 'color'].forEach(m => {
         const item = parsed?.[m];
-        if (item && typeof item === 'object') {
-          modeRanges[m].isCustom = Boolean(item.isCustom && item.box);
-          modeRanges[m].scalePct = Number(item.scalePct) || 80;
-          if (isValidNormalizedBox(item.rawBox)) modeRanges[m].rawBox = { ...item.rawBox };
-          if (isValidNormalizedBox(item.box)) modeRanges[m].box = { ...item.box };
+        if (item && typeof item === 'object' && isValidNormalizedBox(item.box)) {
+          modeRanges[m].isCustom = Boolean(item.isCustom);
+          modeRanges[m].box = { ...item.box };
         }
       });
     } catch {
@@ -996,26 +939,9 @@ button:disabled {
     }
   }
 
-  function isValidNormalizedBox(b) {
-    return (
-      b &&
-      Number.isFinite(b.minX) &&
-      Number.isFinite(b.maxX) &&
-      Number.isFinite(b.minY) &&
-      Number.isFinite(b.maxY) &&
-      b.maxX - b.minX >= 0.08 &&
-      b.maxY - b.minY >= 0.08
-    );
-  }
-
-  // 活動範圍記錄與邊界拖曳狀態
+  // 直接用手指拉框調整活動範圍的狀態
   const calibState = {
-    phase: 'idle',          // 'idle' | 'recording' | 'review'
-    rawPoints: [],          // [{ x, y, t }]
-    filteredPoints: [],     // 過濾異常跳點後的有效軌跡
-    rawBox: null,           // 100% 原始有效範圍 { minX, maxX, minY, maxY }
-    workingBox: null,       // 依比例縮放並支援拖曳微調後的範圍 { minX, maxX, minY, maxY }
-    scalePct: 80,
+    workingBox: null,       // { minX, maxX, minY, maxY }
     dragHandle: null,       // 'left' | 'right' | 'top' | 'bottom' | 'tl' | 'tr' | 'bl' | 'br' | 'move' | null
     dragStartNorm: null,
     dragStartBox: null
@@ -1126,7 +1052,7 @@ button:disabled {
 
     const statusEl = $('customRangeStatusText');
     if (statusEl) {
-      statusEl.textContent = `${modeName(m)}模式：${hasCustom ? `自訂範圍 (${modeRanges[m].scalePct}%)` : '系統預設範圍'}`;
+      statusEl.textContent = `${modeName(m)}：${hasCustom ? '已設定自訂範圍' : '預設範圍'}`;
     }
   }
 
@@ -1156,12 +1082,12 @@ button:disabled {
     const statusBarEl = document.querySelector('.status-bar');
     const bottomBannerEl = $('messageBanner');
     const topOccupied = statusBarEl ? statusBarEl.offsetTop + statusBarEl.offsetHeight : 48;
-    const bottomOccupied = bottomBannerEl && !bottomBannerEl.hidden ? Math.max(54, H - bottomBannerEl.offsetTop) : 58;
+    const bottomOccupied = bottomBannerEl && !bottomBannerEl.hidden ? Math.max(54, H - bottomBannerEl.offsetTop) : 64;
 
     const minX = Math.min(0.35, Math.max(0.11, marginPx / W));
     const maxX = Math.max(0.65, Math.min(0.89, 1 - marginPx / W));
     const minY = Math.min(0.38, Math.max(0.15, (topOccupied + marginPx) / H));
-    const maxY = Math.max(0.62, Math.min(0.84, 1 - (bottomOccupied + marginPx) / H));
+    const maxY = Math.max(0.62, Math.min(0.83, 1 - (bottomOccupied + marginPx) / H));
 
     return { minX, maxX, minY, maxY, W, H, starR };
   }
@@ -1176,9 +1102,7 @@ button:disabled {
       const midY = (safe.minY + safe.maxY) * 0.5;
       const safeSpanX = safe.maxX - safe.minX;
       const safeSpanY = safe.maxY - safe.minY;
-      // 頭部水平小幅移動：約中心左右各 20%（總寬約 40%）
       const halfW = Math.min(0.21, safeSpanX * 0.32);
-      // 頭部垂直小幅移動：約中心上下各 12%（總高約 24%，避免過高抬頭或過低低頭）
       const halfH = Math.min(0.125, safeSpanY * 0.24);
       return {
         minX: Math.max(safe.minX, midX - halfW),
@@ -1193,7 +1117,17 @@ button:disabled {
     return safe;
   }
 
-  // 取得目前模式實際生效的星星活動範圍（若有自訂範圍則優先使用該模式的自訂範圍，否則使用該模式預設範圍）
+  function clampBoxToSafe(box, safe = getStageSafeBounds()) {
+    const minSpanX = 0.14;
+    const minSpanY = 0.12;
+    let minX = Math.max(safe.minX, Math.min(safe.maxX - minSpanX, box.minX));
+    let maxX = Math.min(safe.maxX, Math.max(minX + minSpanX, box.maxX));
+    let minY = Math.max(safe.minY, Math.min(safe.maxY - minSpanY, box.minY));
+    let maxY = Math.min(safe.maxY, Math.max(minY + minSpanY, box.maxY));
+    return { minX, maxX, minY, maxY };
+  }
+
+  // 取得目前模式實際生效的星星活動範圍
   function getEffectiveActiveBounds(mode = state.mode) {
     const safe = getStageSafeBounds();
     const custom = modeRanges[mode];
@@ -1212,17 +1146,7 @@ button:disabled {
     return getDefaultModeBounds(mode);
   }
 
-  function clampBoxToSafe(box, safe = getStageSafeBounds()) {
-    const minSpanX = 0.12;
-    const minSpanY = 0.10;
-    let minX = Math.max(safe.minX, Math.min(safe.maxX - minSpanX, box.minX));
-    let maxX = Math.min(safe.maxX, Math.max(minX + minSpanX, box.maxX));
-    let minY = Math.max(safe.minY, Math.min(safe.maxY - minSpanY, box.minY));
-    let maxY = Math.min(safe.maxY, Math.max(minY + minSpanY, box.maxY));
-    return { minX, maxX, minY, maxY };
-  }
-
-  // 確保目前場上的星星位於當前模式的有效活動範圍內（切換模式、調整範圍或旋轉螢幕後呼叫）
+  // 確保目前場上的星星位於當前模式的有效活動範圍內
   function ensureCurrentStarInsideBounds() {
     if (!game.star) return;
     const b = getEffectiveActiveBounds(state.mode);
@@ -1235,7 +1159,6 @@ button:disabled {
     if (outOfBounds) {
       spawnNextStar(performance.now());
     } else if (config.rangeMode === 'lr') {
-      // 左右練習模式下，確保 Y 軸對齊新範圍的中間高度附近
       const midY = (b.minY + b.maxY) * 0.5;
       const maxOffset = Math.min(0.05, (b.maxY - b.minY) * 0.18);
       if (Math.abs(game.star.y - midY) > maxOffset) {
@@ -1285,7 +1208,7 @@ button:disabled {
     };
   }
 
-  // 重置模式切換初始化狀態（每次切換模式時呼叫：暫停遊戲碰觸判定、清除上一模式追蹤點與停留進度）
+  // 重置模式切換初始化狀態（暫停遊戲碰觸判定、清除上一模式追蹤點與停留進度）
   function resetModeInitialization() {
     state.modeReady = false;
     state.stableMs = 0;
@@ -1297,7 +1220,7 @@ button:disabled {
     }
   }
 
-  // 統一更新追蹤輸出介面 `{found, x, y, mode, timestamp}`，並處理 1 秒連續穩定追蹤確認與範圍記錄
+  // 統一更新追蹤輸出介面 `{found, x, y, mode, timestamp}`，並處理 1 秒連續穩定追蹤確認
   function publishTrackingState(found, normX, normY, ts = performance.now(), colorRadiusPx = 0) {
     const dt = state.lastFrameTs ? Math.min(90, Math.max(0, ts - state.lastFrameTs)) : 16;
     state.lastFrameTs = ts;
@@ -1311,11 +1234,6 @@ button:disabled {
       trackerOutput.x = Math.max(0, Math.min(1, normX));
       trackerOutput.y = Math.max(0, Math.min(1, normY));
       setAppState('tracking_found');
-
-      // 若正在進行「活動範圍記錄」，記錄當前有效追蹤點
-      if (state.calibratingRange && calibState.phase === 'recording') {
-        recordCalibrationPoint(trackerOutput.x, trackerOutput.y, ts);
-      }
 
       // 若尚未完成模式切換後的 1 秒穩定確認，累積穩定時間
       if (!state.modeReady && !state.calibratingRange) {
@@ -1406,7 +1324,6 @@ button:disabled {
     );
 
     if (config.rangeMode === 'lr') {
-      // 左右練習：固定於有效範圍中間高度附近，左、右交替出現
       const side = game.lrNextSide;
       game.lrNextSide = side === 'left' ? 'right' : 'left';
       const leftZone = b.minX + spanX * (0.06 + Math.random() * 0.16);
@@ -1415,7 +1332,6 @@ button:disabled {
       const yJitter = state.mode === 'head' ? Math.min(0.03, spanY * 0.12) : Math.min(0.07, spanY * 0.15);
       candidateY = midY + (Math.random() - 0.5) * yJitter;
     } else if (config.rangeMode === 'left') {
-      // 單側練習（偏左）：限制在有效範圍的左半部（0% ~ 45% 寬度）與有效高度內
       const anchors = [
         { x: b.minX + spanX * 0.08, y: midY },
         { x: b.minX + spanX * 0.36, y: midY - spanY * 0.28 },
@@ -1427,7 +1343,6 @@ button:disabled {
       candidateX = pick.x;
       candidateY = pick.y;
     } else if (config.rangeMode === 'right') {
-      // 單側練習（偏右）：限制在有效範圍的右半部与有效高度內
       const anchors = [
         { x: b.maxX - spanX * 0.08, y: midY },
         { x: b.maxX - spanX * 0.36, y: midY - spanY * 0.28 },
@@ -1439,7 +1354,6 @@ button:disabled {
       candidateX = pick.x;
       candidateY = pick.y;
     } else if (config.rangeMode === 'all') {
-      // 左右＋上下挑戰：在有效範圍內的左、右、上、下交替出現（頭部模式下自動受限於中心附近小垂直範圍）
       const midX = (b.minX + b.maxX) * 0.5;
       const anchors = [
         { x: b.minX + spanX * 0.10, y: midY },
@@ -1458,7 +1372,6 @@ button:disabled {
       candidateX = bestPick.x;
       candidateY = bestPick.y;
     } else {
-      // 自由隨機：嚴格在當前模式的有效範圍 [b.minX, b.maxX] x [b.minY, b.maxY] 內選點
       for (let attempt = 0; attempt < 12; attempt++) {
         const rx = b.minX + Math.random() * spanX;
         const ry = b.minY + Math.random() * spanY;
@@ -1470,7 +1383,6 @@ button:disabled {
       }
     }
 
-    // 最終強制夾限於有效活動範圍內，確保星星絕不會出現在設定區域以外
     candidateX = Math.max(b.minX, Math.min(b.maxX, candidateX));
     candidateY = Math.max(b.minY, Math.min(b.maxY, candidateY));
 
@@ -1495,7 +1407,6 @@ button:disabled {
     }
   }
 
-  // 重置整局星星收集遊戲
   function resetGame() {
     game.collected = 0;
     game.star = null;
@@ -1515,7 +1426,6 @@ button:disabled {
     }
   }
 
-  // 觸發星星收集成功
   function triggerStarCollected(star, now) {
     if (!star || star.collectedLock || state.gameState === 'game_complete') return;
     star.collectedLock = true;
@@ -1580,9 +1490,6 @@ button:disabled {
     }
   }
 
-  // 遊戲核心邏輯更新：
-  // 1. 若處於「設定活動範圍」或尚未通過切換模式後的 1 秒穩定確認 (!state.modeReady)，暫停碰觸判定
-  // 2. 只讀取 trackerOutput `{found, x, y, mode, timestamp}`
   function updateGameLogic(now) {
     const dt = game.lastTickTs ? Math.min(80, Math.max(0, now - game.lastTickTs)) : 16;
     game.lastTickTs = now;
@@ -1592,7 +1499,6 @@ button:disabled {
       return;
     }
 
-    // 過場結束後生成下一顆星星
     if (!game.star && now >= game.nextSpawnAt) {
       spawnNextStar(now);
     }
@@ -1600,7 +1506,6 @@ button:disabled {
     const star = game.star;
     if (!star || star.collectedLock) return;
 
-    // 未偵測到目標 (found=false) 或尚未完成切換模式後的 1 秒連續穩定追蹤確認 (!state.modeReady) 時，不得累積碰觸時間或觸發成功
     if (
       !state.modeReady ||
       !trackerOutput.found ||
@@ -1646,144 +1551,27 @@ button:disabled {
     }
   }
 
-  // ==================== 「設定活動範圍」記錄、異常點過濾、縮放與邊界拖曳 ====================
+  // ==================== 極簡直覺「直接手指拉框」調整活動範圍 ====================
 
-  function recordCalibrationPoint(nx, ny, ts) {
-    const pts = calibState.rawPoints;
-    const prev = pts.length ? pts[pts.length - 1] : null;
-
-    if (prev) {
-      const dist = Math.hypot(nx - prev.x, ny - prev.y);
-      const dt = Math.max(1, ts - prev.t);
-      const speedPerFrame = dist / (dt / 16.67);
-      // 即時濾除單幀異常暴衝跳點（例如超過 24% 畫面寬度的瞬間閃爍跳點）
-      if (dist > 0.24 && speedPerFrame > 0.18) {
-        return;
-      }
-      // 忽略幾乎沒有移動的重疊點以保持軌跡精簡
-      if (dist < 0.006) return;
-    }
-
-    pts.push({ x: nx, y: ny, t: ts });
-    // 即時更新過濾後的預覽範圍框
-    if (pts.length >= 4) {
-      const box = computeFilteredBoundingBox(pts);
-      if (box) {
-        calibState.rawBox = box;
-        calibState.workingBox = applyScaleToRawBox(box, calibState.scalePct);
-      }
-    }
-  }
-
-  // 過濾明顯異常的追蹤跳點（結合鄰近連續性檢查與統計分位數 / 離群值修剪）
-  function computeFilteredBoundingBox(points) {
-    if (!points || points.length < 3) return null;
-
-    // 第 1 步：軌跡連續性濾波（剔除前後都孤立的瞬移閃點）
-    const continuous = [];
-    for (let i = 0; i < points.length; i++) {
-      const p = points[i];
-      if (i > 0 && i < points.length - 1) {
-        const prev = points[i - 1];
-        const next = points[i + 1];
-        const dPrev = Math.hypot(p.x - prev.x, p.y - prev.y);
-        const dNext = Math.hypot(p.x - next.x, p.y - next.y);
-        const dBridge = Math.hypot(next.x - prev.x, next.y - prev.y);
-        // 若該點與前後點距離很大，但前後點彼此很近，代表這是一個單點誤判暴衝
-        if (dPrev > 0.16 && dNext > 0.16 && dBridge < 0.12) {
-          continue;
-        }
-      }
-      continuous.push(p);
-    }
-
-    const validPts = continuous.length >= 3 ? continuous : points;
-    calibState.filteredPoints = validPts;
-
-    const xs = validPts.map(p => p.x).sort((a, b) => a - b);
-    const ys = validPts.map(p => p.y).sort((a, b) => a - b);
-
-    // 第 2 步：分位數修剪（當取樣點足夠時，剔除前後 4% 的極端邊緣離群值）
-    const trimRatio = validPts.length >= 18 ? 0.04 : 0;
-    const lowIdx = Math.floor(validPts.length * trimRatio);
-    const highIdx = Math.max(lowIdx, validPts.length - 1 - lowIdx);
-
-    const safe = getStageSafeBounds();
-    let minX = xs[lowIdx];
-    let maxX = xs[highIdx];
-    let minY = ys[lowIdx];
-    let maxY = ys[highIdx];
-
-    // 確保最小有效寬高，若使用者只做水平移動則自動給予舒適垂直高度
-    const cx = (minX + maxX) * 0.5;
-    const cy = (minY + maxY) * 0.5;
-    const minW = state.mode === 'head' ? 0.22 : 0.26;
-    const minH = state.mode === 'head' ? 0.14 : 0.18;
-
-    if (maxX - minX < minW) {
-      minX = cx - minW * 0.5;
-      maxX = cx + minW * 0.5;
-    }
-    if (maxY - minY < minH) {
-      minY = cy - minH * 0.5;
-      maxY = cy + minH * 0.5;
-    }
-
-    return clampBoxToSafe({ minX, maxX, minY, maxY }, safe);
-  }
-
-  // 以原始記錄範圍中心為基準，套用縮放比例（預設 80%）作為實際星星出現範圍
-  function applyScaleToRawBox(rawBox, scalePct = 80) {
-    if (!rawBox) return getDefaultModeBounds(state.mode);
-    const safe = getStageSafeBounds();
-    const factor = Math.max(0.5, Math.min(1.0, scalePct / 100));
-    const cx = (rawBox.minX + rawBox.maxX) * 0.5;
-    const cy = (rawBox.minY + rawBox.maxY) * 0.5;
-    const halfW = Math.max(0.07, ((rawBox.maxX - rawBox.minX) * factor) * 0.5);
-    const halfH = Math.max(0.06, ((rawBox.maxY - rawBox.minY) * factor) * 0.5);
-
-    return clampBoxToSafe(
-      {
-        minX: cx - halfW,
-        maxX: cx + halfW,
-        minY: cy - halfH,
-        maxY: cy + halfH
-      },
-      safe
-    );
-  }
-
-  // 進入「設定活動範圍」畫面
   function openRangeCalibration() {
     $('settingsSheet').hidden = true;
     $('completeOverlay').hidden = true;
     state.calibratingRange = true;
     if (game.star) game.star.dwellMs = 0;
 
-    const currentCustom = modeRanges[state.mode];
-    calibState.scalePct = currentCustom.scalePct || 80;
-    $('calibScaleInput').value = String(calibState.scalePct);
-    $('calibScaleText').textContent = `${calibState.scalePct}%`;
-
-    calibState.rawPoints = [];
-    calibState.filteredPoints = [];
-
-    if (currentCustom.isCustom && isValidNormalizedBox(currentCustom.box)) {
-      calibState.phase = 'review';
-      calibState.rawBox = isValidNormalizedBox(currentCustom.rawBox)
-        ? { ...currentCustom.rawBox }
-        : { ...currentCustom.box };
-      calibState.workingBox = clampBoxToSafe({ ...currentCustom.box });
-    } else {
-      calibState.phase = 'idle';
-      const def = getDefaultModeBounds(state.mode);
-      calibState.rawBox = { minX: def.minX, maxX: def.maxX, minY: def.minY, maxY: def.maxY };
-      calibState.workingBox = { minX: def.minX, maxX: def.maxX, minY: def.minY, maxY: def.maxY };
-    }
+    const eff = getEffectiveActiveBounds(state.mode);
+    calibState.workingBox = {
+      minX: eff.minX,
+      maxX: eff.maxX,
+      minY: eff.minY,
+      maxY: eff.maxY
+    };
 
     $('calibPanel').hidden = false;
     $('messageBanner').hidden = true;
-    syncCalibPanelUI();
+    $('calibGuideText').textContent =
+      `【${modeName(state.mode)}模式】直接用手指拉動綠色方框邊緣調整大小，或按住方框中央移動位置`;
+    updateStatusUI(`調整${modeName(state.mode)}活動範圍`, 'info');
 
     if (!state.active) {
       startCamera();
@@ -1792,94 +1580,12 @@ button:disabled {
     }
   }
 
-  function syncCalibPanelUI() {
-    const mName = modeName(state.mode);
-    $('calibTitle').textContent = `📐 設定活動範圍（${mName}模式）`;
-    const badge = $('calibStatusBadge');
-    const guide = $('calibGuideText');
-    const scaleRow = $('calibScaleRow');
-    const startBtn = $('calibStartRecBtn');
-    const finishBtn = $('calibFinishRecBtn');
-    const applyBtn = $('calibApplyBtn');
-    const restartBtn = $('calibRestartBtn');
-
-    if (state.mode === 'color' && !state.colorTarget) {
-      badge.textContent = '請先取色';
-      badge.className = 'pill warn';
-      guide.textContent = '顏色模式尚未選色：請先點選上方鏡頭畫面中的鮮明彩色物品取色，再點擊「開始記錄」。';
-    } else if (calibState.phase === 'idle') {
-      badge.textContent = '準備記錄';
-      badge.className = 'pill info';
-      guide.textContent = `請點擊「開始記錄」，接著用${mName}在舒適可及的範圍內上下左右移動，系統將即時描繪軌跡。`;
-    } else if (calibState.phase === 'recording') {
-      badge.textContent = `記錄中 (${calibState.rawPoints.length} 點)`;
-      badge.className = 'pill warn';
-      guide.textContent = `正在記錄${mName}軌跡… 請移動至舒適的上下左右邊界，完成後點擊「完成記錄」。`;
-    } else {
-      badge.textContent = '可微調範圍';
-      badge.className = 'pill good';
-      guide.textContent = `已建立${mName}活動範圍（預設取 80%）。可調整下方比例或直接拖曳綠色框線與圓點微調，再按「套用並返回」。`;
-    }
-
-    startBtn.hidden = calibState.phase !== 'idle';
-    finishBtn.hidden = calibState.phase !== 'recording';
-    applyBtn.hidden = calibState.phase !== 'review';
-    restartBtn.hidden = calibState.phase === 'idle';
-    scaleRow.hidden = calibState.phase !== 'review';
-
-    updateStatusUI(
-      `設定${mName}活動範圍`,
-      'info',
-      guide.textContent
-    );
-  }
-
-  function startRangeRecording() {
-    if (state.mode === 'color' && !state.colorTarget) {
-      $('calibGuideText').textContent = '請先直接點選鏡頭畫面中的彩色物品取色，才能開始記錄軌跡！';
-      return;
-    }
-    calibState.phase = 'recording';
-    calibState.rawPoints = [];
-    calibState.filteredPoints = [];
-    if (trackerOutput.found) {
-      recordCalibrationPoint(trackerOutput.x, trackerOutput.y, performance.now());
-    }
-    syncCalibPanelUI();
-    renderScene();
-  }
-
-  function finishRangeRecording() {
-    const box = computeFilteredBoundingBox(calibState.rawPoints);
-    if (!box || calibState.rawPoints.length < 4) {
-      // 若記錄點數過少，以目前預設範圍為基礎進入微調，並給予溫和提示
-      const def = getDefaultModeBounds(state.mode);
-      calibState.rawBox = { minX: def.minX, maxX: def.maxX, minY: def.minY, maxY: def.maxY };
-      calibState.workingBox = applyScaleToRawBox(calibState.rawBox, calibState.scalePct);
-      calibState.phase = 'review';
-      syncCalibPanelUI();
-      $('calibGuideText').textContent =
-        '記錄到的移動軌跡較短，已先載入基礎活動框。您可直接拖曳畫面上的綠色框線微調，或按「重新記錄」。';
-      renderScene();
-      return;
-    }
-
-    calibState.rawBox = box;
-    calibState.scalePct = Number($('calibScaleInput').value) || 80;
-    calibState.workingBox = applyScaleToRawBox(box, calibState.scalePct);
-    calibState.phase = 'review';
-    syncCalibPanelUI();
-    renderScene();
-  }
-
   function applyRangeAndReturn() {
     if (calibState.workingBox) {
       const safe = getStageSafeBounds();
       const clamped = clampBoxToSafe(calibState.workingBox, safe);
       modeRanges[state.mode] = {
         isCustom: true,
-        rawBox: calibState.rawBox ? { ...calibState.rawBox } : { ...clamped },
-        scalePct: calibState.scalePct,
         box: clamped
       };
       saveRangesToStorage();
@@ -1890,27 +1596,23 @@ button:disabled {
   function resetCurrentModeRangeToDefault() {
     modeRanges[state.mode] = {
       isCustom: false,
-      rawBox: null,
-      scalePct: 80,
       box: null
     };
     saveRangesToStorage();
 
     const def = getDefaultModeBounds(state.mode);
-    calibState.rawPoints = [];
-    calibState.filteredPoints = [];
-    calibState.rawBox = { minX: def.minX, maxX: def.maxX, minY: def.minY, maxY: def.maxY };
-    calibState.workingBox = { minX: def.minX, maxX: def.maxX, minY: def.minY, maxY: def.maxY };
-    calibState.scalePct = 80;
-    $('calibScaleInput').value = '80';
-    $('calibScaleText').textContent = '80%';
-    calibState.phase = 'idle';
+    calibState.workingBox = {
+      minX: def.minX,
+      maxX: def.maxX,
+      minY: def.minY,
+      maxY: def.maxY
+    };
 
     updateScoreUI();
     ensureCurrentStarInsideBounds();
     if (state.calibratingRange) {
-      syncCalibPanelUI();
-      $('calibGuideText').textContent = `已恢復「${modeName(state.mode)}模式」的系統預設活動範圍。`;
+      $('calibGuideText').textContent =
+        `已恢復【${modeName(state.mode)}模式】預設範圍，可直接拖曳微調或按「完成套用」`;
     }
     renderScene();
   }
@@ -1921,18 +1623,17 @@ button:disabled {
     $('calibPanel').hidden = true;
     $('messageBanner').hidden = false;
 
-    // 返回遊戲時重新確認穩定追蹤或立即約束星星在有效範圍內
     ensureCurrentStarInsideBounds();
     updateScoreUI();
     if (applied) {
       $('footerHint').textContent =
-        `已套用${modeName()}活動範圍（更換手機位置、鏡頭距離或坐姿後請重新設定）。`;
+        `已套用${modeName()}活動範圍（更換手機位置或坐姿後可重新拉框）。`;
     }
     refreshTrackingBanner(state.mode);
     renderScene();
   }
 
-  // 檢查指標是否點中活動範圍框的控制點或邊界（支援手指與滑鼠拖曳微調）
+  // 檢查手指或滑鼠是否點中綠色方框的四邊、四角或內部平移區
   function hitTestCalibHandle(px, py) {
     if (!state.calibratingRange || !calibState.workingBox) return null;
     const W = stage.clientWidth;
@@ -1944,7 +1645,7 @@ button:disabled {
     const y2 = b.maxY * H;
     const mx = (x1 + x2) * 0.5;
     const my = (y1 + y2) * 0.5;
-    const hitR = 26;
+    const hitR = 30;
 
     const handles = [
       { id: 'tl', x: x1, y: y1 },
@@ -1961,7 +1662,6 @@ button:disabled {
       if (Math.hypot(px - h.x, py - h.y) <= hitR) return h.id;
     }
 
-    // 點擊四條邊線附近也可直接拖曳該邊
     if (py >= y1 - hitR && py <= y2 + hitR) {
       if (Math.abs(px - x1) <= hitR) return 'left';
       if (Math.abs(px - x2) <= hitR) return 'right';
@@ -1971,8 +1671,7 @@ button:disabled {
       if (Math.abs(py - y2) <= hitR) return 'bottom';
     }
 
-    // 點擊框內空白處可整體平移範圍框
-    if (px > x1 + hitR && px < x2 - hitR && py > y1 + hitR && py < y2 - hitR) {
+    if (px > x1 && px < x2 && py > y1 && py < y2) {
       return 'move';
     }
     return null;
@@ -1981,8 +1680,8 @@ button:disabled {
   function updateCalibDrag(nx, ny) {
     if (!calibState.dragHandle || !calibState.dragStartBox || !calibState.dragStartNorm) return;
     const safe = getStageSafeBounds();
-    const minSpanX = 0.12;
-    const minSpanY = 0.10;
+    const minSpanX = 0.14;
+    const minSpanY = 0.12;
     const dx = nx - calibState.dragStartNorm.x;
     const dy = ny - calibState.dragStartNorm.y;
     const s = calibState.dragStartBox;
@@ -2012,10 +1711,6 @@ button:disabled {
     }
 
     calibState.workingBox = { minX, maxX, minY, maxY };
-    if (calibState.phase === 'idle') {
-      calibState.phase = 'review';
-      syncCalibPanelUI();
-    }
     renderScene();
   }
 
@@ -2035,7 +1730,6 @@ button:disabled {
     context.closePath();
   }
 
-  // 繪製高品質目標星星（若尚在 1 秒追蹤確認期間，以柔和半透明顯示，提示尚未啟動碰觸）
   function drawStar(cx, cy, radius, dwellProgress, now, isReady = true) {
     const reduced = reducedMotionQuery.matches;
     const pulse = reduced ? 1 : 1 + Math.sin(now * 0.0045) * 0.045;
@@ -2046,7 +1740,6 @@ button:disabled {
       ctx.globalAlpha = 0.55;
     }
 
-    // 1. 柔和背景光暈
     const glowGrad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.75);
     glowGrad.addColorStop(0, 'rgba(255, 224, 102, 0.55)');
     glowGrad.addColorStop(0.55, 'rgba(255, 184, 48, 0.22)');
@@ -2056,7 +1749,6 @@ button:disabled {
     ctx.arc(cx, cy, r * 1.75, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. 星星本體
     if (customStarAsset.loaded && customStarAsset.img && !customStarAsset.failed) {
       const size = r * 2.1;
       ctx.drawImage(customStarAsset.img, cx - size / 2, cy - size / 2, size, size);
@@ -2085,7 +1777,6 @@ button:disabled {
       ctx.fill();
     }
 
-    // 3. 碰觸停留進度外環
     if (isReady && dwellProgress > 0.01) {
       const clamped = Math.min(1, Math.max(0, dwellProgress));
       ctx.shadowBlur = 0;
@@ -2146,7 +1837,7 @@ button:disabled {
     }
   }
 
-  // 繪製遊戲中的微弱活動範圍參考框（當有自訂活動範圍或頭部模式時顯示輕柔邊界，讓範圍一目了然）
+  // 繪製遊戲中的微弱活動範圍參考框
   function drawSubtleActiveRangeGuide(W, H) {
     const hasCustom = modeRanges[state.mode].isCustom;
     if (!hasCustom && state.mode !== 'head') return;
@@ -2164,86 +1855,77 @@ button:disabled {
     ctx.restore();
   }
 
-  // 繪製「設定活動範圍」模式下的軌跡、100% 原始外框、縮放後目標框與四邊拖曳控制點
+  // 繪製「直接用手指拉框」的綠色方框與 8 個大型觸控圓點
   function drawRangeCalibrationOverlay(W, H) {
+    if (!calibState.workingBox) return;
+    const wb = calibState.workingBox;
+    const x1 = wb.minX * W;
+    const y1 = wb.minY * H;
+    const x2 = wb.maxX * W;
+    const y2 = wb.maxY * H;
+    const rw = x2 - x1;
+    const rh = y2 - y1;
+    const mx = (x1 + x2) * 0.5;
+    const my = (y1 + y2) * 0.5;
+
     ctx.save();
 
-    // 1. 繪製已走過的路徑軌跡
-    const pts = calibState.rawPoints;
-    if (pts.length > 0) {
-      ctx.strokeStyle = 'rgba(107, 194, 232, 0.85)';
-      ctx.lineWidth = 3.5;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+    // 方框外部稍微加深遮罩，突顯星星會出現的方框範圍
+    ctx.fillStyle = 'rgba(6, 18, 25, 0.42)';
+    ctx.fillRect(0, 0, W, y1);
+    ctx.fillRect(0, y2, W, H - y2);
+    ctx.fillRect(0, y1, x1, rh);
+    ctx.fillRect(x2, y1, W - x2, rh);
+
+    // 方框內部柔和填色與高對比邊框
+    ctx.fillStyle = 'rgba(112, 229, 171, 0.14)';
+    ctx.fillRect(x1, y1, rw, rh);
+
+    ctx.strokeStyle = '#70e5ab';
+    ctx.lineWidth = 3.5;
+    ctx.strokeRect(x1, y1, rw, rh);
+
+    // 方框中央提示標籤与十字準線
+    ctx.strokeStyle = 'rgba(112, 229, 171, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(mx - 18, my);
+    ctx.lineTo(mx + 18, my);
+    ctx.moveTo(mx, my - 18);
+    ctx.lineTo(mx, my + 18);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font = '800 14px system-ui, -apple-system, "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(9, 24, 32, 0.78)';
+    const labelW = Math.min(rw - 12, 168);
+    if (labelW > 80 && rh > 54) {
+      ctx.fillRect(mx - labelW / 2, my - 14, labelW, 28);
+      ctx.fillStyle = '#d8fff0';
+      ctx.fillText(`${modeName(state.mode)}星星範圍（可拖移）`, mx, my);
+    }
+
+    // 四角與四邊中點的大型觸控控制圓點
+    const handles = [
+      [x1, y1], [x2, y1], [x1, y2], [x2, y2],
+      [mx, y1], [mx, y2], [x1, my], [x2, my]
+    ];
+    handles.forEach(([hx, hy]) => {
       ctx.beginPath();
-      for (let i = 0; i < pts.length; i++) {
-        const px = pts[i].x * W;
-        const py = pts[i].y * H;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.stroke();
-
-      // 繪製軌跡節點
-      ctx.fillStyle = 'rgba(180, 240, 255, 0.75)';
-      for (let i = 0; i < pts.length; i += 2) {
-        ctx.beginPath();
-        ctx.arc(pts[i].x * W, pts[i].y * H, 3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // 2. 若有 100% 原始記錄外框，以細虛線標示
-    if (calibState.rawBox && pts.length >= 4) {
-      const rb = calibState.rawBox;
-      ctx.strokeStyle = 'rgba(255, 212, 82, 0.55)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      ctx.strokeRect(rb.minX * W, rb.minY * H, (rb.maxX - rb.minX) * W, (rb.maxY - rb.minY) * H);
-      ctx.setLineDash([]);
-    }
-
-    // 3. 繪製實際星星出現範圍框（支援拖曳微調）
-    if (calibState.workingBox) {
-      const wb = calibState.workingBox;
-      const x1 = wb.minX * W;
-      const y1 = wb.minY * H;
-      const x2 = wb.maxX * W;
-      const y2 = wb.maxY * H;
-      const rw = x2 - x1;
-      const rh = y2 - y1;
-
-      ctx.fillStyle = 'rgba(112, 229, 171, 0.12)';
-      ctx.fillRect(x1, y1, rw, rh);
-
+      ctx.arc(hx, hy, 11, 0, Math.PI * 2);
+      ctx.fillStyle = '#091820';
+      ctx.fill();
+      ctx.lineWidth = 3.5;
       ctx.strokeStyle = '#70e5ab';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x1, y1, rw, rh);
-
-      // 在檢視／微調階段繪製四邊與四角拖曳控制圓點
-      if (calibState.phase !== 'recording') {
-        const mx = (x1 + x2) * 0.5;
-        const my = (y1 + y2) * 0.5;
-        const handles = [
-          [x1, y1], [x2, y1], [x1, y2], [x2, y2],
-          [mx, y1], [mx, y2], [x1, my], [x2, my]
-        ];
-        handles.forEach(([hx, hy]) => {
-          ctx.beginPath();
-          ctx.arc(hx, hy, 9, 0, Math.PI * 2);
-          ctx.fillStyle = '#091820';
-          ctx.fill();
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = '#70e5ab';
-          ctx.stroke();
-        });
-      }
-    }
+      ctx.stroke();
+    });
 
     ctx.restore();
   }
 
-  // 繪製高對比綠色追蹤圓環（若尚在 1 秒穩定確認期間，外圈顯示藍色確認進度環）
   function drawTrackerRing(x, y, colorRadiusPx = 0) {
     if (!Number.isFinite(x) || !Number.isFinite(y)) return;
     ctx.save();
@@ -2258,14 +1940,12 @@ button:disabled {
       ctx.setLineDash([]);
     }
 
-    // 深色外描邊（確保在亮黃色星星上方依然 100% 高對比清晰可見）
     ctx.beginPath();
     ctx.arc(x, y, 22, 0, Math.PI * 2);
     ctx.lineWidth = 7;
     ctx.strokeStyle = 'rgba(5, 24, 18, 0.85)';
     ctx.stroke();
 
-    // 高對比亮綠主圓環
     ctx.shadowColor = '#2ce695';
     ctx.shadowBlur = 10;
     ctx.beginPath();
@@ -2274,7 +1954,6 @@ button:disabled {
     ctx.strokeStyle = state.modeReady || state.calibratingRange ? '#58f5b4' : '#6bc2e8';
     ctx.stroke();
 
-    // 若處於切換模式後的 1 秒穩定確認期間，在追蹤環外圈繪製穩定度進度弧
     if (!state.modeReady && !state.calibratingRange && state.stableMs > 0) {
       const ratio = Math.min(1, Math.max(0, state.stableMs / MODE_INIT_STABLE_MS));
       ctx.shadowBlur = 0;
@@ -2286,7 +1965,6 @@ button:disabled {
       ctx.stroke();
     }
 
-    // 中心精準定位點
     ctx.shadowBlur = 0;
     ctx.beginPath();
     ctx.arc(x, y, 7, 0, Math.PI * 2);
@@ -2301,7 +1979,6 @@ button:disabled {
     ctx.restore();
   }
 
-  // 統一繪圖渲染管線
   function renderScene(now = performance.now()) {
     const W = stage.clientWidth;
     const H = stage.clientHeight;
@@ -2312,7 +1989,6 @@ button:disabled {
     } else {
       drawSubtleActiveRangeGuide(W, H);
 
-      // 繪製當前目標星星（未完成 1 秒穩定確認時以半透明呈現）
       if (game.star && !game.star.collectedLock && state.gameState !== 'game_complete') {
         const sx = game.star.x * W;
         const sy = game.star.y * H;
@@ -2327,7 +2003,6 @@ button:disabled {
       drawEffects(now);
     }
 
-    // 最後繪製高對比綠色追蹤圓環（最上層，不被星星蓋住）
     if (trackerOutput.found) {
       drawTrackerRing(
         trackerOutput.x * W,
@@ -2337,11 +2012,7 @@ button:disabled {
     }
   }
 
-  // 切換追蹤模式：
-  // 1. 暫停目前遊戲碰觸判定 (state.modeReady = false, state.stableMs = 0)
-  // 2. 清除上一模式的追蹤點及停留進度
-  // 3. 保留已收集的星星數 (game.collected) 與同一個相機串流 (state.stream)
-  // 4. 套用新模式獨立的活動範圍並確認星星位於該範圍內
+  // 切換追蹤模式：保留星星進度與相機串流，重新進行 1 秒穩定追蹤確認，並切換為該模式專屬範圍
   function setMode(m) {
     if (m === state.mode) return;
     state.mode = m;
@@ -2394,7 +2065,6 @@ button:disabled {
     });
   });
 
-  // 載入外部 MediaPipe Script
   function loadScript(url) {
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
@@ -2452,7 +2122,6 @@ button:disabled {
     return inst;
   }
 
-  // 處理 MediaPipe 手部／頭部辨識結果
   function onMediaPipeResults(m, r) {
     if (m !== state.mode || !state.active) return;
     const now = performance.now();
@@ -2478,11 +2147,7 @@ button:disabled {
       state.missCount = 0;
       state.lastSeenTime = now;
       publishTrackingState(true, norm.x, norm.y, now, 0);
-      if (state.calibratingRange && calibState.phase === 'recording') {
-        $('calibStatusBadge').textContent = `記錄中 (${calibState.rawPoints.length} 點)`;
-      } else {
-        refreshTrackingBanner(m);
-      }
+      refreshTrackingBanner(m);
     } else {
       state.missCount++;
       if (state.missCount >= 2 || now - state.lastSeenTime > 240) {
@@ -2492,7 +2157,6 @@ button:disabled {
     }
   }
 
-  // 將前鏡頭畫面裁切並鏡像繪製到工作畫布供顏色追蹤使用
   function drawCameraToWorkCanvas() {
     const vw = video.videoWidth;
     const vh = video.videoHeight;
@@ -2531,7 +2195,6 @@ button:disabled {
 
   const hueDiff = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
 
-  // 使用者點擊畫面中的彩色物品取色
   function selectColorAtWorkCoord(wx, wy) {
     if (!drawCameraToWorkCanvas()) return;
     const W = work.width;
@@ -2588,15 +2251,12 @@ button:disabled {
     resetModeInitialization();
     $('colorSwatch').style.background = `rgb(${mid.rgb.join(',')})`;
 
-    if (state.calibratingRange) {
-      syncCalibPanelUI();
-    } else {
+    if (!state.calibratingRange) {
       updateStatusUI('已選擇顏色｜確認中…', 'info', '已取色！請保持彩色物品在畫面內約 1 秒以確認穩定追蹤');
     }
     detectColorFrame(performance.now());
   }
 
-  // HSV 篩選與 4-連通區域分析（BFS）
   function detectColorFrame(now = performance.now()) {
     if (!state.colorTarget) {
       publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
@@ -2718,11 +2378,7 @@ button:disabled {
         )
       );
       publishTrackingState(true, normX, normY, now, radiusPx);
-      if (state.calibratingRange && calibState.phase === 'recording') {
-        $('calibStatusBadge').textContent = `記錄中 (${calibState.rawPoints.length} 點)`;
-      } else {
-        refreshTrackingBanner('color');
-      }
+      refreshTrackingBanner('color');
     } else {
       state.lastColorPos = null;
       publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
@@ -2730,7 +2386,6 @@ button:disabled {
     }
   }
 
-  // 啟動前鏡頭串流（全程共用同一個 stream）
   async function startCamera() {
     unlockAudio();
     const btn = $('startBtn');
@@ -2793,7 +2448,6 @@ button:disabled {
     $('startOverlay').hidden = false;
   }
 
-  // 主追蹤與遊戲更新迴圈
   function startLoop() {
     const token = ++state.loopToken;
     cancelAnimationFrame(state.rafId);
@@ -2890,13 +2544,12 @@ button:disabled {
     resetGame();
   });
 
-  // 舞台 Pointer 事件：處理「設定活動範圍」的邊界拖曳微調，以及顏色模式的點擊取色
+  // 舞台 Pointer 事件：處理「直接手指拉框」的邊界拖曳微調，以及顏色模式的點擊取色
   stage.addEventListener('pointerdown', e => {
     unlockAudio();
     if (!$('startOverlay').hidden || !$('completeOverlay').hidden || !$('settingsSheet').hidden) {
       return;
     }
-    // 忽略點擊在活動範圍控制面板上的按鈕事件
     if (e.target.closest('#calibPanel')) return;
 
     const r = stage.getBoundingClientRect();
@@ -2905,10 +2558,10 @@ button:disabled {
     const nx = Math.max(0, Math.min(1, px / Math.max(1, r.width)));
     const ny = Math.max(0, Math.min(1, py / Math.max(1, r.height)));
 
-    // 若正在「設定活動範圍」的檢視／微調模式，優先檢查是否拖曳綠色邊框或控制點
-    if (state.calibratingRange && calibState.phase !== 'recording') {
+    // 若正在「調整活動範圍」模式，直接用手拖曳綠色邊框、圓點或方框中央
+    if (state.calibratingRange) {
       const handle = hitTestCalibHandle(px, py);
-      if (handle && !(state.mode === 'color' && !state.colorTarget)) {
+      if (handle) {
         calibState.dragHandle = handle;
         calibState.dragStartNorm = { x: nx, y: ny };
         calibState.dragStartBox = { ...calibState.workingBox };
@@ -2951,28 +2604,13 @@ button:disabled {
     $('colorSwatch').style.background = '#546c78';
     resetModeInitialization();
     refreshTrackingBanner('color');
-    if (state.calibratingRange) syncCalibPanelUI();
     renderScene();
   });
 
-  // 「設定活動範圍」按鈕事件
+  // 極簡「直接手指拉框」雙按鈕事件
   $('openRangeCalibBtn').addEventListener('click', openRangeCalibration);
-  $('quickResetRangeBtn').addEventListener('click', resetCurrentModeRangeToDefault);
-  $('calibStartRecBtn').addEventListener('click', startRangeRecording);
-  $('calibFinishRecBtn').addEventListener('click', finishRangeRecording);
-  $('calibApplyBtn').addEventListener('click', applyRangeAndReturn);
-  $('calibRestartBtn').addEventListener('click', startRangeRecording);
   $('calibResetDefaultBtn').addEventListener('click', resetCurrentModeRangeToDefault);
-  $('calibCancelBtn').addEventListener('click', () => closeRangeCalibration(false));
-
-  $('calibScaleInput').addEventListener('input', e => {
-    calibState.scalePct = Number(e.target.value) || 80;
-    $('calibScaleText').textContent = `${calibState.scalePct}%`;
-    if (calibState.rawBox) {
-      calibState.workingBox = applyScaleToRawBox(calibState.rawBox, calibState.scalePct);
-      renderScene();
-    }
-  });
+  $('calibApplyBtn').addEventListener('click', applyRangeAndReturn);
 
   // 齒輪設定抽屜開關與選項綁定
   function openSettings() {
