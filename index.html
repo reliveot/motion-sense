@@ -583,6 +583,89 @@ button:disabled {
   accent-color: #70e5ab;
   height: 26px;
 }
+
+/* 直覺滑動式開關列（語音報數與遊戲音效） */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #112631;
+  border: 1.5px solid #355463;
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.switch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.switch-title {
+  font-size: 14.5px;
+  font-weight: 900;
+  color: #f3fafb;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.switch-desc {
+  font-size: 12px;
+  color: #9ec0ca;
+  line-height: 1.35;
+}
+.switch-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.switch-state-label {
+  font-size: 13px;
+  font-weight: 900;
+  min-width: 32px;
+  text-align: right;
+  color: #9eb6bf;
+}
+.switch-state-label.on {
+  color: #70e5ab;
+}
+.toggle-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 52px;
+  height: 30px;
+  background: #4b5d67;
+  border: 2px solid #6c828e;
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.toggle-input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+  transition: transform 0.18s ease;
+}
+.toggle-input:checked {
+  background: #22a06b;
+  border-color: #70e5ab;
+}
+.toggle-input:checked::after {
+  transform: translateX(22px);
+}
+
 .notice-box {
   background: #10242e;
   border-left: 4px solid #6bc2e8;
@@ -699,7 +782,7 @@ button:disabled {
     <!-- 左上角追蹤狀態、右上角目前玩法與範圍標示 -->
     <div class="status-bar" id="statusBar">
       <span class="pill" id="statusPill">攝影機未開啟</span>
-      <span class="pill info" id="rangePill">星星收集｜左右練習</span>
+      <span class="pill info" id="rangePill">星星收集｜左右移動</span>
     </div>
 
     <!-- 底部操作與狀態提示文字 -->
@@ -742,7 +825,7 @@ button:disabled {
     </div>
   </div>
 
-  <!-- 底部精簡操作列（僅保留提示、顏色重選與重來，設定統一由右上角齒輪開啟） -->
+  <!-- 底部精簡操作列 -->
   <footer class="footer" id="mainFooter">
     <span class="hint" id="footerHint">將綠色追蹤環移到星星上即可收集。</span>
     <span class="swatch" id="colorSwatch" hidden title="目前選取的追蹤顏色"></span>
@@ -750,7 +833,7 @@ button:disabled {
     <button class="opt" id="resetGameBtn" title="重新開始本局進度">重來</button>
   </footer>
 
-  <!-- 齒輪設定與復健參數抽屜（依遊戲模式與挑戰方式動態顯示對應設定） -->
+  <!-- 齒輪設定與復健參數抽屜 -->
   <div class="sheet" id="settingsSheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
     <article>
       <div class="sheet-header">
@@ -785,7 +868,7 @@ button:disabled {
 
           <!-- B. 星星充能專屬子設定 -->
           <div class="setting-row" id="subSettingCharge" hidden>
-            <label>充能星星類型与維持秒數</label>
+            <label>充能星星類型與維持秒數</label>
             <div class="seg-group" role="radiogroup" aria-label="充能星星類型">
               <button type="button" class="seg-btn" data-setting="chargeTypeMode" data-value="static" aria-checked="false">固定充能（藍）</button>
               <button type="button" class="seg-btn" data-setting="chargeTypeMode" data-value="moving" aria-checked="false">移動充能（紫）</button>
@@ -803,7 +886,7 @@ button:disabled {
 
           <!-- C. 星星連線專屬子設定 -->
           <div class="setting-row" id="subSettingConnect" hidden>
-            <label>星星連線玩法與每組顆數</label>
+            <label>星星連線玩法與每組顆數（完成整組算 1 次）</label>
             <div class="seg-group" role="radiogroup" aria-label="星星連線模式">
               <button type="button" class="seg-btn" data-setting="connectSubMode" data-value="number" aria-checked="true">數字提示版</button>
               <button type="button" class="seg-btn" data-setting="connectSubMode" data-value="memory" aria-checked="false">記憶順序版</button>
@@ -822,7 +905,7 @@ button:disabled {
               </div>
             </div>
             <small style="color:#9ec0ca;font-size:12px;">
-              碰錯不扣分；記憶版若碰錯或停滯超過 5 秒將自動閃爍提示目標數字。
+              碰到單顆星星播放音效，完成整組連線才計 1 次並語音報數；若活動框空間較小會自動縮減尺寸或顆數避免重疊。
             </small>
           </div>
         </div>
@@ -839,8 +922,8 @@ button:disabled {
 
           <!-- 指定次數選項 -->
           <div class="setting-row" id="subSettingTargetCount">
-            <label>每回合完成次數（所有星星成功皆算 1 次）</label>
-            <div class="seg-group" role="radiogroup" aria-label="每局收集顆數">
+            <label id="targetCountLabel">每回合目標（收集／充能計顆數，連線計完成組數）</label>
+            <div class="seg-group" role="radiogroup" aria-label="每回合目標數量">
               <button type="button" class="seg-btn" data-setting="targetCount" data-value="5" aria-checked="false">5 顆</button>
               <button type="button" class="seg-btn" data-setting="targetCount" data-value="10" aria-checked="true">10 顆（預設）</button>
               <button type="button" class="seg-btn" data-setting="targetCount" data-value="20" aria-checked="false">20 顆</button>
@@ -849,7 +932,7 @@ button:disabled {
 
           <!-- 限時挑戰秒數選項 -->
           <div class="setting-row" id="subSettingChallengeTime" hidden>
-            <label>限時挑戰時間（普通1分／移動与固定充能2分／限時與移動充能3分）</label>
+            <label>限時挑戰時間（普通1分／移動與固定充能2分／限時與移動充能3分）</label>
             <div class="seg-group" role="radiogroup" aria-label="限時挑戰秒數">
               <button type="button" class="seg-btn" data-setting="challengeDurationSec" data-value="30" aria-checked="false">30 秒</button>
               <button type="button" class="seg-btn" data-setting="challengeDurationSec" data-value="60" aria-checked="true">60 秒（預設）</button>
@@ -858,7 +941,7 @@ button:disabled {
           </div>
         </div>
 
-        <!-- 空間範圍與方向設定 -->
+        <!-- 空間範圍與簡化後的三種方向設定 -->
         <div class="setting-section">
           <div class="setting-row">
             <label>
@@ -867,7 +950,7 @@ button:disabled {
             </label>
             <div class="range-calib-box">
               <span style="font-size:12.5px;color:#c8dfe6;line-height:1.4;flex:1;min-width:150px;">
-                直接在完整鏡頭畫面上用手指拉框調整大小與位置。
+                活動框決定星星最大出現範圍，直接在完整鏡頭畫面上用手指拉框調整。
               </span>
               <button type="button" class="secondary-btn" id="openRangeCalibBtn" style="background:#1f5c41;border-color:#70e5ab;color:#fff;white-space:nowrap;padding:8px 14px;min-height:40px;">
                 📐 調整活動範圍
@@ -875,19 +958,18 @@ button:disabled {
             </div>
           </div>
 
+          <!-- 簡化為三種直覺方向：左右移動（預設）、上下移動、自由移動（上下左右） -->
           <div class="setting-row">
-            <label>目標分布方向（三種模式預設皆為左右練習）</label>
-            <div class="seg-group" role="radiogroup" aria-label="練習範圍">
-              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="lr" aria-checked="true">左右練習</button>
-              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="all" aria-checked="false">左右＋上下</button>
-              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="left" aria-checked="false">單側偏左</button>
-              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="right" aria-checked="false">單側偏右</button>
-              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="random" aria-checked="false">自由隨機</button>
+            <label>目標在活動框內的出現與移動方向</label>
+            <div class="seg-group" role="radiogroup" aria-label="練習方向">
+              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="lr" aria-checked="true">↔ 左右移動（預設）</button>
+              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="ud" aria-checked="false">↕ 上下移動</button>
+              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="free" aria-checked="false">✥ 自由移動（上下左右）</button>
             </div>
           </div>
 
           <div class="setting-row">
-            <label>目標星星大小与碰觸停留（收集／連線模式適用）</label>
+            <label>目標星星大小與碰觸停留（收集／連線模式適用）</label>
             <div class="seg-group" role="radiogroup" aria-label="目標星星大小">
               <button type="button" class="seg-btn" data-setting="targetSize" data-value="large" aria-checked="true">大（預設）</button>
               <button type="button" class="seg-btn" data-setting="targetSize" data-value="medium" aria-checked="false">中</button>
@@ -900,18 +982,34 @@ button:disabled {
           </div>
         </div>
 
-        <!-- 語音報數、音效與顏色容許度 -->
+        <!-- 4. 直覺滑動式開關：語音報數與遊戲音效（各佔一列，左文右開關，立即生效） -->
         <div class="setting-section">
           <div class="setting-row">
-            <label>4. 語音報數與音效回饋（可分別獨立開關）</label>
-            <div class="seg-group" role="radiogroup" aria-label="中文語音報數">
-              <button type="button" class="seg-btn" data-setting="voiceOn" data-value="true" aria-checked="true">🗣️ 語音報數：開</button>
-              <button type="button" class="seg-btn" data-setting="voiceOn" data-value="false" aria-checked="false">語音報數：關</button>
-            </div>
-            <div class="seg-group" role="radiogroup" aria-label="成功提示音效" style="margin-top:4px;">
-              <button type="button" class="seg-btn" data-setting="soundOn" data-value="true" aria-checked="true">開啟音效</button>
-              <button type="button" class="seg-btn" data-setting="soundOn" data-value="false" aria-checked="false">靜音</button>
-            </div>
+            <label>4. 語音報數與音效設定（切換立即生效）</label>
+
+            <!-- 語音報數開關列 -->
+            <label class="switch-row" for="voiceToggleInput">
+              <div class="switch-info">
+                <span class="switch-title">🗣️ 語音報數</span>
+                <span class="switch-desc">完成動作或完成整組連線時，以中文語音朗讀累積次數</span>
+              </div>
+              <div class="switch-control">
+                <span class="switch-state-label on" id="voiceStateText">開啟</span>
+                <input type="checkbox" role="switch" class="toggle-input" id="voiceToggleInput" checked aria-label="語音報數開關">
+              </div>
+            </label>
+
+            <!-- 遊戲音效開關列 -->
+            <label class="switch-row" for="soundToggleInput">
+              <div class="switch-info">
+                <span class="switch-title">🔔 遊戲音效</span>
+                <span class="switch-desc">碰觸星星、充能完成與回合結束時播放提示音效</span>
+              </div>
+              <div class="switch-control">
+                <span class="switch-state-label on" id="soundStateText">開啟</span>
+                <input type="checkbox" role="switch" class="toggle-input" id="soundToggleInput" checked aria-label="遊戲音效開關">
+              </div>
+            </label>
           </div>
 
           <div class="setting-row">
@@ -929,7 +1027,7 @@ button:disabled {
       <div class="notice-box">
         <strong>臨床與復健使用說明：</strong><br>
         • <strong>切換模式保護：</strong>每次切換手部、頭部或顏色模式時，會先確認連續穩定追蹤約 1 秒才恢復碰觸與計時，且保留當前進度。<br>
-        • <strong>語音報數：</strong>每次成功完成動作時以繁體中文報出「累積完成次數（一、二、三…）」，每滿 5 次給予里程碑鼓勵。<br>
+        • <strong>計次與語音規則：</strong>星星收集與充能每完成 1 顆計 1 次；星星連線則是碰到單顆播音效、<strong>完成整組才計 1 次並語音報數</strong>。<br>
         • <strong>免責聲明：</strong>遊戲分數、完成時間、活動範圍與頭部平面位置僅供復健互動激勵參考，<strong>不得直接視為關節活動度（ROM）、軀幹重心轉移或臨床坐姿平衡之客觀評估數值</strong>。
       </div>
 
@@ -1059,9 +1157,9 @@ button:disabled {
     connectStarCount: 3,         // 2 | 3 | 4
     memoryViewSec: 5,            // 3 | 5 | 0 (0 = 不限時，碰觸第 1 顆後隱藏其餘數字)
     challengeType: 'count',      // 'count' (指定次數挑戰) | 'timed' (限時挑戰)
-    targetCount: 10,             // 5 | 10 | 20
+    targetCount: 10,             // 5 | 10 | 20（收集/充能代表顆數，連線代表組數）
     challengeDurationSec: 60,    // 30 | 60 | 120
-    rangeMode: 'lr',             // 'lr' | 'all' | 'left' | 'right' | 'random'
+    rangeMode: 'lr',             // 'lr' (左右移動，預設) | 'ud' (上下移動) | 'free' (自由移動：上下左右)
     targetSize: 'large',         // 'large' | 'medium' | 'small'
     dwellMode: 'dwell',          // 'dwell' (280ms) | 'instant' (0ms)
     voiceOn: true,               // 繁體中文語音報數開關
@@ -1121,11 +1219,11 @@ button:disabled {
     dragStartBox: null
   };
 
-  // V2 遊戲執行期狀態
+  // V2 遊戲執行期狀態（明確區分 completedTargets 與 completedSets）
   const game = {
-    collected: 0,                // 累積完成次數（語音報數依據）
+    completedTargets: 0,         // 累積成功碰觸的星星總數
+    completedSets: 0,            // 累積完成的連線組數（星星連線模式主計數與語音報數依據）
     score: 0,                    // 限時挑戰總分
-    completedSets: 0,            // 星星連線完成組數
     elapsedActiveMs: 0,          // 實際有效練習累計毫秒數
     remainingMs: 60000,          // 限時挑戰剩餘毫秒數
     countsByType: {
@@ -1137,23 +1235,34 @@ button:disabled {
       connect: 0
     },
     shuffleBag: [],              // 特殊星星洗牌袋配額
-    targets: [],                 // 當前場上星星陣列（收集/充能為 1 顆，連線為 2~4 顆）
+    targets: [],                 // 當前場上星星陣列
     connectNextOrder: 1,         // 星星連線目前應觸碰的順序號碼 (1..N)
     connectMemoryPhase: false,   // 記憶版是否正在展示數字倒數中
     connectMemoryRemainMs: 0,    // 記憶版展示剩餘毫秒數
     connectAutoHintRemainMs: 0,  // 記憶版自動容錯閃爍提示剩餘毫秒數
     connectIdleMs: 0,            // 記憶版未成功觸碰下一顆的停滯毫秒數
+    connectRadiusScale: 1.0,     // 當活動框較小時自動縮放連線星星尺寸的比例
     prevHitPoint: null,
     nextSpawnAt: 0,
-    lrNextSide: 'left',
+    lrNextSide: 'left',          // 左右交替控制 ('left' | 'right')
+    udNextSide: 'top',           // 上下交替控制 ('top' | 'bottom')
     allStepIndex: 0,
     particles: [],
     collectBursts: [],
-    milestoneRipples: [],        // 每 5 次里程碑雙層波紋
-    floatingTexts: [],           // 飄浮加分與狀態文字
-    constellationBurst: null,    // 整組連線完成的星座閃耀特效
+    milestoneRipples: [],
+    floatingTexts: [],
+    constellationBurst: null,
     lastTickTs: 0
   };
+
+  // 取得當前模式的主要完成計數（收集／充能為 completedTargets，星星連線為 completedSets）
+  function getPrimaryCount() {
+    return config.gamePlayMode === 'connect' ? game.completedSets : game.completedTargets;
+  }
+
+  function getPrimaryUnitLabel() {
+    return config.gamePlayMode === 'connect' ? '組' : '次';
+  }
 
   // ==================== 音效與繁體中文語音報數管理 ====================
 
@@ -1170,7 +1279,6 @@ button:disabled {
         // 忽略瀏覽器音效限制
       }
     }
-    // 預熱語音合成器（解決部分行動瀏覽器首次語音延遲）
     if (config.voiceOn && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.getVoices();
@@ -1191,7 +1299,11 @@ button:disabled {
       let stepSec = 0.08;
       let wave = 'sine';
 
-      if (kind === 'bonus') {
+      if (kind === 'connect_node') {
+        // 星星連線碰到組內單顆星星：輕快短促雙音，不搶戲
+        notes = [659.25, 880.0];
+        stepSec = 0.055;
+      } else if (kind === 'bonus') {
         notes = [587.33, 783.99, 987.77, 1174.66];
         stepSec = 0.065;
         wave = 'triangle';
@@ -1228,7 +1340,7 @@ button:disabled {
     }
   }
 
-  // 將正整數轉為自然繁體中文讀音（例如 1 -> 一, 10 -> 十, 12 -> 十二, 25 -> 二十五）
+  // 將正整數轉為自然繁體中文讀音
   function numberToChineseSpeech(n) {
     const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
     if (n <= 0) return '零';
@@ -1250,11 +1362,17 @@ button:disabled {
     return String(n);
   }
 
-  // 繁體中文語音報數（報累積成功完成次數，每 5 次加入簡短鼓勵，自動 cancel 避免重疊）
+  // 繁體中文語音報數（收集／充能報 completedTargets，星星連線只在完成整組時報 completedSets）
   function speakCompletionCount(count, isRoundEnd = false) {
     if (!config.voiceOn || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
+      if (count <= 0 && isRoundEnd) {
+        const u = new SpeechSynthesisUtterance('時間到，練習結束！');
+        u.lang = 'zh-TW';
+        window.speechSynthesis.speak(u);
+        return;
+      }
       const numText = numberToChineseSpeech(count);
       let phrase = numText;
 
@@ -1278,7 +1396,7 @@ button:disabled {
 
       window.speechSynthesis.speak(utter);
     } catch {
-      // 若手機不支援語音則靜默降級，依靠畫面大字計數
+      // 若手機不支援語音則靜默降級
     }
   }
 
@@ -1296,12 +1414,10 @@ button:disabled {
 
   function rangeModeLabel(rm = config.rangeMode) {
     switch (rm) {
-      case 'lr': return '左右練習';
-      case 'all': return '左右＋上下';
-      case 'left': return '單側偏左';
-      case 'right': return '單側偏右';
-      case 'random': return '自由隨機';
-      default: return '左右練習';
+      case 'lr': return '左右移動';
+      case 'ud': return '上下移動';
+      case 'free': return '自由移動';
+      default: return '左右移動';
     }
   }
 
@@ -1313,18 +1429,21 @@ button:disabled {
     return `${mins} 分 ${secs} 秒`;
   }
 
-  function getStarRadiusPx() {
+  function getBaseStarRadiusPx() {
     const minDim = Math.min(stage.clientWidth || 360, stage.clientHeight || 480);
     const scale = Math.max(0.82, Math.min(1.25, minDim / 420));
     let base = 44;
     if (config.targetSize === 'medium') base = 34;
     else if (config.targetSize === 'small') base = 26;
-
-    // 星星連線模式同時有 3~4 顆星星，若在小範圍內自動微調半徑避免重疊
-    if (config.gamePlayMode === 'connect' && config.connectStarCount >= 4) {
-      base = Math.min(base, 36);
-    }
     return Math.round(base * scale);
+  }
+
+  function getStarRadiusPx() {
+    const baseR = getBaseStarRadiusPx();
+    if (config.gamePlayMode === 'connect') {
+      return Math.max(20, Math.round(baseR * (game.connectRadiusScale || 1.0)));
+    }
+    return baseR;
   }
 
   function getDwellRequiredMs() {
@@ -1355,7 +1474,7 @@ button:disabled {
     const rangeTag = hasCustom
       ? '自訂範圍'
       : m === 'head'
-      ? '頭部範圍'
+      ? '頭部預設範圍'
       : '預設範圍';
     $('rangePill').textContent = `${gamePlayModeName()}｜${rangeModeLabel(config.rangeMode)}（${rangeTag}）`;
     $('appTitleText').textContent = `Motion Sense｜${
@@ -1372,17 +1491,26 @@ button:disabled {
     }
   }
 
+  // 更新頂部進度徽章：
+  // - 星星連線：指定次數模式顯示「已完成組數 / 目標組數」（例如 2 / 5 組）；限時挑戰顯示「X 分 (Y組)」
+  // - 星星收集與充能：指定次數模式顯示「已完成顆數 / 目標顆數」（例如 3 / 10）；限時挑戰顯示「X 分 (Y次)」
   function updateScoreAndTimerUI() {
     const timerBadge = $('timerBadge');
+    const isConnect = config.gamePlayMode === 'connect';
+    const primaryCount = getPrimaryCount();
+    const unit = getPrimaryUnitLabel();
+
     if (config.challengeType === 'timed') {
       timerBadge.hidden = false;
       const secLeft = Math.max(0, Math.ceil(game.remainingMs / 1000));
       $('timerText').textContent = `${secLeft}s`;
       timerBadge.className = 'timer-badge' + (secLeft <= 10 ? ' urgent' : '');
-      $('scoreText').textContent = `${game.score} 分 (${game.collected}次)`;
+      $('scoreText').textContent = `${game.score} 分 (${primaryCount}${unit})`;
     } else {
       timerBadge.hidden = true;
-      $('scoreText').textContent = `${game.collected} / ${config.targetCount}`;
+      $('scoreText').textContent = isConnect
+        ? `${game.completedSets} / ${config.targetCount} 組`
+        : `${game.completedTargets} / ${config.targetCount}`;
     }
     updateCustomRangeLabels();
   }
@@ -1396,6 +1524,14 @@ button:disabled {
 
     $('subSettingTargetCount').hidden = config.challengeType !== 'count';
     $('subSettingChallengeTime').hidden = config.challengeType !== 'timed';
+
+    const countLabel = $('targetCountLabel');
+    if (countLabel) {
+      countLabel.textContent =
+        config.gamePlayMode === 'connect'
+          ? '每回合目標組數（完成整組連線才算 1 組）'
+          : '每回合目標次數（每完成 1 顆星星算 1 次）';
+    }
   }
 
   function setAppState(nextState) {
@@ -1409,7 +1545,7 @@ button:disabled {
     stage.dataset.gameState = nextGameState;
   }
 
-  // ==================== 活動範圍與星星安全中心邊界計算 ====================
+  // ==================== 活動範圍與三種方向（左右／上下／自由）邊界計算 ====================
 
   function clampUserBoxToCameraStage(box) {
     const minSpanX = 0.16;
@@ -1421,13 +1557,14 @@ button:disabled {
     return { minX, maxX, minY, maxY };
   }
 
+  // 各模式的預設活動框（頭部追蹤使用較保守的預設垂直與水平範圍；使用者自訂後以自訂活動框為準）
   function getDefaultUserRangeBox(mode = state.mode) {
     if (mode === 'head') {
       return {
         minX: 0.27,
         maxX: 0.73,
-        minY: 0.34,
-        maxY: 0.66
+        minY: 0.35,
+        maxY: 0.65
       };
     }
     return {
@@ -1446,10 +1583,10 @@ button:disabled {
     return getDefaultUserRangeBox(mode);
   }
 
-  function getStarCenterHardwareSafeBounds() {
+  function getStarCenterHardwareSafeBounds(customR = null) {
     const W = Math.max(200, stage.clientWidth || 360);
     const H = Math.max(200, stage.clientHeight || 480);
-    const starR = getStarRadiusPx();
+    const starR = customR || getStarRadiusPx();
     const padPx = starR + 12;
 
     const statusBarEl = $('statusBar');
@@ -1465,9 +1602,10 @@ button:disabled {
     return { minX, maxX, minY, maxY, W, H, starR, padPx };
   }
 
-  function getEffectiveStarSpawnBounds(mode = state.mode) {
+  // 計算活動框內的「星星中心安全出現範圍」
+  function getEffectiveStarSpawnBounds(mode = state.mode, customR = null) {
     const userBox = getUserActiveRangeBox(mode);
-    const hw = getStarCenterHardwareSafeBounds();
+    const hw = getStarCenterHardwareSafeBounds(customR);
     const rxNorm = (hw.starR * 0.85) / hw.W;
     const ryNorm = (hw.starR * 0.85) / hw.H;
 
@@ -1495,35 +1633,35 @@ button:disabled {
     };
   }
 
-  // 依據設定的「方向模式（左右／上下左右／偏左／偏右／隨機）」計算目標移動與生成子邊界
-  function getDirectionalSubBounds(mode = state.mode) {
-    const b = getEffectiveStarSpawnBounds(mode);
+  // 依據三種方向設定（lr 左右移動、ud 上下移動、free 自由移動）計算活動框內的分布子範圍
+  function getDirectionalSubBounds(mode = state.mode, customR = null) {
+    const b = getEffectiveStarSpawnBounds(mode, customR);
     const spanX = Math.max(0.08, b.maxX - b.minX);
     const spanY = Math.max(0.06, b.maxY - b.minY);
+    const midX = (b.minX + b.maxX) * 0.5;
     const midY = (b.minY + b.maxY) * 0.5;
 
-    if (config.rangeMode === 'left') {
-      return {
-        ...b,
-        minX: b.minX,
-        maxX: b.minX + spanX * 0.48
-      };
-    }
-    if (config.rangeMode === 'right') {
-      return {
-        ...b,
-        minX: b.maxX - spanX * 0.48,
-        maxX: b.maxX
-      };
-    }
     if (config.rangeMode === 'lr') {
-      const halfBandY = mode === 'head' ? Math.min(0.035, spanY * 0.18) : Math.min(0.06, spanY * 0.22);
+      // 左右移動：主要產生水平位置變化，垂直限制於活動框中心附近狹窄舒適帶
+      const halfBandY = mode === 'head' ? Math.min(0.032, spanY * 0.16) : Math.min(0.055, spanY * 0.20);
       return {
         ...b,
         minY: Math.max(b.minY, midY - halfBandY),
         maxY: Math.min(b.maxY, midY + halfBandY)
       };
     }
+
+    if (config.rangeMode === 'ud') {
+      // 上下移動：主要產生垂直位置變化，水平限制於活動框中心附近狹窄舒適帶
+      const halfBandX = mode === 'head' ? Math.min(0.04, spanX * 0.18) : Math.min(0.065, spanX * 0.20);
+      return {
+        ...b,
+        minX: Math.max(b.minX, midX - halfBandX),
+        maxX: Math.min(b.maxX, midX + halfBandX)
+      };
+    }
+
+    // 自由移動（free）：完整使用活動框內的上下左右空間
     return b;
   }
 
@@ -1588,7 +1726,6 @@ button:disabled {
     state.lastFrameTs = performance.now();
     trackerOutput.found = false;
     trackerOutput.colorRadiusPx = 0;
-    // 切換模式或重置追蹤時，清除普通停留，但充能進度凍結保留
     game.targets.forEach(t => {
       if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
         t.dwellMs = 0;
@@ -1622,7 +1759,6 @@ button:disabled {
       if (!state.modeReady) {
         state.stableMs = 0;
       }
-      // 失去追蹤時，一般碰觸停留歸零；充能星星則完全凍結進度不歸零
       game.targets.forEach(t => {
         if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
           t.dwellMs = 0;
@@ -1682,10 +1818,14 @@ button:disabled {
         );
         return;
       }
+      const progressText =
+        config.challengeType === 'count'
+          ? `已完成 ${game.completedSets}/${config.targetCount} 組`
+          : `已完成 ${game.completedSets} 組`;
       updateStatusUI(
         `請碰觸第 ${game.connectNextOrder} 號星`,
         'good',
-        `● 請依序碰觸第 ${game.connectNextOrder} / ${game.targets.length} 顆星星（已完成 ${game.completedSets} 組）`
+        `● 請依序碰觸第 ${game.connectNextOrder} / ${game.targets.length} 號星（${progressText}）`
       );
       return;
     }
@@ -1694,7 +1834,7 @@ button:disabled {
       updateStatusUI(
         '已準備好｜星星充能',
         'good',
-        `● 將綠色定位環停留在能量星內直到圓環集滿（已完成 ${game.collected} 次）`
+        `● 將綠色定位環停留在能量星內直到圓環集滿（已完成 ${game.completedTargets} 次）`
       );
       return;
     }
@@ -1702,13 +1842,12 @@ button:disabled {
     updateStatusUI(
       '已準備好｜正在追蹤' + modeName(m),
       'good',
-      `● 移動${modeName(m)}碰觸星星（已完成 ${game.collected} 次）`
+      `● 移動${modeName(m)}碰觸星星（已完成 ${game.completedTargets} 次）`
     );
   }
 
-  // ==================== V2 三模式星星生成與洗牌袋配額引擎 ====================
+  // ==================== V2 三模式星星生成與三種方向分布引擎 ====================
 
-  // 洗牌袋抽取下一顆收集星星種類（確保特殊星星比例穩定公平）
   function drawNextCollectStarType() {
     if (config.specialFreq === 'off') return 'normal';
     if (!game.shuffleBag.length) {
@@ -1728,72 +1867,44 @@ button:disabled {
   function drawNextChargeStarType() {
     if (config.chargeTypeMode === 'static') return 'charge_static';
     if (config.chargeTypeMode === 'moving') return 'charge_moving';
-    return game.collected % 2 === 0 ? 'charge_static' : 'charge_moving';
+    return game.completedTargets % 2 === 0 ? 'charge_static' : 'charge_moving';
   }
 
-  // 依據當前方向模式（左右交替、上下左右、單側、隨機）計算單顆星星位置
+  // 依據三種方向設定（lr 左右移動、ud 上下移動、free 自由移動）計算單顆星星位置
   function pickSingleStarPosition(b, avoidX, avoidY) {
+    const midX = (b.minX + b.maxX) * 0.5;
     const midY = (b.minY + b.maxY) * 0.5;
     const spanX = Math.max(0.08, b.maxX - b.minX);
     const spanY = Math.max(0.06, b.maxY - b.minY);
     const minDistNorm = Math.min(
       Math.max(spanX, spanY) * 0.45,
-      Math.max(0.12, (b.starR * 1.9) / Math.min(b.W, b.H))
+      Math.max(0.11, (b.starR * 1.85) / Math.min(b.W, b.H))
     );
 
-    let cx = (b.minX + b.maxX) * 0.5;
+    let cx = midX;
     let cy = midY;
 
     if (config.rangeMode === 'lr') {
+      // 左右移動：主要產生水平位置變化，左、右交替出現
       const side = game.lrNextSide;
       game.lrNextSide = side === 'left' ? 'right' : 'left';
       const leftZone = b.minX + spanX * (0.06 + Math.random() * 0.16);
       const rightZone = b.maxX - spanX * (0.06 + Math.random() * 0.16);
       cx = side === 'left' ? leftZone : rightZone;
-      const yJitter = state.mode === 'head' ? Math.min(0.03, spanY * 0.12) : Math.min(0.07, spanY * 0.15);
+      const yJitter = state.mode === 'head' ? Math.min(0.025, spanY * 0.12) : Math.min(0.05, spanY * 0.14);
       cy = midY + (Math.random() - 0.5) * yJitter;
-    } else if (config.rangeMode === 'left') {
-      const anchors = [
-        { x: b.minX + spanX * 0.08, y: midY },
-        { x: b.minX + spanX * 0.36, y: midY - spanY * 0.28 },
-        { x: b.minX + spanX * 0.12, y: midY + spanY * 0.28 },
-        { x: b.minX + spanX * 0.38, y: midY }
-      ];
-      const pick = anchors[game.allStepIndex % anchors.length];
-      game.allStepIndex++;
-      cx = pick.x;
-      cy = pick.y;
-    } else if (config.rangeMode === 'right') {
-      const anchors = [
-        { x: b.maxX - spanX * 0.08, y: midY },
-        { x: b.maxX - spanX * 0.36, y: midY - spanY * 0.28 },
-        { x: b.maxX - spanX * 0.12, y: midY + spanY * 0.28 },
-        { x: b.maxX - spanX * 0.38, y: midY }
-      ];
-      const pick = anchors[game.allStepIndex % anchors.length];
-      game.allStepIndex++;
-      cx = pick.x;
-      cy = pick.y;
-    } else if (config.rangeMode === 'all') {
-      const midX = (b.minX + b.maxX) * 0.5;
-      const anchors = [
-        { x: b.minX + spanX * 0.10, y: midY },
-        { x: b.maxX - spanX * 0.10, y: midY },
-        { x: midX, y: b.minY + spanY * 0.10 },
-        { x: midX, y: b.maxY - spanY * 0.10 },
-        { x: b.minX + spanX * 0.18, y: b.minY + spanY * 0.18 },
-        { x: b.maxX - spanX * 0.18, y: b.maxY - spanY * 0.18 }
-      ];
-      let bestPick = anchors[game.allStepIndex % anchors.length];
-      game.allStepIndex++;
-      if (avoidX !== null && Math.hypot(bestPick.x - avoidX, bestPick.y - avoidY) < minDistNorm) {
-        bestPick = anchors[game.allStepIndex % anchors.length];
-        game.allStepIndex++;
-      }
-      cx = bestPick.x;
-      cy = bestPick.y;
+    } else if (config.rangeMode === 'ud') {
+      // 上下移動：主要產生垂直位置變化，上、下交替出現
+      const side = game.udNextSide;
+      game.udNextSide = side === 'top' ? 'bottom' : 'top';
+      const topZone = b.minY + spanY * (0.06 + Math.random() * 0.16);
+      const bottomZone = b.maxY - spanY * (0.06 + Math.random() * 0.16);
+      cy = side === 'top' ? topZone : bottomZone;
+      const xJitter = state.mode === 'head' ? Math.min(0.03, spanX * 0.12) : Math.min(0.055, spanX * 0.14);
+      cx = midX + (Math.random() - 0.5) * xJitter;
     } else {
-      for (let attempt = 0; attempt < 12; attempt++) {
+      // 自由移動（上下左右）：在活動框內產生上下左右不同位置，並確保與前一位置保持移動距離
+      for (let attempt = 0; attempt < 14; attempt++) {
         const rx = b.minX + Math.random() * spanX;
         const ry = b.minY + Math.random() * spanY;
         cx = rx;
@@ -1810,68 +1921,135 @@ button:disabled {
     };
   }
 
-  // 為移動星星與移動充能星星建立平滑速度向量（限制在當前活動範圍與方向模式內）
+  // 為移動星星與移動充能星星建立平滑速度向量（遵守左右／上下／自由方向限制）
   function createMovingVelocity(type) {
     const moveBounds = getDirectionalSubBounds(state.mode);
     const spanX = Math.max(0.08, moveBounds.maxX - moveBounds.minX);
-    const spanY = Math.max(0.04, moveBounds.maxY - moveBounds.minY);
-    // 約 8~10 秒橫越一次活動範圍，移動充能星星再放慢 25%
+    const spanY = Math.max(0.06, moveBounds.maxY - moveBounds.minY);
     const speedScale = type === 'charge_moving' ? 0.085 : 0.115;
     const dirX = Math.random() < 0.5 ? 1 : -1;
     const dirY = Math.random() < 0.5 ? 1 : -1;
-    const vx = spanX * speedScale * dirX;
-    const vy = config.rangeMode === 'lr' ? 0 : spanY * speedScale * 0.65 * dirY;
-    return { vx, vy };
+
+    if (config.rangeMode === 'lr') {
+      return { vx: spanX * speedScale * dirX, vy: 0 };
+    }
+    if (config.rangeMode === 'ud') {
+      return { vx: 0, vy: spanY * speedScale * dirY };
+    }
+    return {
+      vx: spanX * speedScale * dirX,
+      vy: spanY * speedScale * 0.72 * dirY
+    };
+  }
+
+  // 為「星星連線」計算活動框內的自適應顆數、目標縮放比例與無重疊座標分布
+  function generateConnectPositions() {
+    const baseR = getBaseStarRadiusPx();
+    const W = Math.max(200, stage.clientWidth || 360);
+    const H = Math.max(200, stage.clientHeight || 480);
+
+    let radiusScale = 1.0;
+    let count = config.connectStarCount;
+    let b = getEffectiveStarSpawnBounds(state.mode, Math.round(baseR * radiusScale));
+    const spanPxX = Math.max(40, (b.maxX - b.minX) * W);
+    const spanPxY = Math.max(40, (b.maxY - b.minY) * H);
+
+    // 計算單一方向軸或周長可用的最大長度，若空間較窄，先適度縮小目標（最低 0.68 倍），再必要時自動減少顆數
+    const availLengthPx =
+      config.rangeMode === 'lr'
+        ? spanPxX
+        : config.rangeMode === 'ud'
+        ? spanPxY
+        : Math.PI * (spanPxX * 0.44 + spanPxY * 0.44);
+
+    const minGapFactor = config.rangeMode === 'free' ? 2.35 : 2.15;
+    const slotsNeeded = config.rangeMode === 'free' ? count : Math.max(1, count - 1);
+    const requiredLengthAtFull = slotsNeeded * (baseR * minGapFactor);
+
+    if (availLengthPx < requiredLengthAtFull) {
+      radiusScale = Math.max(0.68, availLengthPx / Math.max(1, requiredLengthAtFull));
+      b = getEffectiveStarSpawnBounds(state.mode, Math.round(baseR * radiusScale));
+    }
+
+    const scaledR = Math.max(20, Math.round(baseR * radiusScale));
+    const minDistPx = scaledR * 2.05;
+
+    // 若縮小至 0.68 倍後活動框仍不足以容納指定顆數而不重疊，自動減少顆數（如 4 -> 3 -> 2）
+    while (count > 2) {
+      const slots = config.rangeMode === 'free' ? count : count - 1;
+      const curSpanX = Math.max(30, (b.maxX - b.minX) * W);
+      const curSpanY = Math.max(30, (b.maxY - b.minY) * H);
+      const curAvail =
+        config.rangeMode === 'lr'
+          ? curSpanX
+          : config.rangeMode === 'ud'
+          ? curSpanY
+          : Math.PI * (curSpanX * 0.44 + curSpanY * 0.44);
+      if (curAvail >= slots * minDistPx) break;
+      count--;
+    }
+
+    game.connectRadiusScale = radiusScale;
+
+    const spanX = Math.max(0.06, b.maxX - b.minX);
+    const spanY = Math.max(0.06, b.maxY - b.minY);
+    const midX = (b.minX + b.maxX) * 0.5;
+    const midY = (b.minY + b.maxY) * 0.5;
+    const positions = [];
+
+    if (config.rangeMode === 'lr') {
+      // 左右移動：沿水平軸等距分布，微小高度錯開
+      for (let i = 0; i < count; i++) {
+        const t = count === 1 ? 0.5 : i / (count - 1);
+        const px = b.minX + spanX * (0.06 + t * 0.88);
+        const py = midY + (i % 2 === 0 ? -1 : 1) * Math.min(0.022, spanY * 0.16);
+        positions.push({
+          x: Math.max(b.minX, Math.min(b.maxX, px)),
+          y: Math.max(b.minY, Math.min(b.maxY, py))
+        });
+      }
+    } else if (config.rangeMode === 'ud') {
+      // 上下移動：沿垂直軸等距分布，微小水平錯開
+      for (let i = 0; i < count; i++) {
+        const t = count === 1 ? 0.5 : i / (count - 1);
+        const py = b.minY + spanY * (0.06 + t * 0.88);
+        const px = midX + (i % 2 === 0 ? -1 : 1) * Math.min(0.025, spanX * 0.16);
+        positions.push({
+          x: Math.max(b.minX, Math.min(b.maxX, px)),
+          y: Math.max(b.minY, Math.min(b.maxY, py))
+        });
+      }
+    } else {
+      // 自由移動（上下左右）：在活動框內以橢圓端點分布，確保上下左右皆有且彼此距離最大
+      const baseAngle = Math.random() * Math.PI * 2;
+      const rx = spanX * 0.42;
+      const ry = spanY * 0.42;
+      for (let i = 0; i < count; i++) {
+        const ang = baseAngle + (Math.PI * 2 * i) / count;
+        positions.push({
+          x: Math.max(b.minX, Math.min(b.maxX, midX + Math.cos(ang) * rx)),
+          y: Math.max(b.minY, Math.min(b.maxY, midY + Math.sin(ang) * ry))
+        });
+      }
+    }
+
+    // 洗牌打亂各座標對應的順序號
+    for (let i = positions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [positions[i], positions[j]] = [positions[j], positions[i]];
+    }
+
+    return { positions, bounds: b };
   }
 
   // 產生下一顆或下一組星星
   function spawnNextTargets(now = performance.now()) {
     if (state.gameState === 'game_complete') return;
-    const b = getEffectiveStarSpawnBounds(state.mode);
-    const avoidX = trackerOutput.found ? trackerOutput.x : (game.prevHitPoint ? game.prevHitPoint.x : null);
-    const avoidY = trackerOutput.found ? trackerOutput.y : (game.prevHitPoint ? game.prevHitPoint.y : null);
-    const hitRadiusPx = b.starR * 1.08;
 
-    // 模式 C：星星連線（一次產生 2～4 顆帶順序的星星，具防重疊最小間距保護）
+    // 模式 C：星星連線
     if (config.gamePlayMode === 'connect') {
-      const subB = getDirectionalSubBounds(state.mode);
-      const spanX = Math.max(0.10, subB.maxX - subB.minX);
-      const spanY = Math.max(0.06, subB.maxY - subB.minY);
-      const midX = (subB.minX + subB.maxX) * 0.5;
-      const midY = (subB.minY + subB.maxY) * 0.5;
-
-      // 頭部模式或極窄範圍時最多限制 3 顆，避免碰撞圈重疊死鎖
-      const desiredCount =
-        state.mode === 'head' && config.connectStarCount > 3 ? 3 : config.connectStarCount;
-
-      const positions = [];
-      if (config.rangeMode === 'lr' || spanY < 0.12) {
-        // 水平等距排列後打亂順序
-        for (let i = 0; i < desiredCount; i++) {
-          const ratio = desiredCount === 1 ? 0.5 : i / (desiredCount - 1);
-          const px = subB.minX + spanX * (0.08 + ratio * 0.84);
-          const py = midY + (i % 2 === 0 ? -1 : 1) * Math.min(0.025, spanY * 0.25);
-          positions.push({ x: px, y: py });
-        }
-      } else {
-        // 橢圓／多邊形端點分布，確保每顆星星彼此距離最開
-        const baseAngle = Math.random() * Math.PI * 2;
-        const rx = spanX * 0.40;
-        const ry = spanY * 0.38;
-        for (let i = 0; i < desiredCount; i++) {
-          const ang = baseAngle + (Math.PI * 2 * i) / desiredCount;
-          positions.push({
-            x: Math.max(b.minX, Math.min(b.maxX, midX + Math.cos(ang) * rx)),
-            y: Math.max(b.minY, Math.min(b.maxY, midY + Math.sin(ang) * ry))
-          });
-        }
-      }
-
-      // 洗牌打亂各座標對應的順序號
-      for (let i = positions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [positions[i], positions[j]] = [positions[j], positions[i]];
-      }
+      const { positions, bounds: b } = generateConnectPositions();
+      const hitRadiusPx = getStarRadiusPx() * 1.08;
 
       game.targets = positions.map((pos, idx) => {
         const distToTracker = trackerOutput.found
@@ -1915,7 +2093,13 @@ button:disabled {
       return;
     }
 
-    // 模式 A（星星收集）與 模式 B（星星充能）：一次產生 1 顆目標星
+    // 模式 A（星星收集）與 模式 B（星星充能）
+    game.connectRadiusScale = 1.0;
+    const b = getEffectiveStarSpawnBounds(state.mode);
+    const avoidX = trackerOutput.found ? trackerOutput.x : (game.prevHitPoint ? game.prevHitPoint.x : null);
+    const avoidY = trackerOutput.found ? trackerOutput.y : (game.prevHitPoint ? game.prevHitPoint.y : null);
+    const hitRadiusPx = b.starR * 1.08;
+
     const starType =
       config.gamePlayMode === 'charge' ? drawNextChargeStarType() : drawNextCollectStarType();
     const pos = pickSingleStarPosition(b, avoidX, avoidY);
@@ -1958,9 +2142,9 @@ button:disabled {
 
   // 重置整回合遊戲
   function resetGame() {
-    game.collected = 0;
-    game.score = 0;
+    game.completedTargets = 0;
     game.completedSets = 0;
+    game.score = 0;
     game.elapsedActiveMs = 0;
     game.remainingMs = config.challengeDurationSec * 1000;
     game.countsByType = {
@@ -1978,9 +2162,11 @@ button:disabled {
     game.connectMemoryRemainMs = 0;
     game.connectAutoHintRemainMs = 0;
     game.connectIdleMs = 0;
+    game.connectRadiusScale = 1.0;
     game.prevHitPoint = null;
     game.nextSpawnAt = performance.now() + 100;
     game.lrNextSide = 'left';
+    game.udNextSide = 'top';
     game.allStepIndex = 0;
     game.particles = [];
     game.collectBursts = [];
@@ -1997,22 +2183,22 @@ button:disabled {
     }
   }
 
-  // 計算單顆星星在限時挑戰中的得分（嚴格遵守確認規格：1～3 分）
+  // 計算單顆星星在限時挑戰中的得分（1～3 分）
   function getPointsForTarget(target) {
     switch (target.type) {
       case 'timed':
-        return 3; // 3 秒內成功收集限時星得 3 分
+        return 3;
       case 'moving':
-        return 2; // 移動星星得 2 分
+        return 2;
       case 'charge_static':
-        return 2; // 固定充能星星得 2 分
+        return 2;
       case 'charge_moving':
-        return 3; // 移動充能星星得 3 分
+        return 3;
       case 'connect':
-        return 1; // 星星連線每顆得 1 分（整組完成另加 2 或 3 分）
+        return 1;
       case 'normal':
       default:
-        return 1; // 普通星星（含限時退化後）得 1 分
+        return 1;
     }
   }
 
@@ -2073,7 +2259,7 @@ button:disabled {
     }
   }
 
-  // 建立並顯示回合結算統計畫面
+  // 建立並顯示回合結算統計畫面（明確呈現完成組數、實際碰觸星星總數與總練習時間）
   function finishRoundAndShowSummary() {
     setGameState('game_complete');
     const durationStr = formatDurationText(game.elapsedActiveMs);
@@ -2093,41 +2279,55 @@ button:disabled {
       grid.append(div);
     };
 
+    const isConnect = config.gamePlayMode === 'connect';
+
     if (config.challengeType === 'count') {
-      $('completeTitle').textContent = '🎉 太棒了！完成指定次數練習';
+      $('completeTitle').textContent = '🎉 太棒了！完成指定目標練習';
       $('completeSummary').textContent = `您已順利完成本回合「${gamePlayModeName()}」復健練習！`;
-      addStat('完成次數', `${game.collected} / ${config.targetCount} 次`, true);
-      addStat('總練習時間', durationStr, true);
-      addStat('使用的遊戲模式', gamePlayModeName());
-      addStat('使用的追蹤方式', `${modeName(state.mode)}追蹤`);
-      if (config.gamePlayMode === 'connect') {
-        addStat('完成連線組數', `共完成 ${game.completedSets} 組星座連線`, false, true);
+      if (isConnect) {
+        addStat('完成連線組數', `${game.completedSets} / ${config.targetCount} 組`, true);
+        addStat('實際碰觸星星總數', `共 ${game.completedTargets} 顆`, true);
+        addStat('總練習時間', durationStr);
+        addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`);
+      } else {
+        addStat('完成次數', `${game.completedTargets} / ${config.targetCount} 次`, true);
+        addStat('總練習時間', durationStr, true);
+        addStat('使用的遊戲模式', gamePlayModeName());
+        addStat('使用的追蹤方式', `${modeName(state.mode)}追蹤`);
       }
     } else {
       $('completeTitle').textContent = '🏆 時間到！完成限時挑戰';
       $('completeSummary').textContent = `在 ${config.challengeDurationSec} 秒內您完成了精彩的表現！`;
       addStat('累積總分', `${game.score} 分`, true);
-      addStat('成功完成次數', `${game.collected} 次`, true);
-      addStat('挑戰時間', `${config.challengeDurationSec} 秒`);
-      addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`);
-
-      const c = game.countsByType;
-      let detailParts = [];
-      if (config.gamePlayMode === 'collect') {
-        detailParts.push(`普通星 ${c.normal} 顆`);
-        if (c.timed > 0 || config.specialFreq !== 'off') detailParts.push(`限時星 ${c.timed} 顆`);
-        if (c.moving > 0 || config.specialFreq !== 'off') detailParts.push(`移動星 ${c.moving} 顆`);
-      } else if (config.gamePlayMode === 'charge') {
-        detailParts.push(`固定充能 ${c.charge_static} 顆`);
-        detailParts.push(`移動充能 ${c.charge_moving} 顆`);
+      if (isConnect) {
+        addStat('完成連線組數', `${game.completedSets} 組`, true);
+        addStat('實際碰觸星星總數', `共 ${game.completedTargets} 顆`);
+        addStat('挑戰時間', `${config.challengeDurationSec} 秒`);
+        addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`, false, true);
       } else {
-        detailParts.push(`連線星星 ${c.connect} 顆`);
-        detailParts.push(`完成整組 ${game.completedSets} 組`);
+        addStat('成功完成次數', `${game.completedTargets} 次`, true);
+        addStat('挑戰時間', `${config.challengeDurationSec} 秒`);
+        addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`);
+
+        const c = game.countsByType;
+        const detailParts = [];
+        if (config.gamePlayMode === 'collect') {
+          detailParts.push(`普通星 ${c.normal} 顆`);
+          if (c.timed > 0 || config.specialFreq !== 'off') detailParts.push(`限時星 ${c.timed} 顆`);
+          if (c.moving > 0 || config.specialFreq !== 'off') detailParts.push(`移動星 ${c.moving} 顆`);
+        } else {
+          detailParts.push(`固定充能 ${c.charge_static} 顆`);
+          detailParts.push(`移動充能 ${c.charge_moving} 顆`);
+        }
+        addStat('各類星星完成數', detailParts.join('、'), false, true);
       }
-      addStat('各類星星完成數', detailParts.join('、'), false, true);
     }
 
-    updateStatusUI('練習完成！', 'good', `🎉 已完成本回合練習（共 ${game.collected} 次）`);
+    const summaryCountText = isConnect
+      ? `完成 ${game.completedSets} 組連線（共碰觸 ${game.completedTargets} 顆星）`
+      : `共完成 ${game.completedTargets} 次`;
+    updateStatusUI('練習完成！', 'good', `🎉 已完成本回合練習｜${summaryCountText}`);
+
     const reduced = reducedMotionQuery.matches;
     setTimeout(() => {
       if (state.gameState === 'game_complete') {
@@ -2136,7 +2336,7 @@ button:disabled {
     }, reduced ? 120 : 360);
   }
 
-  // 觸發單顆星星成功完成
+  // 觸發單顆星星成功碰觸／充能完成
   function handleTargetCompleted(target, now) {
     if (!target || target.collectedLock || state.gameState === 'game_complete') return;
     target.collectedLock = true;
@@ -2147,85 +2347,116 @@ button:disabled {
     const sy = target.y * H;
     const starR = getStarRadiusPx();
 
-    game.collected += 1;
+    // 累積成功碰觸的星星總數 +1
+    game.completedTargets += 1;
     game.countsByType[target.type] = (game.countsByType[target.type] || 0) + 1;
     game.prevHitPoint = { x: target.x, y: target.y, rPx: starR * 1.1 };
 
     const pts = getPointsForTarget(target);
     game.score += pts;
 
-    const isMilestone = game.collected % 5 === 0;
-    const isBigBonus = target.type === 'timed' || target.type === 'charge_moving';
-
-    // 處理「星星連線」模式的順序推進與整組完成判定
-    let isSetFinished = false;
+    // 情況 A：星星連線模式（碰到單顆只播簡短音效；完成整組才 completedSets + 1 並語音報出完成組數）
     if (config.gamePlayMode === 'connect') {
       target.completed = true;
       game.connectIdleMs = 0;
       game.connectAutoHintRemainMs = 0;
 
+      // 若尚未連完本組最後一顆：只播放簡短成功音效與單顆粒子，不報語音、不增加 completedSets
       if (game.connectNextOrder < game.targets.length) {
         game.connectNextOrder += 1;
-      } else {
-        isSetFinished = true;
-        game.completedSets += 1;
-        const setBonus = config.connectSubMode === 'memory' ? 3 : 2;
-        game.score += setBonus;
-        game.constellationBurst = {
-          points: game.targets.map(t => ({ x: t.x * W, y: t.y * H })),
-          born: now,
-          duration: reducedMotionQuery.matches ? 220 : 520
-        };
         if (config.challengeType === 'timed') {
-          addFloatingText(W * 0.5, H * 0.35, `✨ 整組連線完成 +${setBonus} 分！`, '#70e5ab');
-        } else {
-          addFloatingText(W * 0.5, H * 0.35, `✨ 完成第 ${game.completedSets} 組連線！`, '#70e5ab');
+          addFloatingText(sx, sy - starR * 0.8, `+${pts} 分`, '#ffe066');
         }
+        playGameSound('connect_node');
+        spawnCelebrationParticles(sx, sy, starR * 0.85, false, false);
+        updateScoreAndTimerUI();
+        refreshTrackingBanner(state.mode);
+        return;
       }
-    } else {
+
+      // 已完成本組最後一顆星星：completedSets + 1，計算整組加分並播報語音組數！
+      game.completedSets += 1;
+      const setBonus = config.connectSubMode === 'memory' ? 3 : 2;
+      game.score += setBonus;
+      const isSetMilestone = game.completedSets % 5 === 0;
+
+      game.constellationBurst = {
+        points: game.targets.map(t => ({ x: t.x * W, y: t.y * H })),
+        born: now,
+        duration: reducedMotionQuery.matches ? 220 : 520
+      };
+
+      if (config.challengeType === 'timed') {
+        addFloatingText(sx, sy - starR * 0.8, `+${pts} 分`, '#ffe066');
+        addFloatingText(W * 0.5, H * 0.35, `✨ 第 ${game.completedSets} 組完成 +${setBonus} 分！`, '#70e5ab');
+      } else {
+        addFloatingText(
+          W * 0.5,
+          H * 0.35,
+          `✨ 完成第 ${game.completedSets} / ${config.targetCount} 組連線！`,
+          '#70e5ab'
+        );
+      }
+
+      updateScoreAndTimerUI();
+
+      // 檢查指定組數是否已達成（指定 5 即代表完成 5 組連線）
+      const shouldEndConnectRound =
+        config.challengeType === 'count' && game.completedSets >= config.targetCount;
+
+      if (shouldEndConnectRound) {
+        playGameSound('final');
+        speakCompletionCount(game.completedSets, true);
+        spawnCelebrationParticles(sx, sy, starR, true, true);
+        finishRoundAndShowSummary();
+        return;
+      }
+
+      playGameSound('set_complete');
+      speakCompletionCount(game.completedSets, false);
+      spawnCelebrationParticles(sx, sy, starR, true, isSetMilestone);
+
       game.targets = [];
+      game.nextSpawnAt = now + (reducedMotionQuery.matches ? 180 : 360);
+      refreshTrackingBanner(state.mode);
+      return;
     }
+
+    // 情況 B：星星收集與星星充能模式（每完成單顆星星即計 1 次並語音報數 completedTargets）
+    const isMilestone = game.completedTargets % 5 === 0;
+    const isBigBonus = target.type === 'timed' || target.type === 'charge_moving';
 
     if (config.challengeType === 'timed') {
       addFloatingText(sx, sy - starR * 0.8, `+${pts} 分`, isBigBonus ? '#f472b6' : '#ffe066');
     } else if (isMilestone) {
-      addFloatingText(sx, sy - starR * 0.8, `🎯 已完成 ${game.collected} 次！`, '#70e5ab');
+      addFloatingText(sx, sy - starR * 0.8, `🎯 已完成 ${game.completedTargets} 次！`, '#70e5ab');
     }
 
+    game.targets = [];
     updateScoreAndTimerUI();
 
-    // 檢查指定次數挑戰是否達到結束條件（星星連線模式需先完成當前整組才結算）
-    const shouldEndCountRound =
-      config.challengeType === 'count' &&
-      game.collected >= config.targetCount &&
-      (config.gamePlayMode !== 'connect' || isSetFinished);
+    const shouldEndSingleRound =
+      config.challengeType === 'count' && game.completedTargets >= config.targetCount;
 
-    if (shouldEndCountRound) {
+    if (shouldEndSingleRound) {
       playGameSound('final');
-      speakCompletionCount(game.collected, true);
+      speakCompletionCount(game.completedTargets, true);
       spawnCelebrationParticles(sx, sy, starR, true, true);
       finishRoundAndShowSummary();
       return;
     }
 
-    // 播放音效與中文報數
-    if (isSetFinished) {
-      playGameSound('set_complete');
-    } else if (isBigBonus) {
+    if (isBigBonus) {
       playGameSound('bonus');
     } else if (target.type === 'charge_static') {
       playGameSound('charge_done');
     } else {
       playGameSound('normal');
     }
-    speakCompletionCount(game.collected, false);
+    speakCompletionCount(game.completedTargets, false);
     spawnCelebrationParticles(sx, sy, starR, isBigBonus, isMilestone);
 
-    if (config.gamePlayMode !== 'connect' || isSetFinished) {
-      game.targets = [];
-      game.nextSpawnAt = now + (reducedMotionQuery.matches ? 180 : 340);
-    }
-
+    game.nextSpawnAt = now + (reducedMotionQuery.matches ? 180 : 340);
     refreshTrackingBanner(state.mode);
   }
 
@@ -2240,27 +2471,24 @@ button:disabled {
       return;
     }
 
-    // 只有在完成模式切換 1 秒穩定確認 (state.modeReady) 後，才推進練習計時與遊戲物件
     if (!state.modeReady) {
       return;
     }
 
-    // 累計實際有效練習時間
     game.elapsedActiveMs += dt;
 
-    // 限時挑戰倒數（在記憶順序版展示數字的倒數期間暫停扣除總挑戰時間，確保公平）
+    // 限時挑戰倒數（記憶順序版展示數字期間暫停扣除總挑戰時間）
     if (config.challengeType === 'timed' && !game.connectMemoryPhase) {
       game.remainingMs = Math.max(0, game.remainingMs - dt);
       updateScoreAndTimerUI();
       if (game.remainingMs <= 0) {
         playGameSound('final');
-        speakCompletionCount(game.collected, true);
+        speakCompletionCount(getPrimaryCount(), true);
         finishRoundAndShowSummary();
         return;
       }
     }
 
-    // 過場結束後生成下一顆／下一組目標星
     if (!game.targets.length && now >= game.nextSpawnAt) {
       spawnNextTargets(now);
     }
@@ -2272,7 +2500,6 @@ button:disabled {
     const dtSec = dt / 1000;
     const moveBounds = getDirectionalSubBounds(state.mode);
 
-    // 處理「星星連線（記憶順序版）」的記憶展示倒數與自動容錯閃爍提示
     if (config.gamePlayMode === 'connect') {
       if (game.connectMemoryPhase) {
         game.connectMemoryRemainMs = Math.max(0, game.connectMemoryRemainMs - dt);
@@ -2281,13 +2508,12 @@ button:disabled {
           game.connectIdleMs = 0;
         }
         refreshTrackingBanner(state.mode);
-        return; // 記憶展示期間鎖定碰觸判定，避免誤觸
+        return;
       }
 
       if (game.connectAutoHintRemainMs > 0) {
         game.connectAutoHintRemainMs = Math.max(0, game.connectAutoHintRemainMs - dt);
       } else if (config.connectSubMode === 'memory' && trackerOutput.found) {
-        // 記憶版若超過 5 秒未觸碰正確目標，自動閃爍提示 1.5 秒
         game.connectIdleMs += dt;
         if (game.connectIdleMs >= 5000) {
           game.connectIdleMs = 0;
@@ -2296,7 +2522,6 @@ button:disabled {
       }
     }
 
-    // 逐一更新場上目標星（移動軌跡、3秒限時退化、碰觸與充能判定）
     for (let i = 0; i < game.targets.length; i++) {
       const t = game.targets[i];
       if (!t || t.completed || t.collectedLock) continue;
@@ -2305,20 +2530,19 @@ button:disabled {
       if (t.type === 'timed') {
         t.ttlMs = Math.max(0, t.ttlMs - dt);
         if (t.ttlMs <= 0) {
-          // 3 秒時間到不消失落空，退化為普通黃色星星並保留當前已累積的停留進度
           t.type = 'normal';
           t.degradedFromTimed = true;
           addFloatingText(t.x * W, t.y * H - starR, '轉為普通星星', '#ffd452');
         }
       }
 
-      // 2. 移動星星与移動充能星星的位置更新（靠近追蹤環時自動減速 40%）
+      // 2. 移動星星與移動充能星星位置更新（嚴格遵守活動框與三種方向限制，靠近時自動微減速）
       if (t.type === 'moving' || t.type === 'charge_moving') {
         let speedFactor = 1.0;
         if (trackerOutput.found) {
           const distPx = Math.hypot((trackerOutput.x - t.x) * W, (trackerOutput.y - t.y) * H);
           if (distPx <= starR * 1.45) {
-            speedFactor = 0.58; // 友善近距減速
+            speedFactor = 0.58;
           }
         }
 
@@ -2341,14 +2565,12 @@ button:disabled {
           t.vy = -Math.abs(t.vy);
         }
 
-        // 記錄流線尾跡座標
         t.trail.unshift({ x: t.x, y: t.y });
         if (t.trail.length > 8) t.trail.pop();
       }
 
       // 3. 檢查追蹤定位環是否碰觸目標星
       if (!trackerOutput.found || !Number.isFinite(trackerOutput.x) || !Number.isFinite(trackerOutput.y)) {
-        // 失去鏡頭追蹤 (found=false)：充能進度 100% 凍結保留；一般碰觸停留歸零
         if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
           t.dwellMs = 0;
         }
@@ -2359,7 +2581,6 @@ button:disabled {
       const ty = trackerOutput.y * H;
       const sx = t.x * W;
       const sy = t.y * H;
-      // 移動充能星星給予 1.25 倍較寬容的充能吸引半徑
       const radiusMult = t.type === 'charge_moving' ? 1.28 : 1.08;
       const hitRadius = starR * radiusMult + 10;
       const dist = Math.hypot(tx - sx, ty - sy);
@@ -2373,10 +2594,8 @@ button:disabled {
         }
       }
 
-      // 星星連線模式：檢查是否為當前順序號碼
       if (config.gamePlayMode === 'connect') {
         if (t.order !== game.connectNextOrder) {
-          // 碰觸到非當前順序的星星：不扣分、不重來；若在記憶版則自動觸發 1.5 秒數字閃爍提示
           if (dist <= hitRadius * 0.9) {
             t.wrongDwellMs = (t.wrongDwellMs || 0) + dt;
             if (t.wrongDwellMs >= 260) {
@@ -2393,7 +2612,6 @@ button:disabled {
           continue;
         }
 
-        // 碰觸正確的順序星星
         t.requiredMs = getDwellRequiredMs();
         if (dist <= hitRadius) {
           if (t.requiredMs <= 0) {
@@ -2412,7 +2630,6 @@ button:disabled {
         continue;
       }
 
-      // 星星充能模式：0.5 秒寬限期 + 慢速平滑回退機制
       if (t.type === 'charge_static' || t.type === 'charge_moving') {
         t.requiredMs = getChargeRequiredMs(t.type === 'charge_moving');
         if (dist <= hitRadius) {
@@ -2431,7 +2648,6 @@ button:disabled {
         continue;
       }
 
-      // 星星收集模式（普通星、限時彩虹星、移動青星）
       t.requiredMs = getDwellRequiredMs();
       if (dist <= hitRadius) {
         if (t.requiredMs <= 0) {
@@ -2508,7 +2724,7 @@ button:disabled {
     };
 
     updateScoreAndTimerUI();
-    ensureCurrentTargetsInsideBounds();
+    spawnNextTargets(performance.now());
     if (state.calibratingRange) {
       $('calibGuideText').textContent =
         `已恢復【${modeName(state.mode)}】預設範圍，可繼續拉框或按「完成套用」`;
@@ -2524,12 +2740,14 @@ button:disabled {
     $('statusBar').hidden = false;
     $('messageBanner').hidden = false;
 
-    ensureCurrentTargetsInsideBounds();
-    updateScoreAndTimerUI();
     if (applied) {
+      spawnNextTargets(performance.now());
       $('footerHint').textContent =
         `已套用${modeName()}活動範圍（更換手機位置或坐姿後可重新拉框）。`;
+    } else {
+      ensureCurrentTargetsInsideBounds();
     }
+    updateScoreAndTimerUI();
     refreshTrackingBanner(state.mode);
     renderScene();
   }
@@ -2646,7 +2864,6 @@ button:disabled {
     context.closePath();
   }
 
-  // 繪製移動星星／移動充能星星的柔和流線彗星尾跡
   function drawMotionTrail(target, W, H, r, colorRgb) {
     if (!target.trail || target.trail.length < 2) return;
     ctx.save();
@@ -2663,12 +2880,10 @@ button:disabled {
     ctx.restore();
   }
 
-  // 繪製單顆目標星星（依五種星星造型、倒數外圈、充能核心、連線數字徽章）
   function drawTargetEntity(target, W, H, baseR, now, isReady = true) {
     const cx = target.x * W;
     const cy = target.y * H;
 
-    // 若為星星連線中已完成的星星，繪製為小巧的金色星座錨點（不阻擋視線與路徑）
     if (target.completed) {
       ctx.save();
       ctx.beginPath();
@@ -2698,7 +2913,6 @@ button:disabled {
     const dwellProgress =
       isReady && target.requiredMs > 0 ? Math.min(1, Math.max(0, target.dwellMs / target.requiredMs)) : 0;
 
-    // 1. 若為移動類星星，先畫流線彗星尾跡
     if (type === 'moving') {
       drawMotionTrail(target, W, H, r, '56, 189, 248');
     } else if (type === 'charge_moving') {
@@ -2710,7 +2924,6 @@ button:disabled {
       ctx.globalAlpha = 0.55;
     }
 
-    // 2. 深色對比底襯光暈（確保在任何複雜前鏡頭衣服或亮背景前都清晰可辨）
     const darkBackdrop = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 1.45);
     darkBackdrop.addColorStop(0, 'rgba(6, 18, 26, 0.55)');
     darkBackdrop.addColorStop(1, 'rgba(6, 18, 26, 0)');
@@ -2719,7 +2932,6 @@ button:disabled {
     ctx.arc(cx, cy, r * 1.45, 0, Math.PI * 2);
     ctx.fill();
 
-    // 3. 彩色外發光暈
     let glowColorInner = 'rgba(255, 224, 102, 0.55)';
     let glowColorMid = 'rgba(255, 184, 48, 0.22)';
     if (type === 'timed') {
@@ -2745,7 +2957,6 @@ button:disabled {
     ctx.arc(cx, cy, r * 1.75, 0, Math.PI * 2);
     ctx.fill();
 
-    // 4. 充能星星專屬外圍能量護盾框
     if (type === 'charge_static' || type === 'charge_moving') {
       const shieldRot = reduced ? 0 : now * 0.0008;
       tracePolygonPath(ctx, cx, cy, r * 1.16, 6, shieldRot);
@@ -2755,7 +2966,6 @@ button:disabled {
       ctx.stroke();
     }
 
-    // 5. 繪製星星本體（優先檢查對應類別是否有設定外部透明圖層，否則使用專屬向量設計）
     const slotKey = customStarAssets[type] ? type : 'normal';
     const customSlot = customStarAssets[slotKey];
 
@@ -2767,7 +2977,6 @@ button:disabled {
       ctx.lineCap = 'round';
 
       if (type === 'timed') {
-        // 限時星星：彩虹漸層八角閃耀星芒
         const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
         grad.addColorStop(0, '#ff6b8b');
         grad.addColorStop(0.35, '#ffd452');
@@ -2783,14 +2992,14 @@ button:disabled {
         ctx.strokeStyle = '#ffffff';
         ctx.stroke();
 
-        // 中心白色閃光紋章
         ctx.shadowBlur = 0;
         traceStarPath(ctx, cx, cy, r * 0.45, r * 0.16, 4, 0);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         ctx.fill();
       } else if (type === 'moving') {
-        // 移動星星：亮青色流線五角彗星（帶微幅運動傾角）
-        const tilt = target.vx >= 0 ? 0.18 : -0.18;
+        const tilt = Math.abs(target.vx) >= Math.abs(target.vy)
+          ? (target.vx >= 0 ? 0.18 : -0.18)
+          : (target.vy >= 0 ? 0.12 : -0.12);
         const grad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
         grad.addColorStop(0, '#bae6fd');
         grad.addColorStop(0.5, '#38bdf8');
@@ -2805,13 +3014,11 @@ button:disabled {
         ctx.strokeStyle = '#ffffff';
         ctx.stroke();
 
-        // 內部流線高光
         ctx.shadowBlur = 0;
         traceStarPath(ctx, cx, cy - r * 0.05, r * 0.55, r * 0.26, 5, tilt);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
         ctx.fill();
       } else if (type === 'charge_static' || type === 'charge_moving') {
-        // 固定充能（寶石藍）与移動充能（極光紫）星星
         const isPurple = type === 'charge_moving';
         const tilt = isPurple ? (target.vx >= 0 ? 0.15 : -0.15) : 0;
         const grad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
@@ -2834,7 +3041,6 @@ button:disabled {
         ctx.strokeStyle = '#ffffff';
         ctx.stroke();
 
-        // 中心隨充能進度膨脹發亮的「能量核心」
         ctx.shadowBlur = 0;
         const coreScale = 0.24 + dwellProgress * 0.38;
         ctx.beginPath();
@@ -2845,7 +3051,6 @@ button:disabled {
         ctx.strokeStyle = isPurple ? '#f0abfc' : '#93c5fd';
         ctx.stroke();
       } else {
-        // 普通星星（金黃色）與星星連線星體
         const starGrad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
         starGrad.addColorStop(0, '#fff394');
         starGrad.addColorStop(0.55, '#ffd23f');
@@ -2868,7 +3073,6 @@ button:disabled {
       }
     }
 
-    // 6. 限時星星專屬：外圈 3 秒順時針倒數光環
     if (type === 'timed' && target.maxTtlMs > 0) {
       const ttlRatio = Math.min(1, Math.max(0, target.ttlMs / target.maxTtlMs));
       ctx.shadowBlur = 0;
@@ -2885,21 +3089,14 @@ button:disabled {
       ctx.stroke();
     }
 
-    // 7. 星星連線專屬：高對比中心數字徽章（或記憶版隱藏後的問號／閃爍提示）
     if (type === 'connect') {
       const isCurrentTarget = target.order === game.connectNextOrder;
-      // 決定是否顯示數字：
-      // (a) 數字提示版永遠顯示
-      // (b) 記憶順序版在記憶倒數階段顯示
-      // (c) 記憶順序版選「不限時 (memoryViewSec === 0)」時，在尚未完成第 1 顆前顯示所有數字，碰完第 1 顆後隱藏其餘數字
-      // (d) 記憶順序版觸發自動容錯提示 (connectAutoHintRemainMs > 0) 時，顯示當前目標數字
       const showNumber =
         config.connectSubMode === 'number' ||
         game.connectMemoryPhase ||
         (config.connectSubMode === 'memory' && config.memoryViewSec === 0 && game.connectNextOrder === 1) ||
         (game.connectAutoHintRemainMs > 0 && isCurrentTarget);
 
-      // 當前應觸碰的目標星（在數字版或自動提示時）加上柔和呼吸提示外圈
       if (isCurrentTarget && (config.connectSubMode === 'number' || game.connectAutoHintRemainMs > 0)) {
         ctx.beginPath();
         ctx.arc(cx, cy, r * 1.18, 0, Math.PI * 2);
@@ -2911,7 +3108,7 @@ button:disabled {
       }
 
       ctx.shadowBlur = 0;
-      const badgeR = Math.max(14, r * 0.44);
+      const badgeR = Math.max(13, r * 0.44);
       ctx.beginPath();
       ctx.arc(cx, cy, badgeR, 0, Math.PI * 2);
       ctx.fillStyle = showNumber ? 'rgba(9, 24, 32, 0.9)' : 'rgba(25, 48, 62, 0.85)';
@@ -2927,7 +3124,6 @@ button:disabled {
       ctx.fillText(showNumber ? String(target.order) : '?', cx, cy + 1);
     }
 
-    // 8. 碰觸停留或充能進度外環
     if (isReady && (dwellProgress > 0.01 || type === 'charge_static' || type === 'charge_moving')) {
       const ringR = r * 1.24;
       ctx.shadowBlur = 0;
@@ -2954,7 +3150,6 @@ button:disabled {
     ctx.restore();
   }
 
-  // 繪製星星連線模式的已連星座線條
   function drawConstellationLines(W, H) {
     if (config.gamePlayMode !== 'connect' || game.targets.length < 2) return;
     const sorted = [...game.targets].sort((a, b) => a.order - b.order);
@@ -2978,7 +3173,6 @@ button:disabled {
         ctx.stroke();
       }
 
-      // 從最後一顆已完成星連向使用者當前追蹤點的動態引導虛線
       if (trackerOutput.found && state.modeReady) {
         const lastPt = completedList[completedList.length - 1];
         ctx.shadowBlur = 0;
@@ -2994,9 +3188,7 @@ button:disabled {
     }
   }
 
-  // 繪製特效（收集放大、每 5 次里程碑雙層波紋、星座完成閃耀、粒子、飄字）
   function drawEffects(now) {
-    // 1. 整組星座連線完成閃耀線
     if (game.constellationBurst) {
       const cb = game.constellationBurst;
       const t = (now - cb.born) / cb.duration;
@@ -3019,7 +3211,6 @@ button:disabled {
       }
     }
 
-    // 2. 每 5 次里程碑雙層金色波紋
     for (let i = game.milestoneRipples.length - 1; i >= 0; i--) {
       const rp = game.milestoneRipples[i];
       const t = (now - rp.born) / rp.duration;
@@ -3045,7 +3236,6 @@ button:disabled {
       ctx.restore();
     }
 
-    // 3. 星星收集放大淡出光環
     for (let i = game.collectBursts.length - 1; i >= 0; i--) {
       const b = game.collectBursts[i];
       const t = (now - b.born) / b.duration;
@@ -3066,7 +3256,6 @@ button:disabled {
       ctx.restore();
     }
 
-    // 4. 閃亮粒子
     for (let i = game.particles.length - 1; i >= 0; i--) {
       const p = game.particles[i];
       const age = now - p.born;
@@ -3086,7 +3275,6 @@ button:disabled {
       ctx.restore();
     }
 
-    // 5. 飄浮加分與提示文字
     for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
       const ft = game.floatingTexts[i];
       const t = (now - ft.born) / ft.duration;
@@ -3279,7 +3467,6 @@ button:disabled {
       drawEffects(now);
     }
 
-    // 永遠將高對比綠色追蹤定位環繪製在最頂層，不被任何星星遮蔽
     if (trackerOutput.found) {
       drawTrackerRing(
         trackerOutput.x * W,
@@ -3321,7 +3508,11 @@ button:disabled {
         : `頭部模式（${hasCustom ? '自訂活動範圍' : '中心舒適小範圍'}）：確認穩定追蹤 1 秒後繼續。`;
 
     updateScoreAndTimerUI();
-    ensureCurrentTargetsInsideBounds();
+    if (config.gamePlayMode === 'connect') {
+      spawnNextTargets(performance.now());
+    } else {
+      ensureCurrentTargetsInsideBounds();
+    }
 
     if (state.calibratingRange) {
       openRangeCalibration();
@@ -4158,6 +4349,30 @@ button:disabled {
     if (e.target === $('settingsSheet')) closeSettings();
   });
 
+  // 直覺滑動式開關事件綁定（切換後立即生效，無須重啟遊戲）
+  $('voiceToggleInput').addEventListener('change', e => {
+    config.voiceOn = Boolean(e.target.checked);
+    const label = $('voiceStateText');
+    label.textContent = config.voiceOn ? '開啟' : '關閉';
+    label.className = 'switch-state-label' + (config.voiceOn ? ' on' : '');
+    if (config.voiceOn) {
+      unlockAudio();
+    } else if ('speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch {}
+    }
+  });
+
+  $('soundToggleInput').addEventListener('change', e => {
+    config.soundOn = Boolean(e.target.checked);
+    const label = $('soundStateText');
+    label.textContent = config.soundOn ? '開啟' : '關閉';
+    label.className = 'switch-state-label' + (config.soundOn ? ' on' : '');
+    if (config.soundOn) {
+      unlockAudio();
+      playGameSound('connect_node');
+    }
+  });
+
   document.querySelectorAll('.seg-btn[data-setting]').forEach(btn => {
     btn.addEventListener('click', () => {
       unlockAudio();
@@ -4195,7 +4410,7 @@ button:disabled {
         needRespawnReset = true;
       } else if (key === 'targetCount') {
         config.targetCount = Number(val);
-        if (config.challengeType === 'count' && game.collected >= config.targetCount) {
+        if (config.challengeType === 'count' && getPrimaryCount() >= config.targetCount) {
           needRespawnReset = true;
         }
       } else if (key === 'challengeDurationSec') {
@@ -4210,16 +4425,13 @@ button:disabled {
         }
       } else if (key === 'targetSize') {
         config.targetSize = val;
-        ensureCurrentTargetsInsideBounds();
+        if (config.gamePlayMode === 'connect') {
+          spawnNextTargets(performance.now());
+        } else {
+          ensureCurrentTargetsInsideBounds();
+        }
       } else if (key === 'dwellMode') {
         config.dwellMode = val;
-      } else if (key === 'voiceOn') {
-        config.voiceOn = val === 'true';
-        if (!config.voiceOn && 'speechSynthesis' in window) {
-          try { window.speechSynthesis.cancel(); } catch {}
-        }
-      } else if (key === 'soundOn') {
-        config.soundOn = val === 'true';
       }
 
       syncSettingsVisibility();
