@@ -931,6 +931,189 @@ button:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* 關卡式水平滑動選單（支援手指左右滑動吸附、前後切換鈕與星點指示器） */
+.mode-carousel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.mode-carousel-subhint {
+  font-size: 12px;
+  color: #a5b4fc;
+  font-weight: 700;
+}
+.mode-carousel-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.carousel-arrow-btn {
+  width: 34px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1.5px solid rgba(129, 140, 248, 0.45);
+  background: rgba(20, 32, 74, 0.88);
+  color: #f8fafc;
+  font-size: 16px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+.carousel-arrow-btn:active {
+  transform: scale(0.94);
+}
+.mode-carousel-track {
+  display: flex;
+  gap: 11px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 12% 10px 2px;
+  scrollbar-width: none;
+}
+.mode-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+.mode-level-card {
+  flex: 0 0 86%;
+  max-width: 390px;
+  scroll-snap-align: start;
+  background: linear-gradient(145deg, rgba(18, 28, 66, 0.92), rgba(11, 18, 44, 0.96));
+  border: 2px solid rgba(99, 102, 241, 0.35);
+  border-radius: 16px;
+  padding: 12px 14px;
+  color: #e2e8f0;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 6px 18px rgba(3, 7, 22, 0.5);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+.mode-level-card[aria-selected="true"] {
+  background: linear-gradient(145deg, rgba(22, 62, 68, 0.95), rgba(15, 34, 68, 0.98));
+  border-color: #70e5ab;
+  box-shadow:
+    0 0 0 1px rgba(112, 229, 171, 0.35),
+    0 10px 26px rgba(16, 185, 129, 0.24);
+}
+.mode-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mode-stage-tag {
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #ffd452;
+  background: rgba(255, 212, 82, 0.14);
+  border: 1px solid rgba(255, 212, 82, 0.38);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.mode-active-pill {
+  font-size: 11.5px;
+  font-weight: 900;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.18);
+  color: #cbd5e1;
+  border: 1px solid rgba(129, 140, 248, 0.32);
+}
+.mode-level-card[aria-selected="true"] .mode-active-pill {
+  background: rgba(34, 160, 107, 0.32);
+  color: #70e5ab;
+  border-color: #70e5ab;
+}
+.mode-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.mode-card-icon {
+  font-size: 26px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+.mode-card-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+}
+.mode-card-desc {
+  font-size: 12.8px;
+  line-height: 1.48;
+  color: #d1fae5;
+  margin: 0;
+}
+.mode-level-card:not([aria-selected="true"]) .mode-card-desc {
+  color: #cbd5e1;
+}
+.mode-card-skills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+.mode-skill-label {
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #ffd452;
+  margin-right: 2px;
+}
+.mode-skill-chip {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #e0f2fe;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.mode-carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.mode-dot-btn {
+  width: 26px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.38);
+  background: rgba(15, 23, 54, 0.78);
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+}
+.mode-dot-btn[aria-current="true"] {
+  width: 36px;
+  background: #1f5c41;
+  border-color: #70e5ab;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(112, 229, 171, 0.4);
+}
 .seg-btn {
   padding: 8px 6px;
   min-height: 38px;
@@ -1246,8 +1429,186 @@ button:disabled {
         <!-- 核心玩法選擇：8 大星空宇宙復健模式 -->
         <div class="setting-section">
           <div class="setting-row">
-            <label>1. 選擇星空遊戲模式（共 8 種玩法）</label>
-            <div class="seg-group mode-grid" role="radiogroup" aria-label="選擇遊戲模式">
+            <div class="mode-carousel-header">
+              <div>
+                <label style="margin:0;">1. 選擇星空遊戲模式（共 8 種玩法）</label>
+                <div class="mode-carousel-subhint">↔ 左右滑動關卡卡片，或點選下方編號切換</div>
+              </div>
+              <div class="mode-carousel-nav">
+                <button type="button" class="carousel-arrow-btn" id="modePrevBtn" aria-label="上一個遊戲模式" title="上一關">‹</button>
+                <button type="button" class="carousel-arrow-btn" id="modeNextBtn" aria-label="下一個遊戲模式" title="下一關">›</button>
+              </div>
+            </div>
+
+            <!-- 關卡式水平滑動卡片軌道 -->
+            <div class="mode-carousel-track" id="modeCarouselTrack" role="listbox" aria-label="星空遊戲關卡選單">
+              <!-- 關卡 01：星星收集 -->
+              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="collect" aria-selected="true">
+                <div class="mode-card-top">
+                  <span class="mode-stage-tag">STAGE 01 / 08</span>
+                  <span class="mode-active-pill" data-card-status="collect">✓ 目前選擇</span>
+                </div>
+                <div class="mode-card-title-row">
+                  <span class="mode-card-icon" aria-hidden="true">⭐</span>
+                  <span class="mode-card-title">星星收集</span>
+                </div>
+                <p class="mode-card-desc">移動手部、頭部或手持道具去碰觸夜空中的星星；亦可切換為「持續停留充能」模式。</p>
+                <div class="mode-card-skills">
+                  <span class="mode-skill-label">🎯 主要訓練：</span>
+                  <span class="mode-skill-chip">上肢／頭部伸展</span>
+                  <span class="mode-skill-chip">空間定位</span>
+                  <span class="mode-skill-chip">肌耐力維持</span>
+                </div>
+              </div>
+
+              <!-- 關卡 02：星座連線 -->
+              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="connect" aria-selected="false">
+                <div class="mode-card-top">
+                  <span class="mode-stage-tag">STAGE 02 / 08</span>
+                  <span class="mode-active-pill" data-card-status="connect">點選切換此關</span>
+                </div>
+                <div class="mode-card-title-row">
+                  <span class="mode-card-icon" aria-hidden="true">✨</span>
+                  <span class="mode-card-title">星座連線</span>
+                </div>
+                <p class="mode-card-desc">依數字提示或記憶順序，從 1 號開始依序點亮 2～7 顆星星，連成百變星座與銀河星路。</p>
+                <div class="mode-card-skills">
+                  <span class="mode-skill-label">🎯 主要訓練：</span>
+                  <span class="mode-skill-chip">順序規劃</span>
+                  <span class="mode-skill-chip">視覺空間掃描</span>
+                  <span class="mode-skill-chip">工作記憶</span>
+                </div>
+              </div>
+
+              <!-- 關卡 03：星河軌道 -->
+              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="track" aria-selected="false">
+                <div class="mode-card-top">
+                  <span class="mode-stage-tag">STAGE 03 / 08</span>
+                  <span class="mode-active-pill" data-card-status="track">點選切換此關</span>
+                </div>
+                <div class="mode-card-title-row">
+                  <span class="mode-card-icon" aria-hidden="true">🌈</span>
+                  <span class="mode-card-title">星河軌道</span>
+                </div>
+                <p class="mode-card-desc">先套住起點的星河光球，順著直線、彩虹弧或波浪軌道平穩推向星門終點；跑出線外會脫鉤停住。</p>
+                <div class="mode-card-skills">
+                  <span class="mode-skill-label">🎯 主要訓練：</span>
+                  <span class="mode-skill-chip">動作平穩度</span>
+                  <span class="mode-skill-chip">連續軌跡控制</span>
+                  <span class="mode-skill-chip">手眼追視協調</span>
+                </div>
+              </div>
+
+              <!-- 關卡 04：星象選擇 -->
+              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="select" aria-selected="false">
+                <div class="mode-card-top">
+                  <span class="mode-stage-tag">STAGE 04 / 08</span>
+                  <span class="mode-active-pill" data-card-status="select">點選切換此關</span>
+                </div>
+                <div class="mode-card-title-row">
+                  <span class="mode-card-icon" aria-hidden="true">🎯</span>
+                  <span class="mode-card-title">星象選擇</span>
+                </div>
+                <p class="mode-card-desc">依照畫面圖文或純語音播報題目，從隨機散落或對稱排列的星象中找出正確圖案。</p>
+                <div class="mode-card-skills">
+                  <span class="mode-skill-label">🎯 主要訓練：</span>
+                  <span class="mode-skill-chip">視覺區辨</span>
+                  <span class="mode-skill-chip">聽覺理解</span>
+                  <span class="mode-skill-chip">選擇性注意力</span>
+                </div>
+              </div>
+
+              <!-- 關卡 05：脈衝紅綠燈 -->
+              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="traffic" aria-selected="false">
+                <div class="mode-card-top">
+                  <span class="mode-stage-tag">STAGE 05 / 08</span>
+                  <span class="mode-active-pill" data-card-status="traffic">點選切換此關</span>
+                </div>
+                <div class="mode-card-title-row">
+                  <span class="mode-card-icon" aria-hidden="true">🚦</span>
+                  <span class="mode-card-title">脈衝紅綠燈</span>
+                </div>
+                <p class="mode-card-desc">綠燈時主動出擊碰觸星星，紅燈時立刻煞車停在紅圈外等待；成功守規矩可升級為金色獎勵星。</p>
+                <div class="mode-card-skills">
+                  <span class="mode-skill-label">🎯 主要訓練：</span>
+                  <span class="mode-skill-chip">反應抑制</span>
+                  <span class="mode-skill-chip">衝動控制</span>
+                  <span class="mode-skill-chip">動作啟動與煞車</span>
+                </div>
+              </div>
+
+              <!-- 關卡 06：撥開星雲 -->
+              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="nebula" aria-selected="false">
+                <div class="mode-card-top">
+                  <span class="mode-stage-tag">STAGE 06 / 08</span>
+                  <span class="mode-active-pill" data-card-status="nebula">點選切換此關</span>
+                </div>
+                <div class="mode-card-title-row">
+                  <span class="mode-card-icon" aria-hidden="true">☁️</span>
+                  <span class="mode-card-title">撥開星雲</span>
+                </div>
+                <p class="mode-card-desc">像擦窗戶或擦桌子一樣，做出大範圍上下或左右連續揮動，把寬幅星雲帷幕撥開喚醒隱藏星星。</p>
+                <div class="mode-card-skills">
+                  <span class="mode-skill-label">🎯 主要訓練：</span>
+                  <span class="mode-skill-chip">大範圍關節活動</span>
+                  <span class="mode-skill-chip">肩肘大幅伸展</span>
+                  <span class="mode-skill-chip">連續揮動耐力</span>
+                </div>
+              </div>
+
+              <!-- 關卡 07：星際引力 -->
+              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="magnet" aria-selected="false">
+                <div class="mode-card-top">
+                  <span class="mode-stage-tag">STAGE 07 / 08</span>
+                  <span class="mode-active-pill" data-card-status="magnet">點選切換此關</span>
+                </div>
+                <div class="mode-card-title-row">
+                  <span class="mode-card-icon" aria-hidden="true">🧲</span>
+                  <span class="mode-card-title">星際引力</span>
+                </div>
+                <p class="mode-card-desc">先靠近散落的小星星將它們吸附在身邊，再跨越身體中線一路護送進另一端的星門聖殿。</p>
+                <div class="mode-card-skills">
+                  <span class="mode-skill-label">🎯 主要訓練：</span>
+                  <span class="mode-skill-chip">跨身體中線移動</span>
+                  <span class="mode-skill-chip">多目標路徑規劃</span>
+                  <span class="mode-skill-chip">遠端伸展控制</span>
+                </div>
+              </div>
+
+              <!-- 關卡 08：托起墜落星 -->
+              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="falling" aria-selected="false">
+                <div class="mode-card-top">
+                  <span class="mode-stage-tag">STAGE 08 / 08</span>
+                  <span class="mode-active-pill" data-card-status="falling">點選切換此關</span>
+                </div>
+                <div class="mode-card-title-row">
+                  <span class="mode-card-icon" aria-hidden="true">🌠</span>
+                  <span class="mode-card-title">托起墜落星</span>
+                </div>
+                <p class="mode-card-desc">對準從夜空飄落的流星下方新月光托，做出「由下往上」的托舉動作，將流星送回天際綻放煙火。</p>
+                <div class="mode-card-skills">
+                  <span class="mode-skill-label">🎯 主要訓練：</span>
+                  <span class="mode-skill-chip">抗重力向上抬舉</span>
+                  <span class="mode-skill-chip">動態時機捕捉</span>
+                  <span class="mode-skill-chip">方向協調反應</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 8 關卡快速星點指示器 -->
+            <div class="mode-carousel-dots" id="modeCarouselDots" aria-label="關卡快速切換">
+              <button type="button" class="mode-dot-btn" data-mode-dot="collect" aria-current="true" title="第1關：星星收集">01</button>
+              <button type="button" class="mode-dot-btn" data-mode-dot="connect" aria-current="false" title="第2關：星座連線">02</button>
+              <button type="button" class="mode-dot-btn" data-mode-dot="track" aria-current="false" title="第3關：星河軌道">03</button>
+              <button type="button" class="mode-dot-btn" data-mode-dot="select" aria-current="false" title="第4關：星象選擇">04</button>
+              <button type="button" class="mode-dot-btn" data-mode-dot="traffic" aria-current="false" title="第5關：脈衝紅綠燈">05</button>
+              <button type="button" class="mode-dot-btn" data-mode-dot="nebula" aria-current="false" title="第6關：撥開星雲">06</button>
+              <button type="button" class="mode-dot-btn" data-mode-dot="magnet" aria-current="false" title="第7關：星際引力">07</button>
+              <button type="button" class="mode-dot-btn" data-mode-dot="falling" aria-current="false" title="第8關：托起墜落星">08</button>
+            </div>
+
+            <!-- 隱藏相容按鈕群：供內部事件同步與腳本相容使用 -->
+            <div class="seg-group mode-grid" role="radiogroup" aria-label="選擇遊戲模式" hidden>
               <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="collect" aria-checked="true">⭐ 星星收集</button>
               <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="connect" aria-checked="false">✨ 星星連線</button>
               <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="track" aria-checked="false">🌈 星河軌道</button>
@@ -1257,7 +1618,6 @@ button:disabled {
               <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="magnet" aria-checked="false">🧲 星際引力</button>
               <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="falling" aria-checked="false">🌠 托起墜落星</button>
             </div>
-            <!-- 相容隱藏按鈕：若外部腳本切換 charge 時自動導向星星收集的充能子模式 -->
             <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="charge" aria-checked="false" hidden>⚡ 星星充能</button>
           </div>
 
@@ -5268,21 +5628,47 @@ button:disabled {
       }
     }
 
-    // 4. 🔀 跨中線視覺引導線（在活動框中央繪製柔和垂直中線，協助患者感知跨越身體中線）
+    // 4. 🔀 跨中線視覺引導：「漸層星軸子午線」（兩端北極星芒錨點＋中央極淡漸層星光束與微星粒，取代傳統虛線不切臉）
     if (config.midlineGuideOn && config.rangeMode !== 'ud') {
       const b = getUserActiveRangeBox(state.mode);
       const midX = ((b.minX + b.maxX) * 0.5) * W;
-      const yTop = b.minY * H;
-      const yBottom = b.maxY * H;
+      const yTop = b.minY * H + 8;
+      const yBottom = b.maxY * H - 8;
+      const spanH = Math.max(40, yBottom - yTop);
 
-      ctx.strokeStyle = 'rgba(112, 229, 171, 0.24)';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([8, 8]);
+      // 垂直漸層星光軸：上下兩端微亮引導，畫面正中央淡出至 0.04 透明度，完全不干擾臉部與手部
+      const midGrad = ctx.createLinearGradient(midX, yTop, midX, yBottom);
+      midGrad.addColorStop(0, 'rgba(112, 229, 171, 0.42)');
+      midGrad.addColorStop(0.22, 'rgba(56, 189, 248, 0.12)');
+      midGrad.addColorStop(0.50, 'rgba(56, 189, 248, 0.03)');
+      midGrad.addColorStop(0.78, 'rgba(56, 189, 248, 0.12)');
+      midGrad.addColorStop(1, 'rgba(112, 229, 171, 0.42)');
+
+      ctx.strokeStyle = midGrad;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(midX, yTop + 10);
-      ctx.lineTo(midX, yBottom - 10);
+      ctx.moveTo(midX, yTop);
+      ctx.lineTo(midX, yBottom);
       ctx.stroke();
-      ctx.setLineDash([]);
+
+      // 上下端點「北極星芒定位錨點」
+      ctx.fillStyle = 'rgba(112, 229, 171, 0.72)';
+      traceStarPath(ctx, midX, yTop, 6.5, 2.0, 4, 0);
+      ctx.fill();
+      traceStarPath(ctx, midX, yBottom, 6.5, 2.0, 4, 0);
+      ctx.fill();
+
+      // 中軸線上稀疏呼吸的 5 顆微光星塵點
+      for (let k = 1; k <= 5; k++) {
+        const frac = k / 6;
+        const py = yTop + spanH * frac;
+        const distFromCenter = Math.abs(frac - 0.5) * 2;
+        const dotAlpha = (0.10 + distFromCenter * 0.22) * (reduced ? 1 : 0.8 + Math.sin(now * 0.003 + k) * 0.2);
+        ctx.fillStyle = `rgba(186, 230, 253, ${dotAlpha})`;
+        ctx.beginPath();
+        ctx.arc(midX, py, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     ctx.restore();
@@ -6388,20 +6774,85 @@ button:disabled {
     }
   }
 
-  function drawSubtleActiveRangeGuide(W, H) {
+  // 低干擾星空版活動範圍邊界：「星圖四隅光錨 ＋ 稀疏微光星塵點」（取代生硬的虛線方框）
+  function drawSubtleActiveRangeGuide(W, H, now = performance.now()) {
     const hasCustom = modeRanges[state.mode].isCustom;
-    if (!hasCustom && state.mode !== 'head') return;
     const b = getUserActiveRangeBox(state.mode);
-    const x = b.minX * W;
-    const y = b.minY * H;
-    const w = (b.maxX - b.minX) * W;
-    const h = (b.maxY - b.minY) * H;
+    const x1 = b.minX * W;
+    const y1 = b.minY * H;
+    const x2 = b.maxX * W;
+    const y2 = b.maxY * H;
+    const w = Math.max(20, x2 - x1);
+    const h = Math.max(20, y2 - y1);
+    const reduced = reducedMotionQuery.matches;
+
+    const baseAlpha = hasCustom ? 0.62 : state.mode === 'head' ? 0.54 : 0.38;
+    const armLen = Math.max(16, Math.min(30, Math.min(w, h) * 0.11));
+    const cornerRadius = 10;
 
     ctx.save();
-    ctx.strokeStyle = hasCustom ? 'rgba(112, 229, 171, 0.34)' : 'rgba(107, 194, 232, 0.25)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 6]);
-    ctx.strokeRect(x, y, w, h);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // 1. 繪製四個角落的「L 型星光觀景窗光錨」與頂點四芒星
+    const corners = [
+      { cx: x1, cy: y1, dx: 1, dy: 1 },
+      { cx: x2, cy: y1, dx: -1, dy: 1 },
+      { cx: x1, cy: y2, dx: 1, dy: -1 },
+      { cx: x2, cy: y2, dx: -1, dy: -1 }
+    ];
+
+    for (let i = 0; i < corners.length; i++) {
+      const c = corners[i];
+      const grad = ctx.createRadialGradient(c.cx, c.cy, 1, c.cx, c.cy, armLen * 1.25);
+      grad.addColorStop(0, `rgba(255, 212, 82, ${baseAlpha * 0.95})`);
+      grad.addColorStop(0.45, `rgba(112, 229, 171, ${baseAlpha * 0.78})`);
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(c.cx + c.dx * armLen, c.cy);
+      ctx.lineTo(c.cx + c.dx * cornerRadius, c.cy);
+      ctx.quadraticCurveTo(c.cx, c.cy, c.cx, c.cy + c.dy * cornerRadius);
+      ctx.lineTo(c.cx, c.cy + c.dy * armLen);
+      ctx.stroke();
+
+      // 角落星芒亮點
+      const starX = c.cx + c.dx * 3;
+      const starY = c.cy + c.dy * 3;
+      ctx.fillStyle = `rgba(255, 232, 140, ${baseAlpha * 0.92})`;
+      traceStarPath(ctx, starX, starY, 5.2, 1.5, 4, 0);
+      ctx.fill();
+    }
+
+    // 2. 四邊中點之間僅點綴極稀疏、柔和呼吸的「星塵微粒」，不畫連續虛線，保持畫面清透
+    const stepPx = 42;
+    const hSteps = Math.max(2, Math.floor((w - armLen * 2.4) / stepPx));
+    const vSteps = Math.max(2, Math.floor((h - armLen * 2.4) / stepPx));
+
+    for (let i = 1; i < hSteps; i++) {
+      const frac = i / hSteps;
+      const px = x1 + armLen * 1.2 + frac * (w - armLen * 2.4);
+      const twinkle = reduced ? 0.22 : 0.14 + Math.sin(now * 0.0022 + i * 1.1) * 0.08;
+      ctx.fillStyle = `rgba(186, 230, 253, ${twinkle * (baseAlpha / 0.5)})`;
+      ctx.beginPath();
+      ctx.arc(px, y1, 1.35, 0, Math.PI * 2);
+      ctx.arc(px, y2, 1.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (let j = 1; j < vSteps; j++) {
+      const frac = j / vSteps;
+      const py = y1 + armLen * 1.2 + frac * (h - armLen * 2.4);
+      const twinkle = reduced ? 0.22 : 0.14 + Math.cos(now * 0.0022 + j * 1.3) * 0.08;
+      ctx.fillStyle = `rgba(186, 230, 253, ${twinkle * (baseAlpha / 0.5)})`;
+      ctx.beginPath();
+      ctx.arc(x1, py, 1.35, 0, Math.PI * 2);
+      ctx.arc(x2, py, 1.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.restore();
   }
 
@@ -6548,7 +6999,7 @@ button:disabled {
       drawRangeCalibrationOverlay(W, H);
     } else {
       drawCosmicAtmosphereAndMidline(W, H, now);
-      drawSubtleActiveRangeGuide(W, H);
+      drawSubtleActiveRangeGuide(W, H, now);
 
       if (state.gameState !== 'game_complete') {
         const starR = getStarRadiusPx();
@@ -7380,6 +7831,7 @@ button:disabled {
     updateCustomRangeLabels();
     syncSettingsVisibility();
     $('settingsSheet').hidden = false;
+    syncModeCarouselUI(false);
   });
 
   $('copySessionLogBtn').addEventListener('click', copyDailySessionSummary);
@@ -7452,10 +7904,60 @@ button:disabled {
   $('calibResetDefaultBtn').addEventListener('click', resetCurrentModeRangeToDefault);
   $('calibApplyBtn').addEventListener('click', applyRangeAndReturn);
 
+  const MODE_ORDER = ['collect', 'connect', 'track', 'select', 'traffic', 'nebula', 'magnet', 'falling'];
+  let carouselProgrammaticScrollUntil = 0;
+
+  function syncModeCarouselUI(scrollIntoViewSmooth = true) {
+    const activeMode = config.gamePlayMode === 'charge' ? 'collect' : config.gamePlayMode;
+    document.querySelectorAll('.mode-level-card[data-mode-card]').forEach(card => {
+      const isSel = card.dataset.modeCard === activeMode;
+      card.setAttribute('aria-selected', String(isSel));
+      const pill = card.querySelector('[data-card-status]');
+      if (pill) {
+        pill.textContent = isSel ? '✓ 目前選擇' : '點選切換此關';
+      }
+    });
+
+    document.querySelectorAll('.mode-dot-btn[data-mode-dot]').forEach(dot => {
+      dot.setAttribute('aria-current', String(dot.dataset.modeDot === activeMode));
+    });
+
+    document.querySelectorAll('.seg-btn[data-setting="gamePlayMode"]').forEach(b => {
+      b.setAttribute('aria-checked', String(b.dataset.value === activeMode));
+    });
+
+    const track = $('modeCarouselTrack');
+    const activeCard = track?.querySelector(`.mode-level-card[data-mode-card="${activeMode}"]`);
+    if (track && activeCard && !$('settingsSheet').hidden) {
+      carouselProgrammaticScrollUntil = performance.now() + 460;
+      const targetLeft = Math.max(0, activeCard.offsetLeft - 4);
+      try {
+        track.scrollTo({ left: targetLeft, behavior: scrollIntoViewSmooth ? 'smooth' : 'auto' });
+      } catch {
+        track.scrollLeft = targetLeft;
+      }
+    }
+  }
+
+  function selectGameModeFromCarousel(nextMode, scrollSmooth = true) {
+    if (!nextMode) return;
+    const prevMode = config.gamePlayMode;
+    config.gamePlayMode = nextMode;
+    syncModeCarouselUI(scrollSmooth);
+    syncSettingsVisibility();
+    updateScoreAndTimerUI();
+    if (prevMode !== nextMode) {
+      resetGame();
+    } else {
+      renderScene();
+    }
+  }
+
   function openSettings() {
     updateCustomRangeLabels();
     syncSettingsVisibility();
     $('settingsSheet').hidden = false;
+    syncModeCarouselUI(false);
   }
   function closeSettings() {
     $('settingsSheet').hidden = true;
@@ -7534,7 +8036,9 @@ button:disabled {
       let needRespawnReset = false;
 
       if (key === 'gamePlayMode') {
-        config.gamePlayMode = val;
+        config.gamePlayMode = val === 'charge' ? 'collect' : val;
+        if (val === 'charge') config.collectActionType = 'charge_mixed';
+        syncModeCarouselUI(true);
         needRespawnReset = true;
       } else if (key === 'collectActionType') {
         config.collectActionType = val;
@@ -7671,9 +8175,72 @@ button:disabled {
     cancelAnimationFrame(state.rafId);
   });
 
+  // 綁定關卡式水平滑動選單（卡片點選、左右箭頭、下方編號點、以及手指滑動停妥後自動切換）
+  document.querySelectorAll('.mode-level-card[data-mode-card]').forEach(card => {
+    card.addEventListener('click', () => {
+      unlockAudio();
+      selectGameModeFromCarousel(card.dataset.modeCard, true);
+    });
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        unlockAudio();
+        selectGameModeFromCarousel(card.dataset.modeCard, true);
+      }
+    });
+  });
+
+  document.querySelectorAll('.mode-dot-btn[data-mode-dot]').forEach(dot => {
+    dot.addEventListener('click', () => {
+      unlockAudio();
+      selectGameModeFromCarousel(dot.dataset.modeDot, true);
+    });
+  });
+
+  $('modePrevBtn')?.addEventListener('click', () => {
+    unlockAudio();
+    const idx = Math.max(0, MODE_ORDER.indexOf(config.gamePlayMode));
+    const prevIdx = (idx - 1 + MODE_ORDER.length) % MODE_ORDER.length;
+    selectGameModeFromCarousel(MODE_ORDER[prevIdx], true);
+  });
+
+  $('modeNextBtn')?.addEventListener('click', () => {
+    unlockAudio();
+    const idx = Math.max(0, MODE_ORDER.indexOf(config.gamePlayMode));
+    const nextIdx = (idx + 1) % MODE_ORDER.length;
+    selectGameModeFromCarousel(MODE_ORDER[nextIdx], true);
+  });
+
+  let carouselScrollTimer = null;
+  $('modeCarouselTrack')?.addEventListener('scroll', () => {
+    if (performance.now() < carouselProgrammaticScrollUntil) return;
+    clearTimeout(carouselScrollTimer);
+    carouselScrollTimer = setTimeout(() => {
+      const track = $('modeCarouselTrack');
+      if (!track || $('settingsSheet').hidden) return;
+      const trackRect = track.getBoundingClientRect();
+      const targetCenter = trackRect.left + trackRect.width * 0.44;
+      let closestMode = null;
+      let minDist = Infinity;
+      track.querySelectorAll('.mode-level-card[data-mode-card]').forEach(card => {
+        const r = card.getBoundingClientRect();
+        const cardCenter = r.left + r.width * 0.5;
+        const d = Math.abs(cardCenter - targetCenter);
+        if (d < minDist) {
+          minDist = d;
+          closestMode = card.dataset.modeCard;
+        }
+      });
+      if (closestMode && closestMode !== config.gamePlayMode) {
+        selectGameModeFromCarousel(closestMode, false);
+      }
+    }, 130);
+  }, { passive: true });
+
   // 初始化載入已存範圍與今日累積紀錄、同步設定介面並渲染初始畫面
   loadSavedRanges();
   syncSettingsVisibility();
+  syncModeCarouselUI(false);
   resizeStage();
   updateScoreAndTimerUI();
   spawnNextTargets(performance.now(), false);
