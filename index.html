@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#091820">
+<meta name="theme-color" content="#070b1d">
 <title>Motion Sense｜星空宇宙復健遊戲 V3</title>
 <style>
 :root {
   font-family: system-ui, -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   color-scheme: dark;
-  color: #f3fafb;
-  background: #091820;
+  color: #f4f7ff;
+  background: #070b1d;
   --accent: #70e5ab;
   --accent-bright: #4cffb3;
   --gold: #ffd452;
@@ -18,9 +18,9 @@
   --cyan: #38bdf8;
   --blue: #3b82f6;
   --purple: #a855f7;
-  --surface: #152c37;
-  --surface-elevated: #1e3b49;
-  --border: #3b5c6b;
+  --surface: #101736;
+  --surface-elevated: #18224b;
+  --border: #3b4c85;
 }
 * {
   box-sizing: border-box;
@@ -30,7 +30,11 @@ html, body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: #091820;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(99, 102, 241, 0.22) 0%, rgba(15, 23, 58, 0) 46%),
+    radial-gradient(circle at 84% 18%, rgba(168, 85, 247, 0.18) 0%, rgba(15, 23, 58, 0) 44%),
+    radial-gradient(circle at 50% 92%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 11, 29, 0) 50%),
+    linear-gradient(180deg, #060918 0%, #0b112c 52%, #070b1d 100%);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -177,15 +181,18 @@ button:disabled {
   box-shadow: 0 0 0 1px rgba(112, 229, 171, 0.3);
 }
 
-/* 遊戲與攝影機主舞台（佔 75–85% 高度） */
+/* 遊戲與攝影機主舞台（佔 75–85% 高度）：深空星雲觀景窗邊框 */
 .stage {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
   border-radius: 18px;
-  border: 1.5px solid #3a5968;
-  background: #0e222b;
+  border: 1.5px solid rgba(129, 140, 248, 0.48);
+  background: #070b1e;
+  box-shadow:
+    0 0 28px rgba(79, 70, 229, 0.25),
+    inset 0 0 32px rgba(56, 189, 248, 0.14);
   touch-action: none;
 }
 .stage video,
@@ -203,15 +210,23 @@ button:disabled {
   pointer-events: none;
   z-index: 2;
 }
-/* 極致低干擾的宇宙深色柔光遮罩：邊緣微深突顯星光，中央保持清透讓患者看清動作 */
+/* 星空宇宙深邃星雲濾鏡：中央維持清透看清手部與道具，四周邊緣暈染深空靛藍與星雲紫 */
 .scrim {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 50%, rgba(10, 24, 36, 0.10) 35%, rgba(6, 16, 26, 0.48) 100%),
-    linear-gradient(180deg, rgba(7, 20, 28, 0.56) 0%, rgba(8, 22, 30, 0.14) 18%, rgba(8, 22, 30, 0.14) 76%, rgba(6, 18, 25, 0.62) 100%);
+    radial-gradient(ellipse at 50% 50%, rgba(10, 16, 42, 0.16) 28%, rgba(28, 18, 68, 0.46) 76%, rgba(7, 10, 28, 0.72) 100%),
+    radial-gradient(circle at 14% 18%, rgba(139, 92, 246, 0.28) 0%, rgba(139, 92, 246, 0) 42%),
+    radial-gradient(circle at 86% 82%, rgba(56, 189, 248, 0.24) 0%, rgba(56, 189, 248, 0) 44%),
+    linear-gradient(180deg, rgba(8, 12, 34, 0.64) 0%, rgba(12, 18, 48, 0.18) 20%, rgba(12, 18, 48, 0.18) 76%, rgba(6, 10, 28, 0.72) 100%);
   pointer-events: none;
   z-index: 1;
+  transition: opacity 0.25s ease;
+}
+.stage[data-cosmic-bg="clear"] .scrim {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(8, 14, 32, 0.05) 42%, rgba(12, 18, 46, 0.36) 100%),
+    linear-gradient(180deg, rgba(8, 12, 30, 0.45) 0%, rgba(8, 12, 30, 0.06) 18%, rgba(8, 12, 30, 0.06) 78%, rgba(6, 10, 26, 0.52) 100%);
 }
 
 /* 舞台內頂部狀態膠囊 */
@@ -965,6 +980,13 @@ button:disabled {
               <button type="button" class="seg-btn" data-setting="collectActionType" data-value="charge_moving" aria-checked="false">🟣 移動充能</button>
               <button type="button" class="seg-btn" data-setting="collectActionType" data-value="charge_mixed" aria-checked="false">⚡ 混合充能</button>
             </div>
+            <div style="margin-top:4px;">
+              <label style="margin-bottom:4px;">🌀 收集路線黑洞攔截（生成於移動路徑側翼，引導弧形繞障）</label>
+              <div class="seg-group" role="radiogroup" aria-label="星星收集黑洞開關">
+                <button type="button" class="seg-btn" data-setting="blackHoleQuick" data-value="off" aria-checked="true">關閉黑洞（純收集）</button>
+                <button type="button" class="seg-btn" data-setting="blackHoleQuick" data-value="on" aria-checked="false">🌀 開啟黑洞攔截（吸住2秒）</button>
+              </div>
+            </div>
 
             <div id="subCollectSpecialRow" style="margin-top:4px;">
               <label style="margin-bottom:4px;">特殊星星出現頻率（3秒限時彩虹星／亮青移動星）</label>
@@ -990,12 +1012,17 @@ button:disabled {
             </div>
           </div>
 
-          <!-- 2. ✨ 星座連線（支援 2～7 顆真實星座模板）專屬子設定 -->
+          <!-- 2. ✨ 星座連線（多組星座輪播＋動態隨機不重疊星路）專屬子設定 -->
           <div class="setting-row" id="subSettingConnect" hidden>
-            <label>星座連線玩法與每組顆數（3～7 顆對應真實星座圖案）</label>
+            <label>星座連線玩法、路線變化與每組顆數（每次出題路線皆不同）</label>
             <div class="seg-group" role="radiogroup" aria-label="星星連線模式">
               <button type="button" class="seg-btn" data-setting="connectSubMode" data-value="number" aria-checked="true">數字提示版</button>
               <button type="button" class="seg-btn" data-setting="connectSubMode" data-value="memory" aria-checked="false">記憶順序版</button>
+            </div>
+            <div class="seg-group" role="radiogroup" aria-label="星座路線生成方式" style="margin-top:4px;">
+              <button type="button" class="seg-btn" data-setting="connectRouteMode" data-value="varied" aria-checked="true">🔀 百變星路（星座＋隨機交錯）</button>
+              <button type="button" class="seg-btn" data-setting="connectRouteMode" data-value="random" aria-checked="false">🎲 全隨機不重疊星路</button>
+              <button type="button" class="seg-btn" data-setting="connectRouteMode" data-value="constellation" aria-checked="false">🌌 多組星座輪播</button>
             </div>
             <div class="seg-group" role="radiogroup" aria-label="每組星星顆數" style="margin-top:4px;">
               <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="2" aria-checked="false">2 顆</button>
@@ -1033,10 +1060,14 @@ button:disabled {
 
           <!-- 4. 🎯 星象選擇專屬子設定 -->
           <div class="setting-row" id="subSettingSelect" hidden>
-            <label>星象選擇難度與出題方式</label>
+            <label>星象選擇難度、位置分布與出題方式</label>
             <div class="seg-group" role="radiogroup" aria-label="星星選擇選項數">
               <button type="button" class="seg-btn" data-setting="selectOptionCount" data-value="2" aria-checked="true">初階：2 選 1（預設）</button>
               <button type="button" class="seg-btn" data-setting="selectOptionCount" data-value="3" aria-checked="false">進階：3 選 1</button>
+            </div>
+            <div class="seg-group" role="radiogroup" aria-label="星象選項位置分布" style="margin-top:4px;">
+              <button type="button" class="seg-btn" data-setting="selectLayoutMode" data-value="random" aria-checked="true">🔀 進階：隨機散落（防重疊預設）</button>
+              <button type="button" class="seg-btn" data-setting="selectLayoutMode" data-value="fixed" aria-checked="false">📏 初階：固定對稱位置</button>
             </div>
             <div class="seg-group" role="radiogroup" aria-label="星象出題提示方式" style="margin-top:4px;">
               <button type="button" class="seg-btn" data-setting="selectPromptMode" data-value="both" aria-checked="true">圖文＋語音提示（預設）</button>
@@ -1082,10 +1113,11 @@ button:disabled {
 
           <!-- 8. 🌠 托起墜落星專屬子設定 -->
           <div class="setting-row" id="subSettingFalling" hidden>
-            <label>托起墜落星飄落速度（從星星下方往上托舉彈回夜空）</label>
+            <label>托起墜落星飄落速度（須由下往上托起，觸發升空煙火）</label>
             <div class="seg-group" role="radiogroup" aria-label="墜落星速度">
-              <button type="button" class="seg-btn" data-setting="fallingSpeed" data-value="slow" aria-checked="true">初階：慢速垂直飄落（預設）</button>
-              <button type="button" class="seg-btn" data-setting="fallingSpeed" data-value="medium" aria-checked="false">進階：中速微斜飄落</button>
+              <button type="button" class="seg-btn" data-setting="fallingSpeed" data-value="slow" aria-checked="false">初階：慢速垂直飄落（預設）</button>
+              <button type="button" class="seg-btn" data-setting="fallingSpeed" data-value="medium" aria-checked="true">進階：中速微斜飄落</button>
+              <button type="button" class="seg-btn" data-setting="fallingSpeed" data-value="fast" aria-checked="false">高階：敏捷快速飄落</button>
             </div>
           </div>
         </div>
@@ -1170,6 +1202,15 @@ button:disabled {
               <input type="checkbox" role="switch" class="toggle-input" id="midlineToggleInput" checked aria-label="跨中線視覺引導開關">
             </div>
           </label>
+
+          <!-- 🌌 星空宇宙背景氛圍濃度 -->
+          <div class="setting-row">
+            <label>🌌 星空宇宙背景氛圍（中央保持清透看清手部，四周暈染星雲與星海）</label>
+            <div class="seg-group" role="radiogroup" aria-label="星空宇宙背景濃度">
+              <button type="button" class="seg-btn" data-setting="cosmicBgMode" data-value="dreamy" aria-checked="true">🌌 夢幻星夜（預設推薦）</button>
+              <button type="button" class="seg-btn" data-setting="cosmicBgMode" data-value="clear" aria-checked="false">☀️ 清透實景（微星塵）</button>
+            </div>
+          </div>
 
           <div class="setting-row">
             <label>目標星星大小與碰觸停留</label>
@@ -1274,53 +1315,140 @@ button:disabled {
     { id: 'clover', label: '幸運草', icon: '🍀', color: '#4ade80', stroke: '#16a34a' }
   ];
 
-  // ✨ 星座連線 2～7 顆真實星座幾何模板（正規化相對座標 [0, 1]，會自動映射到活動框內）
+  // ✨ 星座連線 2～7 顆擴充多組星座圖庫（每種顆數皆有多組不同星座，並搭配隨機星路生成器）
   const CONSTELLATION_PATTERNS = {
-    2: {
-      name: '雙子連星',
-      pts: [{ x: 0.14, y: 0.52 }, { x: 0.86, y: 0.48 }]
-    },
-    3: {
-      name: '夏季大三角',
-      pts: [{ x: 0.16, y: 0.28 }, { x: 0.84, y: 0.24 }, { x: 0.52, y: 0.82 }]
-    },
-    4: {
-      name: '南十字座',
-      pts: [{ x: 0.50, y: 0.14 }, { x: 0.50, y: 0.86 }, { x: 0.16, y: 0.48 }, { x: 0.84, y: 0.48 }]
-    },
-    5: {
-      name: '仙后座 W',
-      pts: [
-        { x: 0.10, y: 0.28 },
-        { x: 0.30, y: 0.76 },
-        { x: 0.50, y: 0.38 },
-        { x: 0.70, y: 0.78 },
-        { x: 0.90, y: 0.24 }
-      ]
-    },
-    6: {
-      name: '獵戶座星群',
-      pts: [
-        { x: 0.22, y: 0.18 },
-        { x: 0.78, y: 0.20 },
-        { x: 0.62, y: 0.50 },
-        { x: 0.38, y: 0.52 },
-        { x: 0.24, y: 0.84 },
-        { x: 0.78, y: 0.82 }
-      ]
-    },
-    7: {
-      name: '北斗七星',
-      pts: [
-        { x: 0.08, y: 0.24 },
-        { x: 0.25, y: 0.30 },
-        { x: 0.40, y: 0.42 },
-        { x: 0.54, y: 0.52 },
-        { x: 0.58, y: 0.78 },
-        { x: 0.84, y: 0.76 },
-        { x: 0.88, y: 0.46 }
-      ]
-    }
+    2: [
+      { name: '雙子連星', pts: [{ x: 0.14, y: 0.56 }, { x: 0.86, y: 0.42 }] },
+      { name: '牛郎織女雙星', pts: [{ x: 0.18, y: 0.24 }, { x: 0.82, y: 0.78 }] },
+      { name: '南門雙星', pts: [{ x: 0.84, y: 0.26 }, { x: 0.16, y: 0.74 }] }
+    ],
+    3: [
+      { name: '夏季大三角', pts: [{ x: 0.16, y: 0.26 }, { x: 0.84, y: 0.22 }, { x: 0.52, y: 0.84 }] },
+      { name: '冬季大三角', pts: [{ x: 0.50, y: 0.16 }, { x: 0.16, y: 0.78 }, { x: 0.84, y: 0.74 }] },
+      { name: '白羊座彎弧', pts: [{ x: 0.14, y: 0.68 }, { x: 0.48, y: 0.26 }, { x: 0.86, y: 0.46 }] }
+    ],
+    4: [
+      { name: '南十字座', pts: [{ x: 0.50, y: 0.14 }, { x: 0.50, y: 0.86 }, { x: 0.16, y: 0.48 }, { x: 0.84, y: 0.48 }] },
+      { name: '飛馬座四邊形', pts: [{ x: 0.20, y: 0.22 }, { x: 0.80, y: 0.20 }, { x: 0.82, y: 0.80 }, { x: 0.18, y: 0.78 }] },
+      { name: '天琴座菱星', pts: [{ x: 0.18, y: 0.30 }, { x: 0.54, y: 0.16 }, { x: 0.84, y: 0.62 }, { x: 0.34, y: 0.84 }] }
+    ],
+    5: [
+      {
+        name: '仙后座 W',
+        pts: [
+          { x: 0.10, y: 0.28 },
+          { x: 0.30, y: 0.76 },
+          { x: 0.50, y: 0.36 },
+          { x: 0.70, y: 0.78 },
+          { x: 0.90, y: 0.24 }
+        ]
+      },
+      {
+        name: '天鵝座十字翼',
+        pts: [
+          { x: 0.50, y: 0.14 },
+          { x: 0.50, y: 0.50 },
+          { x: 0.14, y: 0.46 },
+          { x: 0.86, y: 0.46 },
+          { x: 0.50, y: 0.86 }
+        ]
+      },
+      {
+        name: '北冕座星冠',
+        pts: [
+          { x: 0.14, y: 0.34 },
+          { x: 0.28, y: 0.74 },
+          { x: 0.50, y: 0.84 },
+          { x: 0.72, y: 0.74 },
+          { x: 0.86, y: 0.34 }
+        ]
+      }
+    ],
+    6: [
+      {
+        name: '獵戶座星群',
+        pts: [
+          { x: 0.22, y: 0.18 },
+          { x: 0.78, y: 0.20 },
+          { x: 0.62, y: 0.50 },
+          { x: 0.38, y: 0.52 },
+          { x: 0.24, y: 0.84 },
+          { x: 0.78, y: 0.82 }
+        ]
+      },
+      {
+        name: '雙子座星鏈',
+        pts: [
+          { x: 0.16, y: 0.20 },
+          { x: 0.28, y: 0.52 },
+          { x: 0.18, y: 0.82 },
+          { x: 0.80, y: 0.80 },
+          { x: 0.72, y: 0.48 },
+          { x: 0.84, y: 0.18 }
+        ]
+      },
+      {
+        name: '金牛座 V 星群',
+        pts: [
+          { x: 0.14, y: 0.22 },
+          { x: 0.34, y: 0.48 },
+          { x: 0.50, y: 0.78 },
+          { x: 0.66, y: 0.50 },
+          { x: 0.86, y: 0.20 },
+          { x: 0.50, y: 0.26 }
+        ]
+      }
+    ],
+    7: [
+      {
+        name: '北斗七星',
+        pts: [
+          { x: 0.08, y: 0.24 },
+          { x: 0.25, y: 0.30 },
+          { x: 0.40, y: 0.42 },
+          { x: 0.54, y: 0.52 },
+          { x: 0.58, y: 0.78 },
+          { x: 0.84, y: 0.76 },
+          { x: 0.88, y: 0.46 }
+        ]
+      },
+      {
+        name: '小熊座七星',
+        pts: [
+          { x: 0.88, y: 0.20 },
+          { x: 0.70, y: 0.28 },
+          { x: 0.54, y: 0.42 },
+          { x: 0.42, y: 0.58 },
+          { x: 0.18, y: 0.54 },
+          { x: 0.14, y: 0.80 },
+          { x: 0.38, y: 0.82 }
+        ]
+      },
+      {
+        name: '鳳凰座展翼七星',
+        pts: [
+          { x: 0.12, y: 0.68 },
+          { x: 0.26, y: 0.32 },
+          { x: 0.48, y: 0.18 },
+          { x: 0.52, y: 0.54 },
+          { x: 0.34, y: 0.84 },
+          { x: 0.72, y: 0.76 },
+          { x: 0.88, y: 0.30 }
+        ]
+      },
+      {
+        name: '昴宿七姊妹星團',
+        pts: [
+          { x: 0.14, y: 0.38 },
+          { x: 0.32, y: 0.20 },
+          { x: 0.56, y: 0.24 },
+          { x: 0.82, y: 0.34 },
+          { x: 0.74, y: 0.68 },
+          { x: 0.46, y: 0.80 },
+          { x: 0.22, y: 0.72 }
+        ]
+      }
+    ]
   };
 
   // 🌌 今日守護星座收集冊（不限模式，每完成 1 回合依序點亮 1 座）
@@ -1333,13 +1461,42 @@ button:disabled {
     { id: 'egasus', name: '飛馬座', icon: '🐎', story: '馳騁於廣闊星海的羽翼天馬，恭喜您完成今日圓滿的星空巡禮！' }
   ];
 
-  // 極致低干擾的背景宇宙星塵微粒（僅點綴於畫面四周，不干擾中央視覺）
-  const ambientStars = Array.from({ length: 18 }, (_, idx) => ({
-    x: ((idx * 37) % 94 + 3) / 100,
-    y: ((idx * 53) % 88 + 6) / 100,
-    r: 1.1 + (idx % 3) * 0.6,
-    phase: idx * 0.9
-  }));
+  // 多層次星空宇宙背景元素（遠景閃爍星海、四角四芒星、柔光星雲帶與偶發遠景流星）
+  const STAR_COLORS = ['#e0f2fe', '#fef08a', '#e9d5ff', '#bae6fd', '#fde68a'];
+  const ambientStars = Array.from({ length: 54 }, (_, idx) => {
+    // 讓更多星點分布在舞台四周與上下邊緣，中央保持清爽
+    let x = ((idx * 37 + 13) % 96 + 2) / 100;
+    let y = ((idx * 53 + 7) % 94 + 3) / 100;
+    if (x > 0.26 && x < 0.74 && y > 0.26 && y < 0.74 && idx % 3 !== 0) {
+      x = idx % 2 === 0 ? x * 0.38 : 1 - (1 - x) * 0.38;
+    }
+    return {
+      x,
+      y,
+      r: 1.0 + (idx % 4) * 0.55,
+      phase: idx * 0.83,
+      color: STAR_COLORS[idx % STAR_COLORS.length],
+      isDiamond: idx % 5 === 0
+    };
+  });
+
+  const ambientNebulae = [
+    { x: 0.14, y: 0.18, rScale: 0.34, colorInner: 'rgba(139, 92, 246, 0.16)', colorMid: 'rgba(79, 70, 229, 0.07)', phase: 0.4 },
+    { x: 0.86, y: 0.20, rScale: 0.32, colorInner: 'rgba(56, 189, 248, 0.15)', colorMid: 'rgba(14, 165, 233, 0.06)', phase: 1.9 },
+    { x: 0.16, y: 0.82, rScale: 0.35, colorInner: 'rgba(16, 185, 129, 0.13)', colorMid: 'rgba(56, 189, 248, 0.05)', phase: 3.1 },
+    { x: 0.84, y: 0.80, rScale: 0.36, colorInner: 'rgba(192, 132, 252, 0.15)', colorMid: 'rgba(99, 102, 241, 0.06)', phase: 4.5 }
+  ];
+
+  const ambientMeteor = {
+    active: false,
+    x: 0.2,
+    y: 0.1,
+    vx: 0.35,
+    vy: 0.18,
+    born: 0,
+    duration: 1100,
+    nextAt: 4500
+  };
 
   // 支援可選的外部透明圖片圖層
   const customStarAssets = {
@@ -1433,18 +1590,21 @@ button:disabled {
     chargeTypeMode: 'mixed',     // 'static' | 'moving' | 'mixed'
     chargeDurationSec: 2,        // 1 | 2 | 3
     connectSubMode: 'number',    // 'number' | 'memory'
+    connectRouteMode: 'varied',  // 'varied' (星座+隨機交錯) | 'random' (全隨機不重疊) | 'constellation' (多組星座輪播)
     connectStarCount: 3,         // 2 | 3 | 4 | 5 | 6 | 7
     memoryViewSec: 5,            // 3 | 5 | 0
     trackShape: 'arc',           // 'line' | 'arc' | 'wave'
     selectOptionCount: 2,        // 2 | 3
+    selectLayoutMode: 'random',  // 'random' (進階防重疊隨機散落) | 'fixed' (初階固定對稱)
     selectPromptMode: 'both',    // 'both' (圖文+語音) | 'audio_only' (純聽覺出題)
     trafficVariant: 'single',    // 'single' (單星) | 'dual' (雙星交替找綠燈) | 'cruise' (巡航紅綠燈)
     trafficPace: 'relaxed',      // 'relaxed' | 'normal'
-    nebulaDensity: 'light',      // 'light' (3團) | 'dense' (5團) | 'regen' (緩慢飄回)
+    nebulaDensity: 'light',      // 'light' (寬幅輕星雲) | 'dense' (寬幅濃星雲) | 'regen' (緩慢飄回)
     magnetStarCount: 2,          // 2 | 3
-    fallingSpeed: 'slow',        // 'slow' | 'medium'
+    fallingSpeed: 'medium',      // 'slow' | 'medium' | 'fast'
     blackHoleOn: false,          // 🌀 太空黑洞障礙開關
     midlineGuideOn: true,        // 🔀 跨中線視覺引導開關
+    cosmicBgMode: 'dreamy',      // 'dreamy' | 'clear'
     challengeType: 'count',      // 'count' | 'timed'
     targetCount: 10,             // 5 | 10 | 20
     challengeDurationSec: 60,    // 30 | 60 | 120
@@ -1587,6 +1747,15 @@ button:disabled {
     lrNextSide: 'left',
     udNextSide: 'top',
     allStepIndex: 0,
+    connectVariantCounter: 0,
+    lastConstellationName: '',
+    prevTrackerNorm: null,
+    trackerVxPxPerSec: 0,
+    trackerVyPxPerSec: 0,
+    trackerHistory: [],
+    nebulaIdleWarnAt: 0,
+    fallingLiftWarnAt: 0,
+    risingStars: [],
     particles: [],
     collectBursts: [],
     milestoneRipples: [],
@@ -2141,9 +2310,26 @@ button:disabled {
     trackerOutput.colorRadiusPx = colorRadiusPx;
 
     if (found && Number.isFinite(normX) && Number.isFinite(normY)) {
+      const clampedX = Math.max(0, Math.min(1, normX));
+      const clampedY = Math.max(0, Math.min(1, normY));
+      const W = Math.max(200, stage.clientWidth || 360);
+      const H = Math.max(200, stage.clientHeight || 480);
+
+      if (game.prevTrackerNorm && dt > 0) {
+        const instVx = ((clampedX - game.prevTrackerNorm.x) * W) / (dt / 1000);
+        const instVy = ((clampedY - game.prevTrackerNorm.y) * H) / (dt / 1000);
+        game.trackerVxPxPerSec = game.trackerVxPxPerSec * 0.45 + instVx * 0.55;
+        game.trackerVyPxPerSec = game.trackerVyPxPerSec * 0.45 + instVy * 0.55;
+      }
+      game.prevTrackerNorm = { x: clampedX, y: clampedY, ts };
+      game.trackerHistory.push({ x: clampedX, y: clampedY, ts });
+      while (game.trackerHistory.length > 16 || (game.trackerHistory.length > 2 && ts - game.trackerHistory[0].ts > 260)) {
+        game.trackerHistory.shift();
+      }
+
       trackerOutput.found = true;
-      trackerOutput.x = Math.max(0, Math.min(1, normX));
-      trackerOutput.y = Math.max(0, Math.min(1, normY));
+      trackerOutput.x = clampedX;
+      trackerOutput.y = clampedY;
       setAppState('tracking_found');
 
       if (!state.modeReady && !state.calibratingRange) {
@@ -2477,7 +2663,7 @@ button:disabled {
     };
   }
 
-  // 生成或更新「🌀 太空黑洞」障礙物位置（加在星星收集、星河軌道彎道內側、星際引力中）
+  // 生成或更新「🌀 太空黑洞」障礙物位置（具備星河軌道嚴格淨空保護 + 星星收集路徑側翼攔截）
   function spawnOrUpdateBlackHole(b, extraAvoidPoints = []) {
     if (!config.blackHoleOn) {
       game.blackHole = null;
@@ -2489,6 +2675,9 @@ button:disabled {
       return;
     }
 
+    const W = Math.max(200, b.W || stage.clientWidth || 360);
+    const H = Math.max(200, b.H || stage.clientHeight || 480);
+    const starR = b.starR || getStarRadiusPx();
     const midX = (b.minX + b.maxX) * 0.5;
     const midY = (b.minY + b.maxY) * 0.5;
     const spanX = Math.max(0.10, b.maxX - b.minX);
@@ -2498,23 +2687,130 @@ button:disabled {
     let by = midY;
 
     if (gm === 'track' && game.trackCurvePoints.length >= 10) {
-      // 在星河軌道模式下，將黑洞放在弧線彎道的內側（切西瓜捷徑路線上），阻止玩家切西瓜走直線！
-      const startPt = game.trackCurvePoints[0];
-      const endPt = game.trackCurvePoints[game.trackCurvePoints.length - 1];
-      const peakPt = game.trackCurvePoints[Math.floor(game.trackCurvePoints.length * 0.5)];
+      // 🌈 星河軌道：嚴格軌道淨空保護（Clearance Guard），確保黑洞絕不壓在軌道正中間！
+      const curve = game.trackCurvePoints;
+      const corridorHalfPx = Math.max(24, starR * 0.78);
+      const bhRadiusPx = Math.max(26, starR * 0.78);
+      const requiredClearancePx = corridorHalfPx + bhRadiusPx + 24;
+
+      const startPt = curve[0];
+      const endPt = curve[curve.length - 1];
+      const peakPt = curve[Math.floor(curve.length * 0.5)];
       const chordMidX = (startPt.x + endPt.x) * 0.5;
       const chordMidY = (startPt.y + endPt.y) * 0.5;
-      // 放在弦中點（切西瓜直線位置），並與軌道頂點保持安全距離，讓乖乖走軌道外弧的人完全不會撞到黑洞
-      bx = chordMidX + (chordMidX - peakPt.x) * 0.25;
-      by = chordMidY + (chordMidY - peakPt.y) * 0.25;
+
+      // 產生候選點：優先放在弧線內側切西瓜處，若為直線或波浪則放在軌道中段上下／左右側翼
+      const candidates = [];
+      const dxChord = endPt.x - startPt.x;
+      const dyChord = endPt.y - startPt.y;
+      const lenChord = Math.max(0.01, Math.hypot(dxChord, dyChord));
+      const nx = -dyChord / lenChord;
+      const ny = dxChord / lenChord;
+
+      if (config.trackShape === 'arc') {
+        for (const pushRatio of [0.35, 0.55, 0.75, 0.95]) {
+          candidates.push({
+            x: chordMidX + (chordMidX - peakPt.x) * pushRatio,
+            y: chordMidY + (chordMidY - peakPt.y) * pushRatio
+          });
+        }
+      }
+      for (const sideSign of [1, -1]) {
+        for (const offsetPx of [requiredClearancePx + 14, requiredClearancePx + 34, requiredClearancePx + 58]) {
+          for (const tFrac of [0.5, 0.36, 0.64]) {
+            const refPt = curve[Math.floor((curve.length - 1) * tFrac)];
+            candidates.push({
+              x: refPt.x + (nx * sideSign * offsetPx) / W,
+              y: refPt.y + (ny * sideSign * offsetPx) / H
+            });
+          }
+        }
+      }
+      for (let i = 0; i < 24; i++) {
+        candidates.push({
+          x: b.minX + 0.05 + Math.random() * Math.max(0.04, spanX - 0.10),
+          y: b.minY + 0.05 + Math.random() * Math.max(0.04, spanY - 0.10)
+        });
+      }
+
+      let bestCandidate = null;
+      let bestMinDistPx = -1;
+
+      for (const cand of candidates) {
+        const cx = Math.max(b.minX + 0.04, Math.min(b.maxX - 0.04, cand.x));
+        const cy = Math.max(b.minY + 0.04, Math.min(b.maxY - 0.04, cand.y));
+        let minCurveDistPx = Infinity;
+        for (let k = 0; k < curve.length; k++) {
+          const dPx = Math.hypot((cx - curve[k].x) * W, (cy - curve[k].y) * H);
+          if (dPx < minCurveDistPx) minCurveDistPx = dPx;
+        }
+        // 起點與終點額外加大安全距離
+        const startDistPx = Math.hypot((cx - startPt.x) * W, (cy - startPt.y) * H);
+        const endDistPx = Math.hypot((cx - endPt.x) * W, (cy - endPt.y) * H);
+        const effectiveClearPx = Math.min(minCurveDistPx, startDistPx - 16, endDistPx - 16);
+
+        if (effectiveClearPx >= requiredClearancePx) {
+          bestCandidate = { x: cx, y: cy };
+          bestMinDistPx = effectiveClearPx;
+          break;
+        }
+        if (effectiveClearPx > bestMinDistPx) {
+          bestMinDistPx = effectiveClearPx;
+          bestCandidate = { x: cx, y: cy };
+        }
+      }
+
+      if (bestCandidate && bestMinDistPx >= corridorHalfPx + 14) {
+        bx = bestCandidate.x;
+        by = bestCandidate.y;
+      } else {
+        // 若活動框太窄無法安全放置黑洞而不擋路，則暫不放置以免卡關
+        game.blackHole = null;
+        return;
+      }
+    } else if (gm === 'collect' && extraAvoidPoints.length >= 1) {
+      // ⭐ 星星收集：將黑洞放在「上一顆位置／目前游標」與「新目標星」連線的中段側翼，引導弧形繞障！
+      const targetPt = extraAvoidPoints[0];
+      const originPt = trackerOutput.found
+        ? { x: trackerOutput.x, y: trackerOutput.y }
+        : game.prevHitPoint || { x: midX, y: midY };
+
+      const segMidX = (originPt.x + targetPt.x) * 0.5;
+      const segMidY = (originPt.y + targetPt.y) * 0.5;
+      const dxPx = (targetPt.x - originPt.x) * W;
+      const dyPx = (targetPt.y - originPt.y) * H;
+      const segLenPx = Math.hypot(dxPx, dyPx);
+      const minSafePx = Math.max(68, starR * 1.95);
+
+      if (segLenPx >= minSafePx * 1.45) {
+        const perpX = -dyPx / segLenPx;
+        const perpY = dxPx / segLenPx;
+        const flankSign = (game.completedTargets % 2 === 0 ? 1 : -1);
+        const flankOffsetPx = Math.min(segLenPx * 0.32, starR * 1.35);
+        bx = segMidX + (perpX * flankSign * flankOffsetPx) / W;
+        by = segMidY + (perpY * flankSign * flankOffsetPx) / H;
+      } else {
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const rx = b.minX + spanX * (0.18 + Math.random() * 0.64);
+          const ry = b.minY + spanY * (0.18 + Math.random() * 0.64);
+          bx = rx;
+          by = ry;
+          const distTargetPx = Math.hypot((rx - targetPt.x) * W, (ry - targetPt.y) * H);
+          const distOriginPx = Math.hypot((rx - originPt.x) * W, (ry - originPt.y) * H);
+          if (distTargetPx >= minSafePx && distOriginPx >= minSafePx * 0.88) break;
+        }
+      }
     } else {
-      // 在收集或星際引力模式下，將黑洞放在活動框中段偏離目標星的位置
-      for (let attempt = 0; attempt < 12; attempt++) {
-        const rx = b.minX + spanX * (0.25 + Math.random() * 0.50);
-        const ry = b.minY + spanY * (0.25 + Math.random() * 0.50);
+      // 🧲 星際引力或其他模式：避開星門與小星星
+      const minSafePx = Math.max(66, starR * 1.85);
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const rx = b.minX + spanX * (0.22 + Math.random() * 0.56);
+        const ry = b.minY + spanY * (0.22 + Math.random() * 0.56);
         bx = rx;
         by = ry;
-        const farEnough = extraAvoidPoints.every(pt => Math.hypot(rx - pt.x, ry - pt.y) >= 0.20);
+        const farEnough = extraAvoidPoints.every(
+          pt => Math.hypot((rx - pt.x) * W, (ry - pt.y) * H) >= minSafePx
+        );
         if (farEnough) break;
       }
     }
@@ -2522,13 +2818,84 @@ button:disabled {
     game.blackHole = {
       x: Math.max(b.minX + 0.04, Math.min(b.maxX - 0.04, bx)),
       y: Math.max(b.minY + 0.04, Math.min(b.maxY - 0.04, by)),
-      vx: gm === 'track' ? 0 : spanX * 0.045 * (Math.random() < 0.5 ? 1 : -1),
-      vy: gm === 'track' ? 0 : spanY * 0.045 * (Math.random() < 0.5 ? 1 : -1),
+      vx: gm === 'track' ? 0 : spanX * 0.042 * (Math.random() < 0.5 ? 1 : -1),
+      vy: gm === 'track' ? 0 : spanY * 0.042 * (Math.random() < 0.5 ? 1 : -1),
       cooldownMs: 0
     };
   }
 
-  // 為「✨ 星座連線」產生 2～7 顆真實星座圖案座標
+  // 動態產生「不重疊、不打結」的隨機星際連線路徑（泊松盤最小間距取樣 + 2-opt 解交叉排序）
+  function generateRandomNonOverlappingRoute(desiredCount, b, W, H, starR) {
+    const spanX = Math.max(0.08, b.maxX - b.minX);
+    const spanY = Math.max(0.08, b.maxY - b.minY);
+    const midX = (b.minX + b.maxX) * 0.5;
+    const midY = (b.minY + b.maxY) * 0.5;
+    const minDistPx = Math.max(54, starR * 2.38);
+
+    const pts = [];
+    for (let i = 0; i < desiredCount; i++) {
+      let bestPt = null;
+      let bestClearance = -1;
+
+      for (let attempt = 0; attempt < 45; attempt++) {
+        let rx = b.minX + spanX * (0.06 + Math.random() * 0.88);
+        let ry = b.minY + spanY * (0.06 + Math.random() * 0.88);
+
+        if (config.rangeMode === 'lr') {
+          const band = Math.min(0.14, spanY * 0.42);
+          ry = Math.max(b.minY, Math.min(b.maxY, midY + (Math.random() - 0.5) * 2 * band));
+        } else if (config.rangeMode === 'ud') {
+          const band = Math.min(0.16, spanX * 0.42);
+          rx = Math.max(b.minX, Math.min(b.maxX, midX + (Math.random() - 0.5) * 2 * band));
+        } else if (config.midlineGuideOn && i > 0) {
+          // 鼓勵左右交替跨中線分布
+          const preferRight = i % 2 === 1;
+          rx = preferRight
+            ? b.minX + spanX * (0.48 + Math.random() * 0.46)
+            : b.minX + spanX * (0.06 + Math.random() * 0.46);
+        }
+
+        let minDistToExisting = Infinity;
+        for (const p of pts) {
+          const d = Math.hypot((rx - p.x) * W, (ry - p.y) * H);
+          if (d < minDistToExisting) minDistToExisting = d;
+        }
+
+        if (minDistToExisting >= minDistPx) {
+          bestPt = { x: rx, y: ry };
+          break;
+        }
+        if (minDistToExisting > bestClearance) {
+          bestClearance = minDistToExisting;
+          bestPt = { x: rx, y: ry };
+        }
+      }
+      pts.push(bestPt);
+    }
+
+    // 若非記憶跨中線交錯，使用 2-opt 消除折線嚴重自交，讓星路自然順暢且每局走向都不同
+    if (pts.length >= 4 && !config.midlineGuideOn) {
+      const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+      const segmentsIntersect = (A, B, C, D) => ccw(A, C, D) !== ccw(B, C, D) && ccw(A, B, C) !== ccw(A, B, D);
+      for (let pass = 0; pass < 6; pass++) {
+        let improved = false;
+        for (let i = 0; i < pts.length - 3; i++) {
+          for (let j = i + 2; j < pts.length - 1; j++) {
+            if (segmentsIntersect(pts[i], pts[i + 1], pts[j], pts[j + 1])) {
+              const reversed = pts.slice(i + 1, j + 1).reverse();
+              pts.splice(i + 1, j - i, ...reversed);
+              improved = true;
+            }
+          }
+        }
+        if (!improved) break;
+      }
+    }
+
+    return pts;
+  }
+
+  // 為「✨ 星座連線」產生 2～7 顆百變星路（多組真實星座輪播＋鏡像旋轉＋隨機不重疊星路）
   function generateConstellationPositions() {
     const baseR = getBaseStarRadiusPx();
     const W = Math.max(200, stage.clientWidth || 360);
@@ -2552,30 +2919,59 @@ button:disabled {
     }
     game.connectRadiusScale = radiusScale;
 
+    const effectiveStarR = Math.round(baseR * radiusScale);
     const spanX = Math.max(0.08, b.maxX - b.minX);
     const spanY = Math.max(0.08, b.maxY - b.minY);
     const midX = (b.minX + b.maxX) * 0.5;
     const midY = (b.minY + b.maxY) * 0.5;
 
-    const pattern = CONSTELLATION_PATTERNS[desiredCount] || CONSTELLATION_PATTERNS[3];
-    game.connectConstellationName = pattern.name;
+    const variantStep = game.connectVariantCounter++;
+    const useRandomRoute =
+      config.connectRouteMode === 'random' ||
+      (config.connectRouteMode === 'varied' && variantStep % 2 === 1);
 
-    // 偶爾水平鏡像翻轉星座，讓左右兩側都能均勻練習
-    const flipX = game.completedSets % 2 === 1;
+    if (useRandomRoute) {
+      const randomTitles = ['探索星路', '銀河漫遊', '未知星域', '躍遷星鏈', '極光星徑'];
+      game.connectConstellationName = randomTitles[variantStep % randomTitles.length];
+      const positions = generateRandomNonOverlappingRoute(desiredCount, b, W, H, effectiveStarR);
+      return { positions, bounds: b };
+    }
+
+    const patternList = CONSTELLATION_PATTERNS[desiredCount] || CONSTELLATION_PATTERNS[3];
+    // 確保不連續出現同一個星座名稱
+    let candidates = patternList.filter(p => p.name !== game.lastConstellationName);
+    if (!candidates.length) candidates = patternList;
+    const pattern = candidates[variantStep % candidates.length];
+    game.connectConstellationName = pattern.name;
+    game.lastConstellationName = pattern.name;
+
+    // 結合水平翻轉、垂直翻轉與微幅旋轉／擾動，讓同一個星座每次出現的角度與走向也有新鮮感
+    const flipX = variantStep % 2 === 1;
+    const flipY = Math.floor(variantStep / 2) % 2 === 1;
+    const rotAngle = ((variantStep % 5) - 2) * 0.14;
+    const cosA = Math.cos(rotAngle);
+    const sinA = Math.sin(rotAngle);
+
     const positions = pattern.pts.map((pt, idx) => {
-      const ux = flipX ? 1 - pt.x : pt.x;
-      const uy = pt.y;
+      let ux = flipX ? 1 - pt.x : pt.x;
+      let uy = flipY ? 1 - pt.y : pt.y;
+      // 繞中心微幅旋轉 + 輕微隨機位移
+      const dx = ux - 0.5;
+      const dy = uy - 0.5;
+      ux = Math.max(0.05, Math.min(0.95, 0.5 + dx * cosA - dy * sinA + (Math.random() - 0.5) * 0.05));
+      uy = Math.max(0.05, Math.min(0.95, 0.5 + dx * sinA + dy * cosA + (Math.random() - 0.5) * 0.05));
+
       let px = b.minX + spanX * ux;
       let py = b.minY + spanY * uy;
 
       if (config.rangeMode === 'lr') {
         const t = desiredCount === 1 ? 0.5 : idx / (desiredCount - 1);
         px = b.minX + spanX * (0.06 + (flipX ? 1 - t : t) * 0.88);
-        py = midY + (uy - 0.5) * Math.min(0.12, spanY * 0.36);
+        py = midY + (uy - 0.5) * Math.min(0.14, spanY * 0.40);
       } else if (config.rangeMode === 'ud') {
         const t = desiredCount === 1 ? 0.5 : idx / (desiredCount - 1);
-        py = b.minY + spanY * (0.06 + t * 0.88);
-        px = midX + (ux - 0.5) * Math.min(0.14, spanX * 0.36);
+        py = b.minY + spanY * (0.06 + (flipY ? 1 - t : t) * 0.88);
+        px = midX + (ux - 0.5) * Math.min(0.16, spanX * 0.40);
       }
 
       return {
@@ -2730,9 +3126,9 @@ button:disabled {
       return;
     }
 
-    // 模式 4：🎯 星象選擇
+    // 模式 4：🎯 星象選擇（支援「固定對稱位置」與「進階隨機散落防重疊」）
     if (gm === 'select') {
-      game.connectRadiusScale = config.selectOptionCount >= 3 ? 0.88 : 0.96;
+      game.connectRadiusScale = config.selectOptionCount >= 3 ? 0.86 : 0.94;
       const b = getEffectiveStarSpawnBounds(state.mode);
       const spanX = Math.max(0.08, b.maxX - b.minX);
       const spanY = Math.max(0.08, b.maxY - b.minY);
@@ -2741,18 +3137,64 @@ button:disabled {
       const optCount = config.selectOptionCount;
       const positions = [];
 
-      for (let i = 0; i < optCount; i++) {
-        const t = optCount === 1 ? 0.5 : i / (optCount - 1);
-        if (config.rangeMode === 'ud') {
-          positions.push({
-            x: midX + (i % 2 === 0 ? -1 : 1) * Math.min(0.04, spanX * 0.16),
-            y: b.minY + spanY * (0.12 + t * 0.76)
-          });
-        } else {
-          positions.push({
-            x: b.minX + spanX * (0.12 + t * 0.76),
-            y: midY + (optCount === 3 && i === 1 ? -Math.min(0.12, spanY * 0.32) : 0)
-          });
+      if (config.selectLayoutMode === 'fixed') {
+        for (let i = 0; i < optCount; i++) {
+          const t = optCount === 1 ? 0.5 : i / (optCount - 1);
+          if (config.rangeMode === 'ud') {
+            positions.push({
+              x: midX + (i % 2 === 0 ? -1 : 1) * Math.min(0.04, spanX * 0.16),
+              y: b.minY + spanY * (0.12 + t * 0.76)
+            });
+          } else {
+            positions.push({
+              x: b.minX + spanX * (0.12 + t * 0.76),
+              y: midY + (optCount === 3 && i === 1 ? -Math.min(0.12, spanY * 0.32) : 0)
+            });
+          }
+        }
+      } else {
+        // 進階：泊松盤最小距離隨機散落演算法（確保任兩顆選項絕不黏在一起或重疊！）
+        const starR = getStarRadiusPx();
+        const minPairDistPx = Math.max(96, starR * 2.75);
+        const trackerAvoidPx = Math.max(64, starR * 1.45);
+
+        for (let i = 0; i < optCount; i++) {
+          let bestPt = null;
+          let bestMinDist = -1;
+
+          for (let attempt = 0; attempt < 65; attempt++) {
+            let rx = b.minX + spanX * (0.06 + Math.random() * 0.88);
+            let ry = b.minY + spanY * (0.08 + Math.random() * 0.84);
+
+            if (config.rangeMode === 'lr') {
+              const bandY = Math.min(0.18, spanY * 0.52);
+              ry = Math.max(b.minY, Math.min(b.maxY, midY + (Math.random() - 0.5) * 2 * bandY));
+            } else if (config.rangeMode === 'ud') {
+              const bandX = Math.min(0.20, spanX * 0.52);
+              rx = Math.max(b.minX, Math.min(b.maxX, midX + (Math.random() - 0.5) * 2 * bandX));
+            }
+
+            let minPairPx = Infinity;
+            for (const existing of positions) {
+              const d = Math.hypot((rx - existing.x) * b.W, (ry - existing.y) * b.H);
+              if (d < minPairPx) minPairPx = d;
+            }
+
+            const distTrackerPx = trackerOutput.found
+              ? Math.hypot((rx - trackerOutput.x) * b.W, (ry - trackerOutput.y) * b.H)
+              : Infinity;
+
+            if (minPairPx >= minPairDistPx && distTrackerPx >= trackerAvoidPx) {
+              bestPt = { x: rx, y: ry };
+              break;
+            }
+            const scoreDist = Math.min(minPairPx, distTrackerPx * 1.2);
+            if (scoreDist > bestMinDist) {
+              bestMinDist = scoreDist;
+              bestPt = { x: rx, y: ry };
+            }
+          }
+          positions.push(bestPt);
         }
       }
 
@@ -2907,31 +3349,48 @@ button:disabled {
       return;
     }
 
-    // 模式 6：☁️ 撥開星雲（大星星藏在 3～5 團星雲後方，揮手把星雲擦散即自動喚醒得分！）
+    // 模式 6：☁️ 撥開星雲（大片寬幅星雲帷幕覆蓋畫面，必須真正上下／左右揮動才撥得開！）
     if (gm === 'nebula') {
       game.connectRadiusScale = 1.0;
       const b = getEffectiveStarSpawnBounds(state.mode);
       const avoidX = trackerOutput.found ? trackerOutput.x : (game.prevHitPoint ? game.prevHitPoint.x : null);
       const avoidY = trackerOutput.found ? trackerOutput.y : (game.prevHitPoint ? game.prevHitPoint.y : null);
       const centerPos = pickSingleStarPosition(b, avoidX, avoidY);
-      const cloudCount = config.nebulaDensity === 'light' ? 3 : 5;
-      const rx = (b.starR * 1.1) / b.W;
-      const ry = (b.starR * 1.1) / b.H;
+      const spanX = Math.max(0.14, b.maxX - b.minX);
+      const spanY = Math.max(0.14, b.maxY - b.minY);
+      const cloudCount = config.nebulaDensity === 'light' ? 7 : 10;
+      // 擴大星雲帷幕至活動框約 48%～56% 的寬廣範圍，讓患者必須大動作上下／左右揮抹
+      const curtainHalfW = Math.max((b.starR * 2.35) / b.W, spanX * 0.27);
+      const curtainHalfH = Math.max((b.starR * 2.35) / b.H, spanY * 0.27);
       game.blackHole = null;
 
       const clouds = [];
       for (let i = 0; i < cloudCount; i++) {
-        const ang = (Math.PI * 2 * i) / cloudCount + 0.3;
-        const distScale = i === 0 ? 0.15 : 0.65;
+        let offsetX = 0;
+        let offsetY = 0;
+        if (i === 0) {
+          offsetX = 0;
+          offsetY = 0;
+        } else if (i <= 5) {
+          const ang = (Math.PI * 2 * (i - 1)) / 5 + 0.25;
+          offsetX = Math.cos(ang) * curtainHalfW * 0.58;
+          offsetY = Math.sin(ang) * curtainHalfH * 0.58;
+        } else {
+          const ang = (Math.PI * 2 * (i - 6)) / Math.max(1, cloudCount - 6) + 0.65;
+          offsetX = Math.cos(ang) * curtainHalfW * 0.95;
+          offsetY = Math.sin(ang) * curtainHalfH * 0.95;
+        }
         clouds.push({
           id: Date.now() + i + Math.random(),
           type: 'nebula_cloud',
-          x: Math.max(b.minX, Math.min(b.maxX, centerPos.x + Math.cos(ang) * rx * distScale)),
-          y: Math.max(b.minY, Math.min(b.maxY, centerPos.y + Math.sin(ang) * ry * distScale)),
+          x: Math.max(b.minX, Math.min(b.maxX, centerPos.x + offsetX)),
+          y: Math.max(b.minY, Math.min(b.maxY, centerPos.y + offsetY)),
           baseX: centerPos.x,
           baseY: centerPos.y,
+          radiusScale: i === 0 ? 2.15 : i <= 5 ? 1.95 : 1.75,
           opacity: 1.0,
-          phase: i * 1.3,
+          hueShift: i % 3,
+          phase: i * 1.15,
           collectedLock: false
         });
       }
@@ -3003,7 +3462,7 @@ button:disabled {
       return;
     }
 
-    // 模式 8：🌠 托起墜落星（流星從上方緩緩飄落，患者將追蹤環移到流星下方往上托舉彈回夜空）
+    // 模式 8：🌠 托起墜落星（流星從上方有感飄落，患者須從流星下方由下往上托舉，觸發升空煙火）
     if (gm === 'falling') {
       game.connectRadiusScale = 1.0;
       const b = getEffectiveStarSpawnBounds(state.mode);
@@ -3014,15 +3473,22 @@ button:disabled {
 
       const startX =
         config.rangeMode === 'ud'
-          ? (b.minX + b.maxX) * 0.5
+          ? (b.minX + b.maxX) * 0.5 + (Math.random() - 0.5) * Math.min(0.08, spanX * 0.25)
           : side === 'left'
-          ? b.minX + spanX * (0.15 + Math.random() * 0.22)
-          : b.maxX - spanX * (0.15 + Math.random() * 0.22);
-      const startY = b.minY + spanY * 0.06;
-      const vy = spanY * (config.fallingSpeed === 'slow' ? 0.11 : 0.16);
+          ? b.minX + spanX * (0.12 + Math.random() * 0.26)
+          : b.maxX - spanX * (0.12 + Math.random() * 0.26);
+      const startY = b.minY + spanY * 0.04;
+      // 全面提升慢／中／快三段掉落速度，讓接星與上托更有節奏感
+      const speedMult =
+        config.fallingSpeed === 'fast'
+          ? 0.42
+          : config.fallingSpeed === 'medium'
+          ? 0.29
+          : 0.19;
+      const vy = spanY * speedMult;
       const vx =
-        config.fallingSpeed === 'medium' && config.rangeMode !== 'ud'
-          ? spanX * 0.05 * (side === 'left' ? 1 : -1)
+        config.fallingSpeed !== 'slow' && config.rangeMode !== 'ud'
+          ? spanX * (config.fallingSpeed === 'fast' ? 0.085 : 0.055) * (side === 'left' ? 1 : -1)
           : 0;
 
       game.targets = [
@@ -3135,6 +3601,7 @@ button:disabled {
     game.lrNextSide = 'left';
     game.udNextSide = 'top';
     game.allStepIndex = 0;
+    game.risingStars = [];
     game.particles = [];
     game.collectBursts = [];
     game.milestoneRipples = [];
@@ -3759,12 +4226,28 @@ button:disabled {
       return;
     }
 
-    // 專屬邏輯 3：☁️ 撥開星雲（大範圍揮手擦散星雲喚醒星星）
+    // 專屬邏輯 3：☁️ 撥開星雲（必須真正上下／左右揮動才撥得動，停在原地不會消散！）
     if (gm === 'nebula') {
       let remainingClouds = 0;
-      const b = getEffectiveStarSpawnBounds(state.mode);
       const centerX = game.targets[0]?.baseX ?? 0.5;
       const centerY = game.targets[0]?.baseY ?? 0.5;
+
+      // 計算游標移動速度（px/s），針對設定方向加權：停在原地時 speed < 門檻，完全不消散！
+      const absVx = Math.abs(game.trackerVxPxPerSec);
+      const absVy = Math.abs(game.trackerVyPxPerSec);
+      let effectiveSweepSpeed = Math.hypot(absVx, absVy);
+      if (config.rangeMode === 'ud') {
+        effectiveSweepSpeed = absVy * 1.35 + absVx * 0.45;
+      } else if (config.rangeMode === 'lr') {
+        effectiveSweepSpeed = absVx * 1.35 + absVy * 0.45;
+      }
+      if (state.mode === 'head') {
+        effectiveSweepSpeed *= 1.75;
+      }
+
+      const minSweepSpeed = 48; // 必須有明顯揮動速度才算撥雲
+      const isActivelySweeping = effectiveSweepSpeed >= minSweepSpeed;
+      let touchingAnyCloud = false;
 
       for (let i = 0; i < game.targets.length; i++) {
         const c = game.targets[i];
@@ -3772,21 +4255,47 @@ button:disabled {
 
         if (trackerOutput.found && !isTrappedByBlackHole) {
           const dist = Math.hypot((trackerOutput.x - c.x) * W, (trackerOutput.y - c.y) * H);
-          const wipeRadius = starR * 1.55;
+          const wipeRadius = starR * (c.radiusScale || 1.95) * 0.96;
           if (dist <= wipeRadius && c.opacity > 0.05) {
-            const prevOp = c.opacity;
-            c.opacity = Math.max(0, c.opacity - dtSec * 1.85);
-            if (prevOp > 0.12 && c.opacity <= 0.12) {
-              playGameSound('connect_node', i);
-              spawnCelebrationParticles(c.x * W, c.y * H, starR * 0.6, false, false);
+            touchingAnyCloud = true;
+            if (isActivelySweeping) {
+              const prevOp = c.opacity;
+              const wipePower = Math.min(3.4, effectiveSweepSpeed / 155);
+              c.opacity = Math.max(0, c.opacity - dtSec * 1.75 * wipePower);
+              // 順著揮動方向把雲團往外推開，視覺上更有「撥開雲霧」的物理體感！
+              c.x = Math.max(0.04, Math.min(0.96, c.x + (game.trackerVxPxPerSec * dtSec * 0.22) / W));
+              c.y = Math.max(0.06, Math.min(0.94, c.y + (game.trackerVyPxPerSec * dtSec * 0.22) / H));
+
+              if (Math.random() < 0.35 && !reducedMotionQuery.matches) {
+                game.particles.push({
+                  x: trackerOutput.x * W + (Math.random() - 0.5) * 26,
+                  y: trackerOutput.y * H + (Math.random() - 0.5) * 26,
+                  vx: (game.trackerVxPxPerSec * 0.008) + (Math.random() - 0.5) * 2,
+                  vy: (game.trackerVyPxPerSec * 0.008) + (Math.random() - 0.5) * 2,
+                  size: 3 + Math.random() * 3,
+                  color: '#e9d5ff',
+                  born: now,
+                  life: 360
+                });
+              }
+
+              if (prevOp > 0.12 && c.opacity <= 0.12) {
+                playGameSound('connect_node', i);
+                spawnCelebrationParticles(c.x * W, c.y * H, starR * 0.65, false, false);
+              }
             }
           } else if (config.nebulaDensity === 'regen' && c.opacity > 0.10 && c.opacity < 1.0) {
-            // 進階模式：未完全擦掉的雲團會極緩慢飄回一點點
-            c.opacity = Math.min(1.0, c.opacity + dtSec * 0.12);
+            c.opacity = Math.min(1.0, c.opacity + dtSec * 0.10);
           }
         }
 
         if (c.opacity > 0.10) remainingClouds++;
+      }
+
+      if (touchingAnyCloud && !isActivelySweeping && now - game.nebulaIdleWarnAt > 1200) {
+        game.nebulaIdleWarnAt = now;
+        const dirHint = config.rangeMode === 'ud' ? '上下大幅揮動' : config.rangeMode === 'lr' ? '左右大幅揮動' : '上下左右揮動';
+        addFloatingText(trackerOutput.x * W, trackerOutput.y * H - starR, `👋 請${dirHint}才能撥開星雲喔！`, '#e9d5ff');
       }
 
       if (remainingClouds === 0 && game.targets.length > 0) {
@@ -3804,12 +4313,12 @@ button:disabled {
       return;
     }
 
-    // 專屬邏輯 4：🧲 星際引力（靠近吸住散落小星，一起護送進星門）
+    // 專屬邏輯 4：🧲 星際引力（靠近吸住散落小星，一起護送進星門聖殿）
     if (gm === 'magnet' && game.magnetPortal) {
       const portal = game.magnetPortal;
       const px = portal.x * W;
       const py = portal.y * H;
-      const portalR = starR * 1.25;
+      const portalR = starR * 1.28;
       let allDelivered = true;
 
       for (let i = 0; i < game.targets.length; i++) {
@@ -3836,12 +4345,12 @@ button:disabled {
             ms.x += (targetX - ms.x) * 0.32;
             ms.y += (targetY - ms.y) * 0.32;
 
-            // 檢查是否已帶入星門
+            // 檢查是否已帶入星門聖殿
             if (Math.hypot(ms.x * W - px, ms.y * H - py) <= portalR) {
               ms.delivered = true;
               ms.attached = false;
               playGameSound('connect_node', i + 2);
-              spawnCelebrationParticles(px, py, starR * 0.8, false, false);
+              spawnCelebrationParticles(px, py, starR * 0.9, true, false);
               refreshTrackingBanner(state.mode);
             }
           }
@@ -3863,7 +4372,7 @@ button:disabled {
       return;
     }
 
-    // 專屬邏輯 5：🌠 托起墜落星（流星緩緩飄落，碰觸立即往上彈回夜空得分；若飄到底部則溫和重回頂部不扣分）
+    // 專屬邏輯 5：🌠 托起墜落星（必須從星星下半部「由下往上」托舉，觸發流光升空與頂部煙火動畫！）
     if (gm === 'falling' && game.targets[0]) {
       const fs = game.targets[0];
       if (fs.collectedLock) return;
@@ -3880,7 +4389,7 @@ button:disabled {
       }
 
       fs.trail.unshift({ x: fs.x, y: fs.y });
-      if (fs.trail.length > 9) fs.trail.pop();
+      if (fs.trail.length > 10) fs.trail.pop();
 
       // 若飄落到底部邊界還沒接住，不扣分，溫和從上方重新飄下
       if (fs.y >= moveBounds.maxY) {
@@ -3889,10 +4398,46 @@ button:disabled {
       }
 
       if (trackerOutput.found && !isTrappedByBlackHole) {
-        const dist = Math.hypot((trackerOutput.x - fs.x) * W, (trackerOutput.y - fs.y) * H);
-        if (dist <= starR * 1.25 + 12) {
-          addFloatingText(fs.x * W, fs.y * H - starR, '🌠 成功托起流星！', '#70e5ab');
-          handleTargetCompleted(fs, now);
+        const tx = trackerOutput.x * W;
+        const ty = trackerOutput.y * H;
+        const sx = fs.x * W;
+        const sy = fs.y * H;
+        const dist = Math.hypot(tx - sx, ty - sy);
+
+        if (dist <= starR * 1.32 + 14) {
+          // 檢查最近 200ms 的垂直向上位移與瞬時向上速度（螢幕座標往上為負值）
+          let recentDyPx = 0;
+          if (game.trackerHistory.length >= 2) {
+            const oldest = game.trackerHistory[0];
+            recentDyPx = (trackerOutput.y - oldest.y) * H;
+          }
+          const vyThreshold = state.mode === 'head' ? -24 : -52;
+          const dyThreshold = state.mode === 'head' ? -3.2 : -5.8;
+          const isMovingUpward = game.trackerVyPxPerSec <= vyThreshold || recentDyPx <= dyThreshold;
+          const isNotFromTopDown = ty >= sy - starR * 0.42;
+
+          if (isMovingUpward && isNotFromTopDown) {
+            // 觸發「由下往上衝向夜空」的升空流星動畫！
+            game.risingStars.push({
+              x: sx,
+              y: sy,
+              vx: (sx < W * 0.5 ? 1 : -1) * 35 + game.trackerVxPxPerSec * 0.12,
+              vy: -Math.max(480, H * 1.08),
+              ay: -920,
+              r: starR,
+              rot: 0,
+              trail: [],
+              born: now
+            });
+            addFloatingText(sx, sy - starR, '🌠 往上托起！升空綻放！', '#70e5ab');
+            handleTargetCompleted(fs, now);
+          } else if (now - game.fallingLiftWarnAt > 850) {
+            game.fallingLiftWarnAt = now;
+            // 輕微減緩下落並給予「請由下往上托起」提示
+            fs.y = Math.max(moveBounds.minY + 0.04, fs.y - 0.015);
+            playGameSound('hint');
+            addFloatingText(sx, sy - starR * 1.05, '⬆️ 請從下方「由下往上」托起喔！', '#ffd452');
+          }
         }
       }
       return;
@@ -4337,29 +4882,104 @@ button:disabled {
     context.closePath();
   }
 
-  // 繪製極致低干擾的宇宙微星塵與跨中線引導虛線
+  // 繪製多層次星空宇宙氛圍（遠景星雲光暈、閃爍星海、四角四芒星、偶發遠景流星）與跨中線引導
   function drawCosmicAtmosphereAndMidline(W, H, now) {
     ctx.save();
     const reduced = reducedMotionQuery.matches;
+    const isDreamy = config.cosmicBgMode !== 'clear';
+    const alphaScale = isDreamy ? 1.0 : 0.48;
+    const minDim = Math.min(W, H);
 
-    // 1. 極淡宇宙星塵點綴（透明度 <= 0.35，完全不搶鏡頭）
-    for (let i = 0; i < ambientStars.length; i++) {
-      const st = ambientStars[i];
-      const twinkle = reduced ? 0.22 : 0.14 + Math.sin(now * 0.002 + st.phase) * 0.12;
-      ctx.fillStyle = `rgba(216, 243, 255, ${twinkle})`;
-      ctx.beginPath();
-      ctx.arc(st.x * W, st.y * H, st.r, 0, Math.PI * 2);
-      ctx.fill();
+    // 1. 舞台四周緩慢呼吸的深空星雲團（不遮擋中央活動區）
+    if (isDreamy) {
+      for (let i = 0; i < ambientNebulae.length; i++) {
+        const nb = ambientNebulae[i];
+        const driftX = reduced ? 0 : Math.sin(now * 0.0005 + nb.phase) * 14;
+        const driftY = reduced ? 0 : Math.cos(now * 0.0004 + nb.phase) * 12;
+        const nx = nb.x * W + driftX;
+        const ny = nb.y * H + driftY;
+        const nr = minDim * nb.rScale;
+        const grad = ctx.createRadialGradient(nx, ny, nr * 0.1, nx, ny, nr);
+        grad.addColorStop(0, nb.colorInner);
+        grad.addColorStop(0.55, nb.colorMid);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(nx, ny, nr, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // 2. 🔀 跨中線視覺引導線（在活動框中央繪製柔和垂直中線，協助患者感知跨越身體中線）
+    // 2. 雙層閃爍星海（圓點微星 + 精緻呼吸四芒星）
+    for (let i = 0; i < ambientStars.length; i++) {
+      const st = ambientStars[i];
+      const twinkle = reduced
+        ? 0.28 * alphaScale
+        : (0.18 + Math.sin(now * 0.0024 + st.phase) * 0.16) * alphaScale;
+      const sx = st.x * W;
+      const sy = st.y * H;
+
+      ctx.globalAlpha = Math.max(0.05, Math.min(0.65, twinkle));
+      ctx.fillStyle = st.color;
+
+      if (st.isDiamond && isDreamy) {
+        traceStarPath(ctx, sx, sy, st.r * 2.4, st.r * 0.65, 4, 0);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.arc(sx, sy, st.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1.0;
+
+    // 3. 偶爾劃過舞台上緣的遠景流星（每 9～14 秒出現一次，營造活生生的宇宙夜空）
+    if (!reduced && isDreamy) {
+      if (!ambientMeteor.active && now >= ambientMeteor.nextAt) {
+        ambientMeteor.active = true;
+        ambientMeteor.born = now;
+        ambientMeteor.duration = 950;
+        const fromLeft = Math.random() < 0.5;
+        ambientMeteor.x = fromLeft ? 0.12 + Math.random() * 0.25 : 0.88 - Math.random() * 0.25;
+        ambientMeteor.y = 0.08 + Math.random() * 0.18;
+        ambientMeteor.vx = (fromLeft ? 1 : -1) * (0.28 + Math.random() * 0.12);
+        ambientMeteor.vy = 0.12 + Math.random() * 0.08;
+      }
+      if (ambientMeteor.active) {
+        const prog = (now - ambientMeteor.born) / ambientMeteor.duration;
+        if (prog >= 1) {
+          ambientMeteor.active = false;
+          ambientMeteor.nextAt = now + 8500 + Math.random() * 5500;
+        } else {
+          const curX = (ambientMeteor.x + ambientMeteor.vx * prog) * W;
+          const curY = (ambientMeteor.y + ambientMeteor.vy * prog) * H;
+          const tailX = curX - ambientMeteor.vx * W * 0.12;
+          const tailY = curY - ambientMeteor.vy * H * 0.12;
+          const fade = Math.sin(prog * Math.PI) * 0.55;
+
+          const mGrad = ctx.createLinearGradient(curX, curY, tailX, tailY);
+          mGrad.addColorStop(0, `rgba(255, 248, 200, ${fade})`);
+          mGrad.addColorStop(0.5, `rgba(56, 189, 248, ${fade * 0.6})`);
+          mGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+          ctx.strokeStyle = mGrad;
+          ctx.lineWidth = 2.2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(curX, curY);
+          ctx.lineTo(tailX, tailY);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // 4. 🔀 跨中線視覺引導線（在活動框中央繪製柔和垂直中線，協助患者感知跨越身體中線）
     if (config.midlineGuideOn && config.rangeMode !== 'ud') {
       const b = getUserActiveRangeBox(state.mode);
       const midX = ((b.minX + b.maxX) * 0.5) * W;
       const yTop = b.minY * H;
       const yBottom = b.maxY * H;
 
-      ctx.strokeStyle = 'rgba(112, 229, 171, 0.22)';
+      ctx.strokeStyle = 'rgba(112, 229, 171, 0.24)';
       ctx.lineWidth = 1.5;
       ctx.setLineDash([8, 8]);
       ctx.beginPath();
@@ -4367,6 +4987,114 @@ button:disabled {
       ctx.lineTo(midX, yBottom - 10);
       ctx.stroke();
       ctx.setLineDash([]);
+    }
+
+    ctx.restore();
+  }
+
+  // 全新美術設計：「🌟 星門聖殿（Cosmic Stargate）」多層逆向旋轉星盤、極光能量漩渦與八芒星核
+  function drawCosmicStargate(cx, cy, r, now, labelText = '🌟 星門聖殿', theme = 'aurora') {
+    const reduced = reducedMotionQuery.matches;
+    const pulse = reduced ? 1 : 1 + Math.sin(now * 0.004) * 0.05;
+    const outerR = r * 1.25 * pulse;
+    const isGold = theme === 'gold';
+
+    ctx.save();
+
+    // 1. 外層深空極光星雲暈染
+    const haloGrad = ctx.createRadialGradient(cx, cy, r * 0.12, cx, cy, outerR * 1.55);
+    if (isGold) {
+      haloGrad.addColorStop(0, 'rgba(255, 243, 176, 0.85)');
+      haloGrad.addColorStop(0.35, 'rgba(255, 212, 82, 0.45)');
+      haloGrad.addColorStop(0.7, 'rgba(56, 189, 248, 0.22)');
+      haloGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+    } else {
+      haloGrad.addColorStop(0, 'rgba(216, 255, 240, 0.85)');
+      haloGrad.addColorStop(0.35, 'rgba(76, 255, 179, 0.45)');
+      haloGrad.addColorStop(0.68, 'rgba(56, 189, 248, 0.28)');
+      haloGrad.addColorStop(1, 'rgba(139, 92, 246, 0)');
+    }
+    ctx.fillStyle = haloGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR * 1.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. 外圈逆時針旋轉星盤刻度環（Astrolabe Outer Ring）
+    const rotOuter = reduced ? 0 : -now * 0.0011;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotOuter);
+
+    ctx.strokeStyle = isGold ? 'rgba(255, 212, 82, 0.78)' : 'rgba(112, 229, 171, 0.82)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, outerR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 12 道星盤幾何刻度與四方星芒錨點
+    for (let i = 0; i < 12; i++) {
+      const ang = (Math.PI * 2 * i) / 12;
+      const isCardinal = i % 3 === 0;
+      const rIn = outerR * (isCardinal ? 0.82 : 0.90);
+      const rOut = outerR * (isCardinal ? 1.10 : 1.02);
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(ang) * rIn, Math.sin(ang) * rIn);
+      ctx.lineTo(Math.cos(ang) * rOut, Math.sin(ang) * rOut);
+      ctx.lineWidth = isCardinal ? 3 : 1.8;
+      ctx.strokeStyle = isCardinal ? '#ffd452' : 'rgba(186, 230, 253, 0.75)';
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 3. 內圈順時針旋轉能量光弧（Counter-Rotating Vortex Arcs）
+    const rotInner = reduced ? 0 : now * 0.0022;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotInner);
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 4;
+    for (let arm = 0; arm < 3; arm++) {
+      const a0 = (Math.PI * 2 * arm) / 3;
+      ctx.strokeStyle = arm % 2 === 0 ? '#38bdf8' : '#ffd452';
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.82, a0, a0 + 1.25);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 4. 中央八芒星羅盤核心（Pulsing Celestial Star Core）
+    ctx.shadowColor = isGold ? '#ffd452' : '#4cffb3';
+    ctx.shadowBlur = 14;
+    traceStarPath(ctx, cx, cy, r * 0.56 * pulse, r * 0.22 * pulse, 8, reduced ? 0 : now * 0.0008);
+    ctx.fillStyle = isGold ? '#fff3b0' : '#d8fff0';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    // 5. 星門下方高對比精緻膠囊標籤（不遮擋星門中央視覺）
+    if (labelText) {
+      ctx.shadowBlur = 0;
+      const tagY = cy + outerR + 16;
+      const tagW = 92;
+      const tagH = 22;
+      ctx.fillStyle = 'rgba(8, 14, 36, 0.88)';
+      ctx.strokeStyle = isGold ? '#ffd452' : '#70e5ab';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(cx - tagW / 2, tagY - tagH / 2, tagW, tagH, 11);
+      } else {
+        ctx.rect(cx - tagW / 2, tagY - tagH / 2, tagW, tagH);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = '900 12px system-ui, -apple-system, "Noto Sans TC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(labelText, cx, tagY + 0.5);
     }
 
     ctx.restore();
@@ -4547,76 +5275,92 @@ button:disabled {
     ctx.restore();
   }
 
-  // 繪製「☁️ 撥開星雲」模式下的底層隱藏星星與表層星雲團
+  // 繪製「☁️ 撥開星雲」模式下的底層隱藏星星與大片多層次星雲帷幕
   function drawNebulaScene(W, H, starR, now) {
     if (config.gamePlayMode !== 'nebula' || !game.targets.length) return;
     const centerX = (game.targets[0].baseX || 0.5) * W;
     const centerY = (game.targets[0].baseY || 0.5) * H;
 
-    // 1. 先在底層畫出被星雲遮蓋的金色大星星
+    // 1. 先在底層畫出被星雲遮蓋的璀璨金色大星星
     drawTargetEntity(
       { type: 'normal', x: centerX / W, y: centerY / H, dwellMs: 0, requiredMs: 0 },
       W,
       H,
-      starR * 1.18,
+      starR * 1.24,
       now,
       true
     );
 
-    // 2. 在上方疊加可擦除的紫色星雲團
+    // 2. 在上方疊加寬幅多層次夢幻星雲帷幕（支援紫羅蘭／星河藍／極光粉漸層與揮動提示）
     ctx.save();
+    const palettes = [
+      ['rgba(216, 180, 254, 0.95)', 'rgba(126, 34, 206, 0.78)', 'rgba(59, 7, 100, 0)'],
+      ['rgba(165, 180, 252, 0.95)', 'rgba(67, 56, 202, 0.78)', 'rgba(30, 27, 75, 0)'],
+      ['rgba(240, 171, 252, 0.92)', 'rgba(147, 51, 234, 0.75)', 'rgba(76, 29, 149, 0)']
+    ];
+
     for (let i = 0; i < game.targets.length; i++) {
       const c = game.targets[i];
-      if (!c || c.opacity <= 0.03) continue;
-      const cx = c.x * W + Math.sin(now * 0.002 + c.phase) * 5;
-      const cy = c.y * H + Math.cos(now * 0.0018 + c.phase) * 4;
-      const cr = starR * 1.38;
+      if (!c || c.opacity <= 0.04) continue;
+      const cx = c.x * W + Math.sin(now * 0.0018 + c.phase) * 8;
+      const cy = c.y * H + Math.cos(now * 0.0015 + c.phase) * 7;
+      const cr = starR * (c.radiusScale || 1.95);
+      const pal = palettes[(c.hueShift || 0) % palettes.length];
 
-      ctx.globalAlpha = Math.min(0.95, c.opacity);
-      const grad = ctx.createRadialGradient(cx, cy, cr * 0.15, cx, cy, cr);
-      grad.addColorStop(0, '#c084fc');
-      grad.addColorStop(0.55, '#6b21a8');
-      grad.addColorStop(1, 'rgba(59, 7, 100, 0)');
+      ctx.globalAlpha = Math.min(0.96, c.opacity);
+      const grad = ctx.createRadialGradient(cx, cy, cr * 0.14, cx, cy, cr);
+      grad.addColorStop(0, pal[0]);
+      grad.addColorStop(0.58, pal[1]);
+      grad.addColorStop(1, pal[2]);
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(cx, cy, cr, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // 3. 在星雲帷幕中央繪製柔和「上下／左右揮動撥開」動態引導標示
+    const avgOpacity =
+      game.targets.reduce((acc, c) => acc + (c.opacity || 0), 0) / Math.max(1, game.targets.length);
+    if (avgOpacity > 0.25) {
+      ctx.globalAlpha = Math.min(0.88, avgOpacity);
+      ctx.font = '900 14px system-ui, -apple-system, "Noto Sans TC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const arrowText =
+        config.rangeMode === 'ud'
+          ? '↕ 大幅上下揮動撥開星雲'
+          : config.rangeMode === 'lr'
+          ? '↔ 大幅左右揮動撥開星雲'
+          : '👋 大幅上下左右揮動撥開星雲';
+      const tw = 206;
+      const th = 28;
+      ctx.fillStyle = 'rgba(10, 16, 40, 0.82)';
+      ctx.strokeStyle = 'rgba(216, 180, 254, 0.75)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(centerX - tw / 2, centerY - th / 2, tw, th, 14);
+      } else {
+        ctx.rect(centerX - tw / 2, centerY - th / 2, tw, th);
+      }
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#f3e8ff';
+      ctx.fillText(arrowText, centerX, centerY + 0.5);
+    }
+
     ctx.restore();
   }
 
-  // 繪製「🧲 星際引力」的目標星門與小星星
+  // 繪製「🧲 星際引力」的目標星門聖殿與小星星
   function drawMagnetScene(W, H, starR, now) {
     if (config.gamePlayMode !== 'magnet' || !game.magnetPortal) return;
     const px = game.magnetPortal.x * W;
     const py = game.magnetPortal.y * H;
-    const pr = starR * 1.25;
+    const pr = starR * 1.18;
 
-    // 1. 繪製目標星門（藍綠能量漩渦籃）
-    ctx.save();
-    const grad = ctx.createRadialGradient(px, py, pr * 0.2, px, py, pr * 1.3);
-    grad.addColorStop(0, 'rgba(112, 229, 171, 0.48)');
-    grad.addColorStop(0.65, 'rgba(56, 189, 248, 0.24)');
-    grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(px, py, pr * 1.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = '#70e5ab';
-    ctx.lineWidth = 3.5;
-    ctx.setLineDash([8, 6]);
-    ctx.beginPath();
-    ctx.arc(px, py, pr, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    ctx.font = '900 13px system-ui, -apple-system, "Noto Sans TC", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#d8fff0';
-    ctx.fillText('🌀 星門終點', px, py);
-    ctx.restore();
+    // 1. 繪製升級版「🌟 星門聖殿（Cosmic Stargate）」
+    drawCosmicStargate(px, py, pr, now, '🌟 星門聖殿', 'aurora');
 
     // 2. 繪製場上散落或已被吸住的小星星
     for (let i = 0; i < game.targets.length; i++) {
@@ -4727,25 +5471,41 @@ button:disabled {
       return;
     }
 
-    // 繪製「🌠 托起墜落星」的飄落彗星與下方托盤弧線
+    // 繪製「🌠 托起墜落星」的飄落彗星、發光新月光托與動態「由下往上托」箭頭
     if (type === 'falling_star') {
       drawMotionTrail(target, W, H, r, '251, 191, 36');
       ctx.save();
       if (!isReady) ctx.globalAlpha = 0.55;
 
-      // 下方柔和「往上托舉」引導弧線與箭頭
-      ctx.strokeStyle = '#70e5ab';
-      ctx.lineWidth = 3.5;
+      // 下方發光「新月光托（Crescent Cradle）」與動態向上雙箭頭，直覺引導「由下往上頂」！
+      const liftBounce = reduced ? 0 : Math.sin(now * 0.008) * 5;
+      ctx.shadowColor = '#4cffb3';
+      ctx.shadowBlur = 10;
+      ctx.strokeStyle = '#4cffb3';
+      ctx.lineWidth = 4.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.arc(cx, cy + r * 0.25, r * 1.15, 0.2 * Math.PI, 0.8 * Math.PI);
+      ctx.arc(cx, cy + r * 0.22 + liftBounce * 0.4, r * 1.22, 0.18 * Math.PI, 0.82 * Math.PI);
+      ctx.stroke();
+
+      // 繪製底部向上 V 型發光推進箭頭
+      const arrowY = cy + r * 1.62 + liftBounce;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ffd452';
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, arrowY + 7);
+      ctx.lineTo(cx, arrowY - 3);
+      ctx.lineTo(cx + 12, arrowY + 7);
+      ctx.moveTo(cx - 8, arrowY + 15);
+      ctx.lineTo(cx, arrowY + 7);
+      ctx.lineTo(cx + 8, arrowY + 15);
       ctx.stroke();
 
       const starGrad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
       starGrad.addColorStop(0, '#fff394');
       starGrad.addColorStop(0.55, '#ffd23f');
       starGrad.addColorStop(1, '#f59e0b');
-      ctx.shadowColor = 'rgba(255, 196, 37, 0.7)';
+      ctx.shadowColor = 'rgba(255, 196, 37, 0.75)';
       ctx.shadowBlur = 14;
       traceStarPath(ctx, cx, cy, r, r * 0.48, 5, 0);
       ctx.fillStyle = starGrad;
@@ -5107,25 +5867,11 @@ button:disabled {
         ctx.stroke();
       }
 
-      // 4. 繪製終點星門（Target Portal）
-      ctx.shadowBlur = 0;
+      // 4. 繪製升級版終點「🌟 星門聖殿（Cosmic Stargate）」
+      ctx.restore();
       const ex = endPt.x * W;
       const ey = endPt.y * H;
-      ctx.beginPath();
-      ctx.arc(ex, ey, starR * 0.92, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 212, 82, 0.22)';
-      ctx.fill();
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = '#ffd452';
-      ctx.stroke();
-
-      ctx.font = '900 12px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#fff6d6';
-      ctx.fillText('🏁 終點', ex, ey);
-
-      ctx.restore();
+      drawCosmicStargate(ex, ey, starR * 0.92, performance.now(), '🏁 星門終點', 'gold');
       return;
     }
 
@@ -5181,6 +5927,63 @@ button:disabled {
   }
 
   function drawEffects(now) {
+    const W = stage.clientWidth || 360;
+    const H = stage.clientHeight || 480;
+
+    // 繪製「🌠 托起墜落星」成功由下往上托起後的「流光升空＋頂部星光煙火」動畫
+    for (let i = game.risingStars.length - 1; i >= 0; i--) {
+      const rs = game.risingStars[i];
+      const dtSec = 0.016;
+      rs.vy += (rs.ay || -900) * dtSec;
+      rs.x += rs.vx * dtSec;
+      rs.y += rs.vy * dtSec;
+      rs.rot += 0.16;
+      rs.trail.unshift({ x: rs.x, y: rs.y });
+      if (rs.trail.length > 14) rs.trail.pop();
+
+      // 沿途噴發金色與亮青流光粒子
+      if (!reducedMotionQuery.matches && Math.random() < 0.75) {
+        game.particles.push({
+          x: rs.x + (Math.random() - 0.5) * 16,
+          y: rs.y + rs.r * 0.4,
+          vx: (Math.random() - 0.5) * 2.4,
+          vy: 1.5 + Math.random() * 2.5,
+          size: 2.5 + Math.random() * 3.5,
+          color: Math.random() < 0.6 ? '#ffd452' : '#4cffb3',
+          born: now,
+          life: 380
+        });
+      }
+
+      // 繪製升空彗星長尾與旋轉亮星
+      ctx.save();
+      for (let k = rs.trail.length - 1; k >= 1; k--) {
+        const pt = rs.trail[k];
+        const ratio = 1 - k / rs.trail.length;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, rs.r * (0.22 + ratio * 0.55), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 212, 82, ${ratio * 0.55})`;
+        ctx.fill();
+      }
+
+      ctx.shadowColor = '#ffd452';
+      ctx.shadowBlur = 18;
+      traceStarPath(ctx, rs.x, rs.y, rs.r * 1.08, rs.r * 0.50, 5, rs.rot);
+      ctx.fillStyle = '#fff5b8';
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#4cffb3';
+      ctx.stroke();
+      ctx.restore();
+
+      // 抵達夜空頂端時綻放大型星光煙火！
+      if (rs.y <= Math.max(48, H * 0.14) || now - rs.born > 1200) {
+        spawnCelebrationParticles(rs.x, Math.max(48, rs.y), rs.r * 1.15, true, true);
+        playGameSound('bonus');
+        game.risingStars.splice(i, 1);
+      }
+    }
+
     if (game.constellationBurst) {
       const cb = game.constellationBurst;
       const t = (now - cb.born) / cb.duration;
@@ -6369,12 +7172,23 @@ button:disabled {
     if (e.target === $('settingsSheet')) closeSettings();
   });
 
+  function syncBlackHoleUI() {
+    const input = $('blackHoleToggleInput');
+    if (input) input.checked = Boolean(config.blackHoleOn);
+    const label = $('blackHoleStateText');
+    if (label) {
+      label.textContent = config.blackHoleOn ? '開啟' : '關閉';
+      label.className = 'switch-state-label' + (config.blackHoleOn ? ' on' : '');
+    }
+    document.querySelectorAll('.seg-btn[data-setting="blackHoleQuick"]').forEach(b => {
+      b.setAttribute('aria-checked', String((b.dataset.value === 'on') === Boolean(config.blackHoleOn)));
+    });
+  }
+
   // 滑動開關事件綁定（黑洞障礙、跨中線引導、語音報數、遊戲音效）
   $('blackHoleToggleInput').addEventListener('change', e => {
     config.blackHoleOn = Boolean(e.target.checked);
-    const label = $('blackHoleStateText');
-    label.textContent = config.blackHoleOn ? '開啟' : '關閉';
-    label.className = 'switch-state-label' + (config.blackHoleOn ? ' on' : '');
+    syncBlackHoleUI();
     const b = getEffectiveStarSpawnBounds(state.mode);
     spawnOrUpdateBlackHole(b, game.targets);
     renderScene();
@@ -6437,8 +7251,16 @@ button:disabled {
         needRespawnReset = true;
       } else if (key === 'chargeDurationSec') {
         config.chargeDurationSec = Number(val);
+      } else if (key === 'blackHoleQuick') {
+        config.blackHoleOn = val === 'on';
+        syncBlackHoleUI();
+        const b = getEffectiveStarSpawnBounds(state.mode);
+        spawnOrUpdateBlackHole(b, game.targets);
       } else if (key === 'connectSubMode') {
         config.connectSubMode = val;
+        needRespawnReset = true;
+      } else if (key === 'connectRouteMode') {
+        config.connectRouteMode = val;
         needRespawnReset = true;
       } else if (key === 'connectStarCount') {
         config.connectStarCount = Number(val);
@@ -6452,8 +7274,14 @@ button:disabled {
       } else if (key === 'selectOptionCount') {
         config.selectOptionCount = Number(val);
         needRespawnReset = true;
+      } else if (key === 'selectLayoutMode') {
+        config.selectLayoutMode = val;
+        needRespawnReset = true;
       } else if (key === 'selectPromptMode') {
         config.selectPromptMode = val;
+      } else if (key === 'cosmicBgMode') {
+        config.cosmicBgMode = val;
+        stage.dataset.cosmicBg = val;
       } else if (key === 'trafficVariant') {
         config.trafficVariant = val;
         needRespawnReset = true;
