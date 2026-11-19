@@ -333,7 +333,7 @@
     bgmOn: true,
     bgmVolume: 0.35,
     sfxVolume: 0.80,
-    cameraFit: 'contain'
+    cameraFit: 'fit-width'
   };
 
   // 三種追蹤模式各自獨立儲存的「使用者設定活動範圍」
@@ -873,7 +873,7 @@
     const vh = video.videoHeight || 480;
     const W = Math.max(1, stage.clientWidth);
     const H = Math.max(1, stage.clientHeight);
-    const s = config.cameraFit === 'cover' ? Math.max(W / vw, H / vh) : Math.min(W / vw, H / vh);
+    const s = config.cameraFit === 'cover' ? Math.max(W / vw, H / vh) : (W / vw);
 
     const px = (1 - rawPoint.x) * vw * s - (vw * s - W) / 2;
     const py = rawPoint.y * vh * s - (vh * s - H) / 2;
@@ -4952,6 +4952,10 @@
   function renderScene(now = performance.now()) {
     const W = stage.clientWidth;
     const H = stage.clientHeight;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
     ctx.clearRect(0, 0, W, H);
 
     if (state.calibratingRange) {
@@ -5158,12 +5162,12 @@
     wctx.translate(W, 0);
     wctx.scale(-1, 1);
     if (config.cameraFit === 'cover') {
-      const s = config.cameraFit === 'cover' ? Math.max(W / vw, H / vh) : Math.min(W / vw, H / vh);
+      const s = config.cameraFit === 'cover' ? Math.max(W / vw, H / vh) : (W / vw);
       const sw = W / s;
       const sh = H / s;
       wctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, W, H);
     } else {
-      const s = Math.min(W / vw, H / vh);
+      const s = W / vw;
       const dw = vw * s;
       const dh = vh * s;
       const dx = (W - dw) / 2;
@@ -5918,7 +5922,35 @@
     updateCustomRangeLabels();
     syncSettingsVisibility();
     $('settingsSheet').hidden = false;
+    const resumeBtn = $('resumeFromSettingsBtn');
+    if (resumeBtn) {
+      resumeBtn.textContent = state.active ? '▶ 繼續遊戲' : '▶ 開始遊戲';
+    }
     syncModeCarouselUI(false);
+  }
+
+  async function restartCameraAndGame() {
+    closeSettings();
+    state.loopToken++;
+    cancelAnimationFrame(state.rafId);
+
+    // 徹底釋放舊鏡頭串流與清空殘留畫布，避免 iPad 爆圖或殘影
+    if (state.stream) {
+      try {
+        state.stream.getTracks().forEach(t => t.stop());
+      } catch {}
+      state.stream = null;
+    }
+    video.srcObject = null;
+
+    game.particles = [];
+    game.floatingTexts = [];
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, stage.clientWidth, stage.clientHeight);
+
+    resetGame();
+    await startCamera();
   }
   function closeSettings() {
     $('settingsSheet').hidden = true;
@@ -5926,6 +5958,15 @@
   }
   $('openSettingsTop').addEventListener('click', openSettings);
   $('closeSettingsBtn').addEventListener('click', closeSettings);
+  $('resumeFromSettingsBtn').addEventListener('click', () => {
+    closeSettings();
+    if (!state.active) {
+      startCamera();
+    }
+  });
+  $('restartFullBtn').addEventListener('click', () => {
+    restartCameraAndGame();
+  });
   $('closeSettingsTop').addEventListener('click', closeSettings);
   $('settingsSheet').addEventListener('click', e => {
     if (e.target === $('settingsSheet')) closeSettings();
@@ -5997,7 +6038,7 @@
   });
 
   $('cameraFitSelect').addEventListener('change', e => {
-    config.cameraFit = e.target.value === 'cover' ? 'cover' : 'contain';
+    config.cameraFit = e.target.value === 'cover' ? 'cover' : 'fit-width';
     video.classList.toggle('fit-cover', config.cameraFit === 'cover');
     resizeStage();
   });
