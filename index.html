@@ -1,673 +1,417 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#070b1d">
-<title>星動體感訓練｜楊昀霖 職能治療師</title>
-<link rel="stylesheet" href="css/style.css?v=4.1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#F7F3EA">
+  <title>懷舊冰果室｜手搖剉冰樂・楊昀霖 職能治療師</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-<main class="app">
-  <!-- 頂部欄：標題、限時倒數、進度／分數徽章、右上角齒輪設定與全螢幕 -->
-  <header class="top">
-    <div class="brand">
-      <strong id="appTitleText">星動體感訓練｜星星收集</strong>
-    </div>
-    <div class="top-right">
-      <div class="timer-badge" id="timerBadge" hidden aria-live="polite" title="剩餘挑戰時間">
-        <span>⏱</span>
-        <span id="timerText">60s</span>
+
+  <video id="video" muted autoplay playsinline></video>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- 頂部雙層訂單看板 -->
+  <div id="top-hud">
+    <div class="hud-main-board">
+      <div class="hud-top-row">
+        <span id="hud-recipe-name">🥣 相思紅豆湯圓煉乳冰</span>
+        <span id="hud-bowl-text" class="bowl-counter-badge">第 1 / 5 碗</span>
       </div>
-      <span class="ver-pill" title="目前版本">v4.1</span>
-      <div class="score-badge" id="scoreBadge" aria-live="polite" title="目前進度">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#ffd452" stroke="#ff9f1c" stroke-width="1.5" d="M12 2.4l2.9 6.1 6.7.9-4.9 4.7 1.2 6.7L12 17.6 6.1 20.8l1.2-6.7-4.9-4.7 6.7-.9L12 2.4z"/>
-        </svg>
-        <span id="scoreText">0 / 10</span>
-      </div>
-      <button class="icon-btn" id="openSettingsTop" aria-label="開啟設定與說明" title="遊戲模式與復健設定">⚙</button>
-      <button class="icon-btn" id="fullBtn" aria-label="切換全螢幕" title="切換全螢幕">⛶</button>
-    </div>
-  </header>
-
-  <!-- 三種追蹤模式切換（固定於最上方，不需捲動） -->
-  <nav class="tabs" aria-label="追蹤模式切換">
-    <button class="tab" data-mode="hand" aria-pressed="true">✋ 手部</button>
-    <button class="tab" data-mode="head" aria-pressed="false">🙂 頭部</button>
-    <button class="tab" data-mode="color" aria-pressed="false">🟠 顏色</button>
-  </nav>
-
-  <!-- 遊戲與鏡像前鏡頭主舞台 -->
-  <section class="stage" id="stage" aria-label="復健互動畫面">
-    <video id="video" muted autoplay playsinline></video>
-    <div class="scrim"></div>
-    <canvas id="canvas"></canvas>
-
-    <!-- 左上角追蹤狀態、右上角目前玩法與範圍標示 -->
-    <div class="status-bar" id="statusBar">
-      <span class="pill" id="statusPill">攝影機未開啟</span>
-      <span class="pill info" id="rangePill">星星收集｜左右移動</span>
+      <div id="hud-step-pills"></div>
+      <div id="hud-action-line" role="status" aria-live="polite">準備開始製作剉冰</div>
     </div>
 
-    <!-- 底部操作與狀態提示文字 -->
-    <div class="bottom-banner" id="messageBanner" aria-live="polite">
-      按下「啟動前鏡頭」開始星空宇宙復健練習
-    </div>
-
-    <!-- 啟動與錯誤遮罩 -->
-    <div class="overlay" id="startOverlay">
-      <div class="overlay-card">
-        <h2 id="coverTitle">星動體感訓練</h2>
-        <p id="coverText">內建「星星收集（含充能）、星座連線（2～7顆真實星座）、星河軌道（牽引光球）、星象選擇、脈衝紅綠燈、撥開星雲、星際引力、托起墜落星」8 大星空模式。</p>
-        <p class="sub-note">楊昀霖 職能治療師設計｜只使用前鏡頭自拍鏡像，已強化握拳與微側臉辨識穩定度。</p>
-        <button id="startBtn" class="mainbtn">啟動前鏡頭</button>
-      </div>
-    </div>
-
-    <!-- 完成練習結算遮罩（含今日守護星座收集冊與不干擾連玩的今日總結複製） -->
-    <div class="overlay" id="completeOverlay" hidden>
-      <div class="overlay-card">
-        <h2 id="completeTitle">🎉 太棒了！完成練習</h2>
-        <p id="completeSummary">您已順利完成本回合星空復健練習！</p>
-        <div class="stats-grid" id="completeStatsGrid"></div>
-
-        <!-- 🌌 今日守護星座收集冊 -->
-        <div class="album-card" id="constellationAlbumBox">
-          <div class="album-header">
-            <span class="album-title" id="albumHeaderText">🌌 今日守護星座收集冊（已點亮 1 / 6）</span>
-          </div>
-          <p id="albumStoryText" style="font-size:12px;color:#d6eaef;margin:0;"></p>
-          <div class="album-badges" id="albumBadgesRow"></div>
-        </div>
-
-        <!-- 📋 今日累積總結與一鍵複製回報 -->
-        <div class="session-bar">
-          <span id="sessionLogSummaryText">今日已累計完成 1 回合</span>
-          <button type="button" class="copy-btn" id="copySessionLogBtn">📋 複製今日總結</button>
-        </div>
-
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:2px;">
-          <button id="playAgainBtn" class="mainbtn">再玩一次</button>
-          <button id="completeSettingsBtn" class="secondary-btn">調整難度設定</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 活動範圍編輯控制列：位於攝影機舞台下方外部，不遮擋任何攝影機畫面與拉框邊界 -->
-  <div class="calib-bar" id="calibPanel" hidden>
-    <p class="calib-guide" id="calibGuideText">
-      拖曳綠色方框四邊／四角調整大小，或按住方框內部移動位置
-    </p>
-    <div class="calib-btn-row">
-      <button type="button" class="calib-btn" id="calibResetDefaultBtn">恢復預設</button>
-      <button type="button" class="calib-btn primary" id="calibApplyBtn">完成套用</button>
+    <div class="hud-btn-group">
+      <button id="btn-fullscreen" class="circle-icon-btn" title="全螢幕">⛶</button>
+      <button id="btn-settings" class="circle-icon-btn" title="遊戲模式與復健設定">⚙️</button>
     </div>
   </div>
 
-  <!-- 底部精簡操作列 -->
-  <footer class="footer" id="mainFooter">
-    <span class="hint" id="footerHint">將綠色追蹤環移到星星上即可收集。</span>
-    <span class="swatch" id="colorSwatch" hidden title="目前選取的追蹤顏色"></span>
-    <button class="opt" id="rechooseBtn" hidden>重新選色</button>
-    <button class="opt" id="resetGameBtn" title="重新開始本局進度">重來</button>
-  </footer>
-
-  <!-- 齒輪設定與復健參數抽屜 -->
-  <div class="sheet" id="settingsSheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
-    <article>
-      <div class="sheet-header">
-        <h3 id="settingsTitle">⚙ 星動體感訓練｜設定 <span class="ver-badge">v4.1</span></h3>
-        <button class="icon-btn icon-btn-sm" id="closeSettingsTop" aria-label="關閉設定">✕</button>
-      </div>
-      <div class="panel-quick-actions">
-        <button class="mainbtn" id="resumeFromSettingsBtn" type="button">▶ 繼續遊戲</button>
-        <button class="secbtn" id="restartFullBtn" type="button">🔄 重新開始（重整鏡頭）</button>
-      </div>
-
-      <div class="setting-group">
-        <!-- 核心玩法選擇：8 大星空宇宙復健模式 -->
-        <div class="setting-section">
-          <div class="setting-row">
-            <div class="mode-carousel-header">
-              <div>
-                <label style="margin:0;">1. 選擇星空遊戲模式（共 8 種玩法）</label>
-                <div class="mode-carousel-subhint">↔ 左右滑動關卡卡片，或點選下方編號切換</div>
-              </div>
-              <div class="mode-carousel-nav">
-                <button type="button" class="carousel-arrow-btn" id="modePrevBtn" aria-label="上一個遊戲模式" title="上一關">‹</button>
-                <button type="button" class="carousel-arrow-btn" id="modeNextBtn" aria-label="下一個遊戲模式" title="下一關">›</button>
-              </div>
-            </div>
-
-            <!-- 關卡式水平滑動卡片軌道 -->
-            <div class="mode-carousel-track" id="modeCarouselTrack" role="listbox" aria-label="星空遊戲關卡選單">
-              <!-- 關卡 01：星星收集 -->
-              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="collect" aria-selected="true">
-                <div class="mode-card-top">
-                  <span class="mode-stage-tag">STAGE 01 / 08</span>
-                  <span class="mode-active-pill" data-card-status="collect">✓ 目前選擇</span>
-                </div>
-                <div class="mode-card-title-row">
-                  <span class="mode-card-icon" aria-hidden="true">⭐</span>
-                  <span class="mode-card-title">星星收集</span>
-                </div>
-                <p class="mode-card-desc">移動手部、頭部或手持道具去碰觸夜空中的星星；亦可切換為「持續停留充能」模式。</p>
-                <div class="mode-card-skills">
-                  <span class="mode-skill-label">🎯 主要訓練：</span>
-                  <span class="mode-skill-chip">上肢／頭部伸展</span>
-                  <span class="mode-skill-chip">空間定位</span>
-                  <span class="mode-skill-chip">肌耐力維持</span>
-                </div>
-              </div>
-
-              <!-- 關卡 02：星座連線 -->
-              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="connect" aria-selected="false">
-                <div class="mode-card-top">
-                  <span class="mode-stage-tag">STAGE 02 / 08</span>
-                  <span class="mode-active-pill" data-card-status="connect">點選切換此關</span>
-                </div>
-                <div class="mode-card-title-row">
-                  <span class="mode-card-icon" aria-hidden="true">✨</span>
-                  <span class="mode-card-title">星座連線</span>
-                </div>
-                <p class="mode-card-desc">依數字提示或記憶順序，從 1 號開始依序點亮 2～7 顆星星，連成百變星座與銀河星路。</p>
-                <div class="mode-card-skills">
-                  <span class="mode-skill-label">🎯 主要訓練：</span>
-                  <span class="mode-skill-chip">順序規劃</span>
-                  <span class="mode-skill-chip">視覺空間掃描</span>
-                  <span class="mode-skill-chip">工作記憶</span>
-                </div>
-              </div>
-
-              <!-- 關卡 03：星河軌道 -->
-              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="track" aria-selected="false">
-                <div class="mode-card-top">
-                  <span class="mode-stage-tag">STAGE 03 / 08</span>
-                  <span class="mode-active-pill" data-card-status="track">點選切換此關</span>
-                </div>
-                <div class="mode-card-title-row">
-                  <span class="mode-card-icon" aria-hidden="true">🌈</span>
-                  <span class="mode-card-title">星河軌道</span>
-                </div>
-                <p class="mode-card-desc">先套住起點的星河光球，順著直線、彩虹弧或波浪軌道平穩推向星門終點；跑出線外會脫鉤停住。</p>
-                <div class="mode-card-skills">
-                  <span class="mode-skill-label">🎯 主要訓練：</span>
-                  <span class="mode-skill-chip">動作平穩度</span>
-                  <span class="mode-skill-chip">連續軌跡控制</span>
-                  <span class="mode-skill-chip">手眼追視協調</span>
-                </div>
-              </div>
-
-              <!-- 關卡 04：星象選擇 -->
-              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="select" aria-selected="false">
-                <div class="mode-card-top">
-                  <span class="mode-stage-tag">STAGE 04 / 08</span>
-                  <span class="mode-active-pill" data-card-status="select">點選切換此關</span>
-                </div>
-                <div class="mode-card-title-row">
-                  <span class="mode-card-icon" aria-hidden="true">🎯</span>
-                  <span class="mode-card-title">星象選擇</span>
-                </div>
-                <p class="mode-card-desc">依照畫面圖文或純語音播報題目，從隨機散落或對稱排列的星象中找出正確圖案。</p>
-                <div class="mode-card-skills">
-                  <span class="mode-skill-label">🎯 主要訓練：</span>
-                  <span class="mode-skill-chip">視覺區辨</span>
-                  <span class="mode-skill-chip">聽覺理解</span>
-                  <span class="mode-skill-chip">選擇性注意力</span>
-                </div>
-              </div>
-
-              <!-- 關卡 05：脈衝紅綠燈 -->
-              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="traffic" aria-selected="false">
-                <div class="mode-card-top">
-                  <span class="mode-stage-tag">STAGE 05 / 08</span>
-                  <span class="mode-active-pill" data-card-status="traffic">點選切換此關</span>
-                </div>
-                <div class="mode-card-title-row">
-                  <span class="mode-card-icon" aria-hidden="true">🚦</span>
-                  <span class="mode-card-title">脈衝紅綠燈</span>
-                </div>
-                <p class="mode-card-desc">綠燈時主動出擊碰觸星星，紅燈時立刻煞車停在紅圈外等待；成功守規矩可升級為金色獎勵星。</p>
-                <div class="mode-card-skills">
-                  <span class="mode-skill-label">🎯 主要訓練：</span>
-                  <span class="mode-skill-chip">反應抑制</span>
-                  <span class="mode-skill-chip">衝動控制</span>
-                  <span class="mode-skill-chip">動作啟動與煞車</span>
-                </div>
-              </div>
-
-              <!-- 關卡 06：撥開星雲 -->
-              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="nebula" aria-selected="false">
-                <div class="mode-card-top">
-                  <span class="mode-stage-tag">STAGE 06 / 08</span>
-                  <span class="mode-active-pill" data-card-status="nebula">點選切換此關</span>
-                </div>
-                <div class="mode-card-title-row">
-                  <span class="mode-card-icon" aria-hidden="true">☁️</span>
-                  <span class="mode-card-title">撥開星雲</span>
-                </div>
-                <p class="mode-card-desc">像擦窗戶或擦桌子一樣，做出大範圍上下或左右連續揮動，把寬幅星雲帷幕撥開喚醒隱藏星星。</p>
-                <div class="mode-card-skills">
-                  <span class="mode-skill-label">🎯 主要訓練：</span>
-                  <span class="mode-skill-chip">大範圍關節活動</span>
-                  <span class="mode-skill-chip">肩肘大幅伸展</span>
-                  <span class="mode-skill-chip">連續揮動耐力</span>
-                </div>
-              </div>
-
-              <!-- 關卡 07：星際引力 -->
-              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="magnet" aria-selected="false">
-                <div class="mode-card-top">
-                  <span class="mode-stage-tag">STAGE 07 / 08</span>
-                  <span class="mode-active-pill" data-card-status="magnet">點選切換此關</span>
-                </div>
-                <div class="mode-card-title-row">
-                  <span class="mode-card-icon" aria-hidden="true">🧲</span>
-                  <span class="mode-card-title">星際引力</span>
-                </div>
-                <p class="mode-card-desc">先靠近散落的小星星將它們吸附在身邊，再跨越身體中線一路護送進另一端的星門聖殿。</p>
-                <div class="mode-card-skills">
-                  <span class="mode-skill-label">🎯 主要訓練：</span>
-                  <span class="mode-skill-chip">跨身體中線移動</span>
-                  <span class="mode-skill-chip">多目標路徑規劃</span>
-                  <span class="mode-skill-chip">遠端伸展控制</span>
-                </div>
-              </div>
-
-              <!-- 關卡 08：托起墜落星 -->
-              <div class="mode-level-card" role="option" tabindex="0" data-mode-card="falling" aria-selected="false">
-                <div class="mode-card-top">
-                  <span class="mode-stage-tag">STAGE 08 / 08</span>
-                  <span class="mode-active-pill" data-card-status="falling">點選切換此關</span>
-                </div>
-                <div class="mode-card-title-row">
-                  <span class="mode-card-icon" aria-hidden="true">🌠</span>
-                  <span class="mode-card-title">托起墜落星</span>
-                </div>
-                <p class="mode-card-desc">對準從夜空飄落的流星下方新月光托，做出「由下往上」的托舉動作，將流星送回天際綻放煙火。</p>
-                <div class="mode-card-skills">
-                  <span class="mode-skill-label">🎯 主要訓練：</span>
-                  <span class="mode-skill-chip">抗重力向上抬舉</span>
-                  <span class="mode-skill-chip">動態時機捕捉</span>
-                  <span class="mode-skill-chip">方向協調反應</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 8 關卡快速星點指示器 -->
-            <div class="mode-carousel-dots" id="modeCarouselDots" aria-label="關卡快速切換">
-              <button type="button" class="mode-dot-btn" data-mode-dot="collect" aria-current="true" title="第1關：星星收集">01</button>
-              <button type="button" class="mode-dot-btn" data-mode-dot="connect" aria-current="false" title="第2關：星座連線">02</button>
-              <button type="button" class="mode-dot-btn" data-mode-dot="track" aria-current="false" title="第3關：星河軌道">03</button>
-              <button type="button" class="mode-dot-btn" data-mode-dot="select" aria-current="false" title="第4關：星象選擇">04</button>
-              <button type="button" class="mode-dot-btn" data-mode-dot="traffic" aria-current="false" title="第5關：脈衝紅綠燈">05</button>
-              <button type="button" class="mode-dot-btn" data-mode-dot="nebula" aria-current="false" title="第6關：撥開星雲">06</button>
-              <button type="button" class="mode-dot-btn" data-mode-dot="magnet" aria-current="false" title="第7關：星際引力">07</button>
-              <button type="button" class="mode-dot-btn" data-mode-dot="falling" aria-current="false" title="第8關：托起墜落星">08</button>
-            </div>
-
-            <!-- 隱藏相容按鈕群：供內部事件同步與腳本相容使用 -->
-            <div class="seg-group mode-grid" role="radiogroup" aria-label="選擇遊戲模式" hidden>
-              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="collect" aria-checked="true">⭐ 星星收集</button>
-              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="connect" aria-checked="false">✨ 星星連線</button>
-              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="track" aria-checked="false">🌈 星河軌道</button>
-              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="select" aria-checked="false">🎯 星象選擇</button>
-              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="traffic" aria-checked="false">🚦 脈衝紅綠燈</button>
-              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="nebula" aria-checked="false">☁️ 撥開星雲</button>
-              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="magnet" aria-checked="false">🧲 星際引力</button>
-              <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="falling" aria-checked="false">🌠 托起墜落星</button>
-            </div>
-            <button type="button" class="seg-btn" data-setting="gamePlayMode" data-value="charge" aria-checked="false" hidden>⚡ 星星充能</button>
-          </div>
-
-          <!-- 1. ⭐ 星星收集（整合收集＋充能）專屬子設定 -->
-          <div class="setting-row" id="subSettingCollect">
-            <label>星星收集互動方式（定點收集 vs. 持續充能）</label>
-            <div class="seg-group" role="radiogroup" aria-label="收集或充能模式">
-              <button type="button" class="seg-btn" data-setting="collectActionType" data-value="touch" aria-checked="true">⭐ 碰觸收集（預設）</button>
-              <button type="button" class="seg-btn" data-setting="collectActionType" data-value="charge_static" aria-checked="false">🔵 固定充能</button>
-              <button type="button" class="seg-btn" data-setting="collectActionType" data-value="charge_moving" aria-checked="false">🟣 移動充能</button>
-              <button type="button" class="seg-btn" data-setting="collectActionType" data-value="charge_mixed" aria-checked="false">⚡ 混合充能</button>
-            </div>
-            <div style="margin-top:4px;">
-              <label style="margin-bottom:4px;">🌀 收集路線黑洞攔截（生成於移動路徑側翼，引導弧形繞障）</label>
-              <div class="seg-group" role="radiogroup" aria-label="星星收集黑洞開關">
-                <button type="button" class="seg-btn" data-setting="blackHoleQuick" data-value="off" aria-checked="true">關閉黑洞（純收集）</button>
-                <button type="button" class="seg-btn" data-setting="blackHoleQuick" data-value="on" aria-checked="false">🌀 開啟黑洞攔截（吸住2秒）</button>
-              </div>
-            </div>
-
-            <div id="subCollectSpecialRow" style="margin-top:4px;">
-              <label style="margin-bottom:4px;">特殊星星出現頻率（3秒限時彩虹星／亮青移動星）</label>
-              <div class="seg-group" role="radiogroup" aria-label="特殊星星出現頻率">
-                <button type="button" class="seg-btn" data-setting="specialFreq" data-value="off" aria-checked="false">關閉（純黃星）</button>
-                <button type="button" class="seg-btn" data-setting="specialFreq" data-value="low" aria-checked="true">少量（預設）</button>
-                <button type="button" class="seg-btn" data-setting="specialFreq" data-value="high" aria-checked="false">豐富</button>
-              </div>
-            </div>
-
-            <div id="subSettingCharge" hidden style="margin-top:4px;">
-              <label style="margin-bottom:4px;">充能維持秒數（暫離享 0.5 秒寬限不掉能量）</label>
-              <div class="seg-group" role="radiogroup" aria-label="充能維持秒數">
-                <button type="button" class="seg-btn" data-setting="chargeDurationSec" data-value="1" aria-checked="false">1 秒（輕鬆）</button>
-                <button type="button" class="seg-btn" data-setting="chargeDurationSec" data-value="2" aria-checked="true">2 秒（預設）</button>
-                <button type="button" class="seg-btn" data-setting="chargeDurationSec" data-value="3" aria-checked="false">3 秒（進階）</button>
-              </div>
-              <div class="seg-group" role="radiogroup" aria-label="充能星星類型" hidden>
-                <button type="button" class="seg-btn" data-setting="chargeTypeMode" data-value="static" aria-checked="false">固定充能（藍）</button>
-                <button type="button" class="seg-btn" data-setting="chargeTypeMode" data-value="moving" aria-checked="false">移動充能（紫）</button>
-                <button type="button" class="seg-btn" data-setting="chargeTypeMode" data-value="mixed" aria-checked="true">混合出現（預設）</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. ✨ 星座連線（多組星座輪播＋動態隨機不重疊星路）專屬子設定 -->
-          <div class="setting-row" id="subSettingConnect" hidden>
-            <label>星座連線玩法、路線變化與每組顆數（每次出題路線皆不同）</label>
-            <div class="seg-group" role="radiogroup" aria-label="星星連線模式">
-              <button type="button" class="seg-btn" data-setting="connectSubMode" data-value="number" aria-checked="true">數字提示版</button>
-              <button type="button" class="seg-btn" data-setting="connectSubMode" data-value="memory" aria-checked="false">記憶順序版</button>
-            </div>
-            <div class="seg-group" role="radiogroup" aria-label="星座路線生成方式" style="margin-top:4px;">
-              <button type="button" class="seg-btn" data-setting="connectRouteMode" data-value="varied" aria-checked="true">🔀 百變星路（星座＋隨機交錯）</button>
-              <button type="button" class="seg-btn" data-setting="connectRouteMode" data-value="random" aria-checked="false">🎲 全隨機不重疊星路</button>
-              <button type="button" class="seg-btn" data-setting="connectRouteMode" data-value="constellation" aria-checked="false">🌌 多組星座輪播</button>
-            </div>
-            <div class="seg-group" role="radiogroup" aria-label="每組星星顆數" style="margin-top:4px;">
-              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="2" aria-checked="false">2 顆</button>
-              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="3" aria-checked="true">3 顆（預設）</button>
-              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="4" aria-checked="false">4 顆</button>
-              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="5" aria-checked="false">5 顆（仙后W）</button>
-              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="6" aria-checked="false">6 顆（獵戶座）</button>
-              <button type="button" class="seg-btn" data-setting="connectStarCount" data-value="7" aria-checked="false">7 顆（北斗七星）</button>
-            </div>
-            <div id="subSettingMemoryTime" hidden style="margin-top:4px;">
-              <label style="margin-bottom:4px;">記憶順序版：數字顯示時間（記憶版上限 5 顆）</label>
-              <div class="seg-group" role="radiogroup" aria-label="記憶顯示時間">
-                <button type="button" class="seg-btn" data-setting="memoryViewSec" data-value="3" aria-checked="false">3 秒</button>
-                <button type="button" class="seg-btn" data-setting="memoryViewSec" data-value="5" aria-checked="true">5 秒（預設）</button>
-                <button type="button" class="seg-btn" data-setting="memoryViewSec" data-value="0" aria-checked="false">不限時（碰1號隱藏）</button>
-              </div>
-            </div>
-            <small style="color:#9ec0ca;font-size:12px;">
-              完成整組星座連線才計 1 次並語音報數；已點亮的星星會化為星座錨點不擋路。
-            </small>
-          </div>
-
-          <!-- 3. 🌈 星河軌道（牽引光球滑軌＋脫軌停住）專屬子設定 -->
-          <div class="setting-row" id="subSettingTrack" hidden>
-            <label>星河軌道路線造型（套住光球沿軌牽引至終點星門）</label>
-            <div class="seg-group" role="radiogroup" aria-label="星星軌道路線造型">
-              <button type="button" class="seg-btn" data-setting="trackShape" data-value="line" aria-checked="false">📏 直線軌道</button>
-              <button type="button" class="seg-btn" data-setting="trackShape" data-value="arc" aria-checked="true">🌈 彩虹弧線（預設）</button>
-              <button type="button" class="seg-btn" data-setting="trackShape" data-value="wave" aria-checked="false">〰️ S 型波浪</button>
-            </div>
-            <small style="color:#9ec0ca;font-size:12px;">
-              請將綠色追蹤環套住「星河光球」順著軌道推向終點；若跑出軌道外，光球會脫鉤停在原地等待您接回，不可切西瓜跳關！
-            </small>
-          </div>
-
-          <!-- 4. 🎯 星象選擇專屬子設定 -->
-          <div class="setting-row" id="subSettingSelect" hidden>
-            <label>星象選擇難度、位置分布與出題方式</label>
-            <div class="seg-group" role="radiogroup" aria-label="星星選擇選項數">
-              <button type="button" class="seg-btn" data-setting="selectOptionCount" data-value="2" aria-checked="true">初階：2 選 1（預設）</button>
-              <button type="button" class="seg-btn" data-setting="selectOptionCount" data-value="3" aria-checked="false">進階：3 選 1</button>
-            </div>
-            <div class="seg-group" role="radiogroup" aria-label="星象選項位置分布" style="margin-top:4px;">
-              <button type="button" class="seg-btn" data-setting="selectLayoutMode" data-value="random" aria-checked="true">🔀 進階：隨機散落（防重疊預設）</button>
-              <button type="button" class="seg-btn" data-setting="selectLayoutMode" data-value="fixed" aria-checked="false">📏 初階：固定對稱位置</button>
-            </div>
-            <div class="seg-group" role="radiogroup" aria-label="星象出題提示方式" style="margin-top:4px;">
-              <button type="button" class="seg-btn" data-setting="selectPromptMode" data-value="both" aria-checked="true">圖文＋語音提示（預設）</button>
-              <button type="button" class="seg-btn" data-setting="selectPromptMode" data-value="audio_only" aria-checked="false">純聽覺語音出題（高階）</button>
-            </div>
-          </div>
-
-          <!-- 5. 🚦 脈衝紅綠燈（單星／雙星交替／巡航移動）專屬子設定 -->
-          <div class="setting-row" id="subSettingTraffic" hidden>
-            <label>脈衝紅綠燈玩法變化與轉換節奏</label>
-            <div class="seg-group" role="radiogroup" aria-label="紅綠燈玩法模式">
-              <button type="button" class="seg-btn" data-setting="trafficVariant" data-value="single" aria-checked="true">🚦 單星號誌（預設）</button>
-              <button type="button" class="seg-btn" data-setting="trafficVariant" data-value="dual" aria-checked="false">🔀 雙星交替（找綠燈）</button>
-              <button type="button" class="seg-btn" data-setting="trafficVariant" data-value="cruise" aria-checked="false">🛸 巡航紅綠燈（移動）</button>
-            </div>
-            <div class="seg-group" role="radiogroup" aria-label="紅綠燈節奏" style="margin-top:4px;">
-              <button type="button" class="seg-btn" data-setting="trafficPace" data-value="relaxed" aria-checked="true">從容（綠燈 4.2 秒）</button>
-              <button type="button" class="seg-btn" data-setting="trafficPace" data-value="normal" aria-checked="false">標準（綠燈 3.0 秒）</button>
-            </div>
-            <small style="color:#9ec0ca;font-size:12px;">
-              紅燈時乖乖停在紅圈外不誤觸，轉回綠燈時將升級為「✨ 金色通行星（額外 +1 獎勵分）」！
-            </small>
-          </div>
-
-          <!-- 6. ☁️ 撥開星雲專屬子設定 -->
-          <div class="setting-row" id="subSettingNebula" hidden>
-            <label>撥開星雲濃密程度（大範圍揮手擦散星雲喚醒星星）</label>
-            <div class="seg-group" role="radiogroup" aria-label="星雲濃密程度">
-              <button type="button" class="seg-btn" data-setting="nebulaDensity" data-value="light" aria-checked="true">初階：3 團輕星雲（預設）</button>
-              <button type="button" class="seg-btn" data-setting="nebulaDensity" data-value="dense" aria-checked="false">中階：5 團濃星雲</button>
-              <button type="button" class="seg-btn" data-setting="nebulaDensity" data-value="regen" aria-checked="false">進階：星雲會緩慢飄回</button>
-            </div>
-          </div>
-
-          <!-- 7. 🧲 星際引力專屬子設定 -->
-          <div class="setting-row" id="subSettingMagnet" hidden>
-            <label>星際引力小星數量（靠近吸住小星，一起護送進星門）</label>
-            <div class="seg-group" role="radiogroup" aria-label="星際引力數量">
-              <button type="button" class="seg-btn" data-setting="magnetStarCount" data-value="2" aria-checked="true">初階：每次吸 2 顆（預設）</button>
-              <button type="button" class="seg-btn" data-setting="magnetStarCount" data-value="3" aria-checked="false">進階：每次吸 3 顆</button>
-            </div>
-          </div>
-
-          <!-- 8. 🌠 托起墜落星專屬子設定 -->
-          <div class="setting-row" id="subSettingFalling" hidden>
-            <label>托起墜落星飄落速度（須由下往上托起，觸發升空煙火）</label>
-            <div class="seg-group" role="radiogroup" aria-label="墜落星速度">
-              <button type="button" class="seg-btn" data-setting="fallingSpeed" data-value="slow" aria-checked="false">初階：慢速垂直飄落（預設）</button>
-              <button type="button" class="seg-btn" data-setting="fallingSpeed" data-value="medium" aria-checked="true">進階：中速微斜飄落</button>
-              <button type="button" class="seg-btn" data-setting="fallingSpeed" data-value="fast" aria-checked="false">高階：敏捷快速飄落</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 挑戰方式與計分設定 -->
-        <div class="setting-section">
-          <div class="setting-row">
-            <label>2. 挑戰方式與目標設定</label>
-            <div class="seg-group" role="radiogroup" aria-label="挑戰方式">
-              <button type="button" class="seg-btn" data-setting="challengeType" data-value="count" aria-checked="true">🎯 指定次數（預設）</button>
-              <button type="button" class="seg-btn" data-setting="challengeType" data-value="timed" aria-checked="false">⏱ 限時挑戰（計分）</button>
-            </div>
-          </div>
-
-          <!-- 指定次數選項 -->
-          <div class="setting-row" id="subSettingTargetCount">
-            <label id="targetCountLabel">每回合目標（完成完整任務算 1 次）</label>
-            <div class="seg-group" role="radiogroup" aria-label="每回合目標數量">
-              <button type="button" class="seg-btn" data-setting="targetCount" data-value="5" aria-checked="false">5 顆</button>
-              <button type="button" class="seg-btn" data-setting="targetCount" data-value="10" aria-checked="true">10 顆（預設）</button>
-              <button type="button" class="seg-btn" data-setting="targetCount" data-value="20" aria-checked="false">20 顆</button>
-            </div>
-          </div>
-
-          <!-- 限時挑戰秒數選項 -->
-          <div class="setting-row" id="subSettingChallengeTime" hidden>
-            <label>限時挑戰時間（時間結束顯示總分、完成次數與明細）</label>
-            <div class="seg-group" role="radiogroup" aria-label="限時挑戰秒數">
-              <button type="button" class="seg-btn" data-setting="challengeDurationSec" data-value="30" aria-checked="false">30 秒</button>
-              <button type="button" class="seg-btn" data-setting="challengeDurationSec" data-value="60" aria-checked="true">60 秒（預設）</button>
-              <button type="button" class="seg-btn" data-setting="challengeDurationSec" data-value="120" aria-checked="false">120 秒</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 空間範圍、三種方向與進階挑戰開關（黑洞干擾、跨中線引導） -->
-        <div class="setting-section">
-          <div class="setting-row">
-            <label>
-              <span>3. 個人化活動範圍與特殊訓練機制</span>
-              <span id="customRangeStatusText" style="color:#70e5ab;font-size:13px;">手部：預設範圍</span>
-            </label>
-            <div class="range-calib-box">
-              <span style="font-size:12.5px;color:#c8dfe6;line-height:1.4;flex:1;min-width:150px;">
-                活動框決定星星最大出現範圍，直接在完整鏡頭畫面上用手指拉框調整。
-              </span>
-              <button type="button" class="secondary-btn" id="openRangeCalibBtn" style="background:#1f5c41;border-color:#70e5ab;color:#fff;white-space:nowrap;padding:8px 14px;min-height:40px;">
-                📐 調整活動範圍
-              </button>
-            </div>
-          </div>
-
-          <div class="setting-row">
-            <label>目標在活動框內的出現與移動方向</label>
-            <div class="seg-group" role="radiogroup" aria-label="練習方向">
-              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="lr" aria-checked="true">↔ 左右移動（預設）</button>
-              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="ud" aria-checked="false">↕ 上下移動</button>
-              <button type="button" class="seg-btn" data-setting="rangeMode" data-value="free" aria-checked="false">✥ 自由移動（上下左右）</button>
-            </div>
-          </div>
-
-          <!-- 🌀 太空黑洞干擾開關（碰到被重力束吸住鎖定 2 秒，不暫停相機） -->
-          <label class="switch-row" for="blackHoleToggleInput">
-            <div class="switch-info">
-              <span class="switch-title">🌀 太空黑洞障礙（吸住 2 秒）</span>
-              <span class="switch-desc">在收集、軌道彎道與引力模式加入黑洞，碰到會被重力束吸住鎖定 2 秒</span>
-            </div>
-            <div class="switch-control">
-              <span class="switch-state-label" id="blackHoleStateText">關閉</span>
-              <input type="checkbox" role="switch" class="toggle-input" id="blackHoleToggleInput" aria-label="太空黑洞障礙開關">
-            </div>
-          </label>
-
-          <!-- 🔀 跨中線引導線開關 -->
-          <label class="switch-row" for="midlineToggleInput">
-            <div class="switch-info">
-              <span class="switch-title">🔀 跨中線視覺引導</span>
-              <span class="switch-desc">顯示柔和身體中線與跨越方向引導，鼓勵患側手或頭部跨過中線移動</span>
-            </div>
-            <div class="switch-control">
-              <span class="switch-state-label on" id="midlineStateText">開啟</span>
-              <input type="checkbox" role="switch" class="toggle-input" id="midlineToggleInput" checked aria-label="跨中線視覺引導開關">
-            </div>
-          </label>
-
-          <!-- 🌌 星空宇宙背景氛圍濃度 -->
-          <div class="setting-row">
-            <label>🌌 星空宇宙背景氛圍（中央保持清透看清手部，四周暈染星雲與星海）</label>
-            <div class="seg-group" role="radiogroup" aria-label="星空宇宙背景濃度">
-              <button type="button" class="seg-btn" data-setting="cosmicBgMode" data-value="dreamy" aria-checked="true">🌌 夢幻星夜（預設推薦）</button>
-              <button type="button" class="seg-btn" data-setting="cosmicBgMode" data-value="clear" aria-checked="false">☀️ 清透實景（微星塵）</button>
-            </div>
-          </div>
-
-          <div class="setting-row">
-            <label>目標星星大小與碰觸停留</label>
-            <div class="seg-group" role="radiogroup" aria-label="目標星星大小">
-              <button type="button" class="seg-btn" data-setting="targetSize" data-value="large" aria-checked="true">大（預設）</button>
-              <button type="button" class="seg-btn" data-setting="targetSize" data-value="medium" aria-checked="false">中</button>
-              <button type="button" class="seg-btn" data-setting="targetSize" data-value="small" aria-checked="false">小</button>
-            </div>
-            <div class="seg-group" role="radiogroup" aria-label="碰觸判定方式" style="margin-top:4px;">
-              <button type="button" class="seg-btn" data-setting="dwellMode" data-value="dwell" aria-checked="true">短暫停留（約 0.3 秒）</button>
-              <button type="button" class="seg-btn" data-setting="dwellMode" data-value="instant" aria-checked="false">立即命中</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. 直覺滑動式開關：語音報數與遊戲音效 -->
-        <div class="setting-section">
-          <div class="setting-row">
-            <label>4. 語音報數與音效設定（切換立即生效）</label>
-
-            <label class="switch-row" for="voiceToggleInput">
-              <div class="switch-info">
-                <span class="switch-title">🗣️ 語音報數</span>
-                <span class="switch-desc">完成完整任務時以中文語音報數；星象選擇模式同步播報題目</span>
-              </div>
-              <div class="switch-control">
-                <span class="switch-state-label on" id="voiceStateText">開啟</span>
-                <input type="checkbox" role="switch" class="toggle-input" id="voiceToggleInput" checked aria-label="語音報數開關">
-              </div>
-            </label>
-
-            <label class="switch-row" for="bgmToggleInput">
-              <div class="switch-info">
-                <span class="switch-title">🎵 宇宙背景音樂</span>
-                <span class="switch-desc">輕柔舒緩的宇宙星際環境音景，可獨立開啟或微調音量</span>
-              </div>
-              <div class="switch-control">
-                <span class="switch-state-label on" id="bgmStateText">開啟</span>
-                <input type="checkbox" role="switch" class="toggle-input" id="bgmToggleInput" checked aria-label="宇宙背景音樂開關">
-              </div>
-            </label>
-            <div class="volume-slider-row">
-              <span>音樂音量</span>
-              <input type="range" id="bgmVolumeInput" min="0" max="100" step="5" value="35" aria-label="背景音樂音量">
-              <output id="bgmVolumeText">35%</output>
-            </div>
-
-            <label class="switch-row" for="soundToggleInput">
-              <div class="switch-info">
-                <span class="switch-title">🔔 遊戲互動音效</span>
-                <span class="switch-desc">碰觸星星、星空風鈴音階、星雲碎裂與回合結束時播放音效</span>
-              </div>
-              <div class="switch-control">
-                <span class="switch-state-label on" id="soundStateText">開啟</span>
-                <input type="checkbox" role="switch" class="toggle-input" id="soundToggleInput" checked aria-label="遊戲音效開關">
-              </div>
-            </label>
-            <div class="volume-slider-row">
-              <span>音效音量</span>
-              <input type="range" id="sfxVolumeInput" min="0" max="100" step="5" value="80" aria-label="遊戲音效音量">
-              <output id="sfxVolumeText">80%</output>
-            </div>
-
-            <div class="setting-row" style="margin-top:8px;">
-              <label for="cameraFitSelect">📷 鏡頭視野模式</label>
-              <select id="cameraFitSelect" aria-label="鏡頭視野模式">
-                <option value="fit-width" selected>保留左右最大範圍（上下可裁切，推薦）</option>
-                <option value="cover">滿版填滿畫面（會裁切部分左右邊緣）</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="setting-row">
-            <label for="toleranceInput">
-              <span>顏色／黑灰物品追蹤容許度</span>
-              <output id="tolText">16</output>
-            </label>
-            <div class="range-row">
-              <input type="range" id="toleranceInput" min="8" max="30" value="16">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 5. 延伸資源：復健衛教懶人包（中風／帕金森）、手功能五階段線上課程、3D列印手部練習工具與聯絡職能治療師 -->
-      <section class="cr-section-wrap" aria-label="延伸復健資源與工具">
-        <h4 class="cr-section-heading">✨ 延伸復健資源與課程工具</h4>
-        <div class="cr-root"><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span><div><div class="cr-panel-title">復健衛教資源</div><div class="cr-panel-sub">中風與帕金森生活復健指南，依需要選擇閱讀</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><p>將常見的復健與照護問題整理成容易查找的指南，可依疾病與目前遇到的生活困難選擇閱讀。</p><div class="cr-feature"><h3>中風復健攻略</h3><div class="cr-muted">包含手部動作、站立行走、生活自理、照顧及其他常見問題。</div><div class="cr-linkrow"><a href="https://reliveot.github.io/stroke-rehab-guide/" rel="noopener" target="_blank">進入中風復健攻略 ↗</a></div></div><div class="cr-feature"><h3>帕金森氏症生活復健指南</h3><div class="cr-muted">從翻身、走路、手部動作到疲勞與照顧安排，以問題卡片探索；提供民眾家屬版與職能治療師專業版。</div><div class="cr-linkrow"><a href="https://reliveot.github.io/parkinsons-rehab-guide/" rel="noopener" target="_blank">開啟帕金森生活復健指南 ↗</a></div></div></div></details><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="m2 10 10-6 10 6-10 6z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path><path d="M22 10v7"></path></svg></span><div><div class="cr-panel-title">手功能五階段線上課程</div><div class="cr-panel-sub">會員課程｜提供免費預覽與教學</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><div class="cr-card-course-mini"><img alt="中風後，手到底該怎麼練？課程情境插畫" class="cr-card-course-photo" src="assets/course-hand-hero.webp?v=4.1"/><div class="cr-card-course-body"><span class="cr-card-paid">YouTube 付費會員課程</span><h3>中風後，讓患側手回到生活</h3><p>從目前做得到的動作開始，認識五階段練習、調整難度，讓患側手逐步參與生活。</p><a class="cr-card-primary-link" href="https://reliveot.github.io/stroke-hand-course/" rel="noopener noreferrer" target="_blank">查看課程介紹與免費教學 ↗</a><div class="cr-card-mini-note">完整課程約 1 小時 40 分鐘｜YouTube 會員 NT$600／月<br/>另有免費預覽與教學影片，完整課程需付費加入會員。</div></div></div></div></details><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect height="7" width="10" x="7" y="14"></rect></svg></span><div><div class="cr-panel-title">3D 列印手部練習工具</div><div class="cr-panel-sub">六種工具與免費操作示範</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><p>六種 3D 列印手部練習工具，提供前臂翻轉、雙手合作、抓握與日常操作等活動選擇。</p><div class="cr-card-tools-grid"><div class="cr-card-tool"><img alt="翻轉手操作商品照" decoding="async" loading="lazy" src="assets/tool-flip-hand.webp?v=4.1"/><span>翻轉手</span></div><div class="cr-card-tool"><img alt="雙手合作握把操作商品照" decoding="async" loading="lazy" src="assets/tool-two-hand-grip.webp?v=4.1"/><span>雙手合作握把</span></div><div class="cr-card-tool"><img alt="日常動作訓練握把操作商品照" decoding="async" loading="lazy" src="assets/tool-daily-grip.webp?v=4.1"/><span>日常動作訓練握把</span></div><div class="cr-card-tool"><img alt="抓握助手操作商品照" decoding="async" loading="lazy" src="assets/tool-grasp-helper.webp?v=4.1"/><span>抓握助手</span></div><div class="cr-card-tool"><img alt="手指開合夾操作商品照" decoding="async" loading="lazy" src="assets/tool-finger-clip.webp?v=4.1"/><span>手指開合夾</span></div><div class="cr-card-tool"><img alt="筷夾手操作商品照" decoding="async" loading="lazy" src="assets/tool-chopstick-hand.webp?v=4.1"/><span>筷夾手</span></div></div><div class="cr-linkrow cr-card-tool-links"><a href="https://shopee.tw/peter72401" rel="noopener noreferrer" target="_blank">查看練習工具與賣場 ↗</a><a href="https://www.youtube.com/playlist?list=PLYhYZRJq80tqVBohsxQh9XkC1cUZw-QXT" rel="noopener noreferrer" target="_blank">觀看免費操作示範 ↗</a></div><div class="cr-smallprint">工具是輔助日常活動與自主練習的選擇，建議依目前能力、練習目標與安全條件，和治療師討論適用方式。</div></div></details></div><a class="cr-contact" href="https://reliveot.github.io/card" rel="noopener noreferrer" target="_blank">聯絡楊昀霖職能治療師 ↗</a>
-      </section>
-
-      <div class="notice-box">
-        <strong>臨床與復健使用說明：</strong><br>
-        • <strong>強化手／頭穩定追蹤：</strong>已降低握拳與微側臉的辨識門檻，並採用不歸零滑動確認與推論逾時保護，大幅減少漏抓。<br>
-        • <strong>今日累積總結與星座圖鑑：</strong>不限模式每完成 1 回合即可點亮 1 座今日守護星座；所有回合自動累計於今日總結，收工時可一鍵複製回報。<br>
-        • <strong>免責聲明：</strong>遊戲分數、完成時間、活動範圍與頭部平面位置僅供復健互動激勵參考，<strong>不得直接視為關節活動度（ROM）、軀幹重心轉移或臨床坐姿平衡之客觀評估數值</strong>。
-      </div>
-
-      <div class="sheet-actions">
-        <button class="mainbtn" id="closeSettingsBtn" style="min-height:44px;padding:10px 24px;font-size:16px;min-width:120px;">完成返回</button>
-      </div>
-    </article>
+  <!-- 獨立美化的追蹤狀態提示浮標 -->
+  <div id="tracking-status-chip" class="tracking-chip" role="status" aria-live="polite">
+    <span id="status-dot" class="status-dot"></span>
+    <span id="tracking-text">觸控／滑鼠模式</span>
   </div>
-</main>
 
-<script src="js/sound.js?v=4.1"></script>
-<script src="js/tracker.js?v=4.1"></script>
-<script src="js/game.js?v=4.1"></script>
+  <!-- 左下角小按鈕（僅在顏色模式重新取色，或點餐記憶模式偷看訂單時浮現） -->
+  <div id="bottom-bar">
+    <button id="repick-color-btn" class="mini-action-pill" type="button">
+      <span id="color-swatch"></span>
+      <span>🎨 重選色</span>
+    </button>
+    <button id="peek-order-btn" class="mini-action-pill" type="button">
+      <span>👀 偷看訂單</span>
+    </button>
+  </div>
+
+  <!-- 右下角固定診斷工具（預設收合，展開為半透明玻璃卡片） -->
+  <div id="diag-widget" class="diag-widget">
+    <div id="diag-card" class="diag-card" hidden>
+      <div class="diag-card-header">
+        <span>🩺 手部追蹤即時診斷</span>
+        <button id="diag-close-btn" type="button" class="diag-close-btn" aria-label="收合診斷卡">✕</button>
+      </div>
+      <div class="diag-grid">
+        <div class="diag-item"><span class="diag-k">引擎模式</span><span id="diag-engine" class="diag-v">-</span></div>
+        <div class="diag-item"><span class="diag-k">送出次數</span><span id="diag-sent" class="diag-v">0</span></div>
+        <div class="diag-item"><span class="diag-k">回傳次數</span><span id="diag-res" class="diag-v">0</span></div>
+        <div class="diag-item"><span class="diag-k">找到手次數</span><span id="diag-found" class="diag-v">0</span></div>
+        <div class="diag-item"><span class="diag-k">游標更新</span><span id="diag-cursor" class="diag-v">0</span></div>
+        <div class="diag-item"><span class="diag-k">錯誤次數</span><span id="diag-err" class="diag-v">0</span></div>
+        <div class="diag-item"><span class="diag-k">即時座標</span><span id="diag-coord" class="diag-v">-</span></div>
+        <div class="diag-item"><span class="diag-k">最近回傳</span><span id="diag-last-ts" class="diag-v">-</span></div>
+      </div>
+      <div id="diag-err-msg" class="diag-err-msg">狀態正常</div>
+    </div>
+    <button id="diag-toggle-btn" type="button" class="diag-toggle-btn" aria-expanded="false">
+      🩺 診斷
+    </button>
+  </div>
+
+  <!-- 開場迎賓啟動畫面 -->
+  <div id="welcome-modal" class="modal-overlay open">
+    <div class="welcome-card">
+      <span class="welcome-badge">吱吱復健 · Relive OT｜v12</span>
+      <div class="welcome-title">🥣 懷舊冰果室｜手搖剉冰樂</div>
+      <div class="welcome-sub">上肢空間定位・物品顏色感測・記憶認知訓練</div>
+      <div class="welcome-desc">
+        <strong>每碗 2 種配料 ＋ 1 種淋醬，看點餐找料放回冰碗！</strong><br>
+        ① 移動湯匙到<strong>【配料區】</strong>挖起指定材料<br>
+        ② 再<strong>【放回冰碗】</strong>，完成 3 樣即可上菜
+      </div>
+      <div class="welcome-actions">
+        <button id="btn-welcome-hand" class="btn-accent-main">✋ 啟動手部體感・開始做冰</button>
+        <button id="btn-welcome-color" class="btn-wood-sub">🎨 啟動物品顏色感測（手持彩色握把／物品）</button>
+        <button id="btn-welcome-touch" class="btn-wood-sub">👆 不開鏡頭・直接用觸控／滑鼠開始</button>
+      </div>
+      <button id="btn-welcome-settings" class="secondary-btn">⚙️ 選擇遊戲模式與控制設定</button>
+    </div>
+  </div>
+
+  <!-- 精簡緊湊版治療師設定面板 -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h2>🥣 懷舊冰果室｜模式與設定</h2>
+        <button id="btn-close-settings" class="secondary-btn">✕ 返回</button>
+      </div>
+
+      <div class="settings-body">
+        <!-- 1. 遊戲模式（左右滑動小卡片＋專屬插畫） -->
+        <section class="setting-section">
+          <div class="setting-section-title">
+            <span>1. 遊戲模式（左右滑動選擇）</span>
+            <span class="section-hint">← 左右滑動 →</span>
+          </div>
+
+          <div class="mode-carousel" id="grp-game-mode">
+            <div class="mode-card active" data-mode="ACTION">
+              <img class="mode-card-img" src="./images/mode-action.png" alt="純動作引導">
+              <div class="mode-card-body">
+                <div class="mode-card-header">
+                  <span class="mode-card-title">🟢 純動作引導</span>
+                  <span class="mode-card-badge">第 1～4 級</span>
+                </div>
+                <div class="mode-card-desc">單一目標盆＋動態箭頭引導，專注上肢伸展與往返控制。</div>
+              </div>
+            </div>
+
+            <div class="mode-card" data-mode="FIND">
+              <img class="mode-card-img" src="./images/mode-find.png" alt="看單找料">
+              <div class="mode-card-body">
+                <div class="mode-card-header">
+                  <span class="mode-card-title">🟡 看單找料</span>
+                  <span class="mode-card-badge">第 2 級起</span>
+                </div>
+                <div class="mode-card-desc">隱藏箭頭、外圍擺滿多盆配料，看訂單找出正確食材。</div>
+              </div>
+            </div>
+
+            <div class="mode-card" data-mode="MEMORY_ORDER">
+              <img class="mode-card-img" src="./images/mode-memory-order.png" alt="點餐記憶">
+              <div class="mode-card-body">
+                <div class="mode-card-header">
+                  <span class="mode-card-title">🔵 點餐記憶</span>
+                  <span class="mode-card-badge">第 2 級起</span>
+                </div>
+                <div class="mode-card-desc">先記住 3 樣材料後隱藏菜單，憑記憶湊齊（不限順序）。</div>
+              </div>
+            </div>
+
+            <div class="mode-card" data-mode="MEMORY_QUIZ">
+              <img class="mode-card-img" src="./images/mode-memory-quiz.png" alt="做完猜口味">
+              <div class="mode-card-body">
+                <div class="mode-card-header">
+                  <span class="mode-card-title">🟣 做完猜口味</span>
+                  <span class="mode-card-badge">第 2 級起</span>
+                </div>
+                <div class="mode-card-desc">製作時隱藏冰名，完成 3 樣後回想剛剛做的是哪一碗。</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. 控制與空間分級 -->
+        <section class="setting-section">
+          <div class="setting-section-title">
+            <span>2. 控制方式與空間分級</span>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">操作來源（自動辨識任一手・固定鏡像）：</div>
+            <div class="btn-grid" id="grp-track-mode">
+              <button class="opt-btn active" data-val="HAND">✋ 手部體感</button>
+              <button class="opt-btn" data-val="COLOR">🎨 物品顏色感測</button>
+              <button class="opt-btn" data-val="TOUCH">👆 觸控／滑鼠</button>
+            </div>
+          </div>
+
+          <div class="detail-row" id="sub-color-tools" style="display:none;">
+            <div class="btn-grid">
+              <button id="btn-repick-in-panel" class="opt-btn">🎯 點擊畫面中的彩色物品取色</button>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">空間層級（找料／記憶模式自動第 2 級起）：</div>
+            <div class="btn-grid" id="grp-space-level">
+              <button class="opt-btn active" data-val="1">1級：對半兩區</button>
+              <button class="opt-btn" data-val="2">2級：中碗＋左右</button>
+              <button class="opt-btn" data-val="3">3級：中碗＋左右上</button>
+              <button class="opt-btn" data-val="4">4級：中碗＋四方</button>
+            </div>
+          </div>
+
+          <div class="detail-row" id="sub-level1-dir">
+            <div class="btn-grid" id="grp-l1-dir">
+              <button class="opt-btn active" data-val="L2R">左(碗) ↔ 右(料)</button>
+              <button class="opt-btn" data-val="R2L">右(碗) ↔ 左(料)</button>
+              <button class="opt-btn" data-val="B2T">下(碗) ↔ 上(料)</button>
+            </div>
+          </div>
+
+          <div class="detail-row" id="sub-multi-seq" style="display:none;">
+            <div class="btn-grid" id="grp-seq-mode">
+              <button class="opt-btn active" data-val="ALT">依序交替</button>
+              <button class="opt-btn" data-val="FIXED_L">固定左區</button>
+              <button class="opt-btn" data-val="FIXED_R">固定右區</button>
+              <button class="opt-btn" data-val="RANDOM">隨機方位</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. 動作細節、古早味配樂與聲音 -->
+        <section class="setting-section">
+          <div class="setting-section-title">
+            <span>3. 動作細節與古早味配樂</span>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">挖料停留秒數：</div>
+            <div class="btn-grid" id="grp-dwell-time">
+              <button class="opt-btn" data-val="0">0秒</button>
+              <button class="opt-btn active" data-val="0.6">0.6秒</button>
+              <button class="opt-btn" data-val="1.2">1.2秒</button>
+              <button class="opt-btn" data-val="2.0">2.0秒</button>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">往返與區塊大小：</div>
+            <div class="btn-grid" id="grp-require-return">
+              <button class="opt-btn active" data-val="true">標準往返</button>
+              <button class="opt-btn" data-val="false">單向省力</button>
+            </div>
+            <div class="btn-grid" id="grp-zone-size" style="margin-top:4px;">
+              <button class="opt-btn active" data-val="1.15">超寬鬆大區</button>
+              <button class="opt-btn" data-val="1.0">標準大區</button>
+              <button class="opt-btn" data-val="0.82">內縮區塊</button>
+            </div>
+          </div>
+
+          <div class="detail-row" id="sub-memorize-row" style="display:none;">
+            <div class="detail-label">點餐記憶看菜單秒數：</div>
+            <div class="btn-grid" id="grp-memorize-sec">
+              <button class="opt-btn" data-val="4">4 秒</button>
+              <button class="opt-btn active" data-val="6">6 秒</button>
+              <button class="opt-btn" data-val="9">9 秒</button>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">目標碗數：</div>
+            <div class="btn-grid" id="grp-target-bowls">
+              <button class="opt-btn" data-val="3">3 碗</button>
+              <button class="opt-btn active" data-val="5">5 碗</button>
+              <button class="opt-btn" data-val="7">7 碗</button>
+              <button class="opt-btn" data-val="10">10 碗</button>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-label">音效、語音與古早味背景音樂：</div>
+            <div class="btn-grid">
+              <button id="btn-toggle-bgm" class="opt-btn active">🎵 古早味配樂開</button>
+              <button id="btn-toggle-sound" class="opt-btn active">🔊 音效開</button>
+              <button id="btn-toggle-tts" class="opt-btn active">🗣️ 語音開</button>
+            </div>
+            <div class="bgm-slider-row">
+              <span class="bgm-slider-label">音樂音量</span>
+              <input id="bgm-volume-slider" type="range" min="0" max="100" value="45" aria-label="背景音樂音量">
+              <span id="bgm-volume-val" class="bgm-slider-val">45%</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. 延伸復健資源與課程工具（可折疊收納） -->
+        <section class="cr-section-wrap" aria-label="延伸復健資源與工具">
+          <div class="cr-section-heading">🌿 延伸復健資源與課程工具 · 吱吱復健</div>
+          <div class="cr-root">
+            <details class="cr-panel">
+              <summary>
+                <span class="cr-symbol">
+                  <svg aria-hidden="true" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24" width="20">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                  </svg>
+                </span>
+                <div>
+                  <div class="cr-panel-title">復健衛教資訊懶人包</div>
+                  <div class="cr-panel-sub">腦中風與帕金森生活復健指南</div>
+                </div>
+                <span aria-hidden="true" class="cr-chev"></span>
+              </summary>
+              <div class="cr-panel-content">
+                <div class="cr-feature">
+                  <h3>中風復健攻略</h3>
+                  <div class="cr-muted">包含手部動作、站立行走、生活自理、照顧及其他常見問題。</div>
+                  <div class="cr-linkrow">
+                    <a href="https://reliveot.github.io/stroke-rehab-guide/" rel="noopener" target="_blank">進入中風復健攻略 ↗</a>
+                  </div>
+                </div>
+                <div class="cr-feature">
+                  <h3>帕金森氏症生活復健指南</h3>
+                  <div class="cr-muted">從翻身、走路、手部動作到疲勞與照顧安排，提供民眾版與專業版。</div>
+                  <div class="cr-linkrow">
+                    <a href="https://reliveot.github.io/parkinsons-rehab-guide/" rel="noopener" target="_blank">開啟帕金森生活復健指南 ↗</a>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <details class="cr-panel">
+              <summary>
+                <span class="cr-symbol">
+                  <svg aria-hidden="true" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24" width="20">
+                    <path d="m2 10 10-6 10 6-10 6z"></path>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                    <path d="M22 10v7"></path>
+                  </svg>
+                </span>
+                <div>
+                  <div class="cr-panel-title">手功能五階段線上課程</div>
+                  <div class="cr-panel-sub">YouTube 會員課程｜免費預覽與教學</div>
+                </div>
+                <span aria-hidden="true" class="cr-chev"></span>
+              </summary>
+              <div class="cr-panel-content">
+                <div class="cr-card-course-mini">
+                  <img alt="中風後，手到底該怎麼練？課程情境插畫" class="cr-card-course-photo" src="./images/course.webp" onerror="this.style.display='none'">
+                  <div class="cr-card-course-body">
+                    <span class="cr-card-paid">YouTube 付費會員課程</span>
+                    <h3>中風後，讓患側手回到生活</h3>
+                    <p>從目前做得到的動作開始，認識五階段練習、調整難度。</p>
+                    <a class="cr-card-primary-link" href="https://reliveot.github.io/stroke-hand-course/" rel="noopener noreferrer" target="_blank">查看課程介紹 ↗</a>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <details class="cr-panel">
+              <summary>
+                <span class="cr-symbol">
+                  <svg aria-hidden="true" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24" width="20">
+                    <path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect height="7" width="10" x="7" y="14"></rect>
+                  </svg>
+                </span>
+                <div>
+                  <div class="cr-panel-title">3D 列印手部練習工具</div>
+                  <div class="cr-panel-sub">六種工具與免費操作示範</div>
+                </div>
+                <span aria-hidden="true" class="cr-chev"></span>
+              </summary>
+              <div class="cr-panel-content">
+                <div class="cr-card-tools-grid">
+                  <div class="cr-card-tool"><img alt="翻轉手" src="./images/tool-1.webp" onerror="this.style.display='none'"><span>翻轉手</span></div>
+                  <div class="cr-card-tool"><img alt="雙手合作握把" src="./images/tool-2.webp" onerror="this.style.display='none'"><span>雙手合作握把</span></div>
+                  <div class="cr-card-tool"><img alt="日常動作訓練握把" src="./images/tool-3.webp" onerror="this.style.display='none'"><span>日常動作訓練握把</span></div>
+                  <div class="cr-card-tool"><img alt="抓握助手" src="./images/tool-4.webp" onerror="this.style.display='none'"><span>抓握助手</span></div>
+                  <div class="cr-card-tool"><img alt="手指開合夾" src="./images/tool-5.webp" onerror="this.style.display='none'"><span>手指開合夾</span></div>
+                  <div class="cr-card-tool"><img alt="筷夾手" src="./images/tool-6.webp" onerror="this.style.display='none'"><span>筷夾手</span></div>
+                </div>
+                <div class="cr-linkrow cr-card-tool-links">
+                  <a href="https://shopee.tw/peter72401" rel="noopener noreferrer" target="_blank">查看練習工具 ↗</a>
+                  <a href="https://www.youtube.com/playlist?list=PLYhYZRJq80tqVBohsxQh9XkC1cUZw-QXT" rel="noopener noreferrer" target="_blank">免費操作示範 ↗</a>
+                </div>
+              </div>
+            </details>
+
+            <div class="cr-contact-bar">
+              <div class="cr-contact-info">楊昀霖 職能治療師 · 吱吱復健</div>
+              <div class="cr-contact-links">
+                <a class="line-btn" href="https://lin.ee/4HnOdD4" rel="noopener noreferrer" target="_blank">LINE ↗</a>
+                <a href="https://www.facebook.com/relive.OT" rel="noopener noreferrer" target="_blank">FB ↗</a>
+                <a href="https://reliveot.github.io/card/" rel="noopener noreferrer" target="_blank">電子名片 ↗</a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="settings-footer">
+        <button id="btn-restart-session" class="secondary-btn">🔄 換新口味重來</button>
+        <button id="btn-apply-settings" class="primary-btn">✓ 套用並返回</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 整組完成結算彈窗 -->
+  <div id="summary-modal" class="modal-overlay">
+    <div class="summary-card">
+      <div style="font-size:2.4rem;">🥣✨🏆</div>
+      <div style="font-size:1.65rem; font-weight:900; color:#4A3222;">今日訂單全部完成！</div>
+      <div style="font-size:1.02rem; font-weight:800; color:#A34E34; margin-top:-4px;">古早味冰果室・今日完售！</div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <div id="sum-bowls" class="stat-val">5 碗</div>
+          <div class="stat-label">完成招牌剉冰</div>
+        </div>
+        <div class="stat-box">
+          <div id="sum-actions" class="stat-val">15 次</div>
+          <div class="stat-label">成功挖料與加料</div>
+        </div>
+        <div class="stat-box">
+          <div id="sum-time" class="stat-val">01:20</div>
+          <div class="stat-label">總練習時間</div>
+        </div>
+      </div>
+
+      <div id="sum-showcase" class="completed-bowls-showcase"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button id="btn-sum-settings" class="secondary-btn">⚙️ 調整難度設定</button>
+        <button id="btn-sum-again" class="primary-btn">🥣 再做一輪新口味！</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/game.js"></script>
 </body>
 </html>

@@ -1,6281 +1,2119 @@
-(() => {
-'use strict';
+import { InputTracker } from './tracker.js';
 
-  const $ = id => document.getElementById(id);
-  const video = $('video');
-  const stage = $('stage');
-  const canvas = $('canvas');
-  const ctx = canvas.getContext('2d');
-  const work = document.createElement('canvas');
-  const wctx = work.getContext('2d', { willReadFrequently: true });
+/********************************************************************
+ * 1. 外部美術圖檔資源載入管理器
+ ********************************************************************/
+const imageCache = {};
+function getExternalAsset(filename) {
+  if (!filename) return null;
+  const cached = imageCache[filename];
+  if (cached) return cached.loaded ? cached.img : null;
+  const entry = { img: new Image(), loaded: false };
+  entry.img.onload = () => { entry.loaded = true; };
+  entry.img.src = `./images/${filename}`;
+  imageCache[filename] = entry;
+  return null;
+}
+['bowl-empty.png', 'basin-pot.png', 'spoon.png', 'bowl-garnish.png'].forEach(getExternalAsset);
 
-  const reducedMotionQuery = window.matchMedia
-    ? window.matchMedia('(prefers-reduced-motion: reduce)')
-    : { matches: false };
-
-  // 模式切換後的穩定追蹤確認時間（改為累積減衰制，不因單幀閃爍而歸零）
-  const MODE_INIT_STABLE_MS = 850;
-  // 限時彩虹星星持續時間（維持 3 秒，結束後退化為普通星星）
-  const TIMED_STAR_DURATION_MS = 3000;
-  // 充能星星離開圈外時的寬限時間（0.5 秒不掉能量，之後每秒慢速回退 20%）
-  const CHARGE_GRACE_MS = 500;
-  const CHARGE_DECAY_RATE = 0.20;
-  // 🌀 黑洞吸住鎖定時間（2 秒）
-  const BLACK_HOLE_TRAP_MS = 2000;
-
-  // 星象選擇模式的 5 種雙重編碼星際／自然圖騰
-  const SELECT_SHAPES = [
-    { id: 'star', label: '星星', icon: '⭐', color: '#ffd452', stroke: '#f59e0b' },
-    { id: 'moon', label: '月亮', icon: '🌙', color: '#93c5fd', stroke: '#3b82f6' },
-    { id: 'sun', label: '太陽', icon: '☀️', color: '#fdba74', stroke: '#ea580c' },
-    { id: 'heart', label: '愛心', icon: '❤️', color: '#f472b6', stroke: '#db2777' },
-    { id: 'clover', label: '幸運草', icon: '🍀', color: '#4ade80', stroke: '#16a34a' }
-  ];
-
-  // ✨ 星座連線 2～7 顆擴充多組星座圖庫（每種顆數皆有多組不同星座，並搭配隨機星路生成器）
-  const CONSTELLATION_PATTERNS = {
-    2: [
-      { name: '雙子連星', pts: [{ x: 0.14, y: 0.56 }, { x: 0.86, y: 0.42 }] },
-      { name: '牛郎織女雙星', pts: [{ x: 0.18, y: 0.24 }, { x: 0.82, y: 0.78 }] },
-      { name: '南門雙星', pts: [{ x: 0.84, y: 0.26 }, { x: 0.16, y: 0.74 }] }
-    ],
-    3: [
-      { name: '夏季大三角', pts: [{ x: 0.16, y: 0.26 }, { x: 0.84, y: 0.22 }, { x: 0.52, y: 0.84 }] },
-      { name: '冬季大三角', pts: [{ x: 0.50, y: 0.16 }, { x: 0.16, y: 0.78 }, { x: 0.84, y: 0.74 }] },
-      { name: '白羊座彎弧', pts: [{ x: 0.14, y: 0.68 }, { x: 0.48, y: 0.26 }, { x: 0.86, y: 0.46 }] }
-    ],
-    4: [
-      { name: '南十字座', pts: [{ x: 0.50, y: 0.14 }, { x: 0.50, y: 0.86 }, { x: 0.16, y: 0.48 }, { x: 0.84, y: 0.48 }] },
-      { name: '飛馬座四邊形', pts: [{ x: 0.20, y: 0.22 }, { x: 0.80, y: 0.20 }, { x: 0.82, y: 0.80 }, { x: 0.18, y: 0.78 }] },
-      { name: '天琴座菱星', pts: [{ x: 0.18, y: 0.30 }, { x: 0.54, y: 0.16 }, { x: 0.84, y: 0.62 }, { x: 0.34, y: 0.84 }] }
-    ],
-    5: [
-      {
-        name: '仙后座 W',
-        pts: [
-          { x: 0.10, y: 0.28 },
-          { x: 0.30, y: 0.76 },
-          { x: 0.50, y: 0.36 },
-          { x: 0.70, y: 0.78 },
-          { x: 0.90, y: 0.24 }
-        ]
-      },
-      {
-        name: '天鵝座十字翼',
-        pts: [
-          { x: 0.50, y: 0.14 },
-          { x: 0.50, y: 0.50 },
-          { x: 0.14, y: 0.46 },
-          { x: 0.86, y: 0.46 },
-          { x: 0.50, y: 0.86 }
-        ]
-      },
-      {
-        name: '北冕座星冠',
-        pts: [
-          { x: 0.14, y: 0.34 },
-          { x: 0.28, y: 0.74 },
-          { x: 0.50, y: 0.84 },
-          { x: 0.72, y: 0.74 },
-          { x: 0.86, y: 0.34 }
-        ]
-      }
-    ],
-    6: [
-      {
-        name: '獵戶座星群',
-        pts: [
-          { x: 0.22, y: 0.18 },
-          { x: 0.78, y: 0.20 },
-          { x: 0.62, y: 0.50 },
-          { x: 0.38, y: 0.52 },
-          { x: 0.24, y: 0.84 },
-          { x: 0.78, y: 0.82 }
-        ]
-      },
-      {
-        name: '雙子座星鏈',
-        pts: [
-          { x: 0.16, y: 0.20 },
-          { x: 0.28, y: 0.52 },
-          { x: 0.18, y: 0.82 },
-          { x: 0.80, y: 0.80 },
-          { x: 0.72, y: 0.48 },
-          { x: 0.84, y: 0.18 }
-        ]
-      },
-      {
-        name: '金牛座 V 星群',
-        pts: [
-          { x: 0.14, y: 0.22 },
-          { x: 0.34, y: 0.48 },
-          { x: 0.50, y: 0.78 },
-          { x: 0.66, y: 0.50 },
-          { x: 0.86, y: 0.20 },
-          { x: 0.50, y: 0.26 }
-        ]
-      }
-    ],
-    7: [
-      {
-        name: '北斗七星',
-        pts: [
-          { x: 0.08, y: 0.24 },
-          { x: 0.25, y: 0.30 },
-          { x: 0.40, y: 0.42 },
-          { x: 0.54, y: 0.52 },
-          { x: 0.58, y: 0.78 },
-          { x: 0.84, y: 0.76 },
-          { x: 0.88, y: 0.46 }
-        ]
-      },
-      {
-        name: '小熊座七星',
-        pts: [
-          { x: 0.88, y: 0.20 },
-          { x: 0.70, y: 0.28 },
-          { x: 0.54, y: 0.42 },
-          { x: 0.42, y: 0.58 },
-          { x: 0.18, y: 0.54 },
-          { x: 0.14, y: 0.80 },
-          { x: 0.38, y: 0.82 }
-        ]
-      },
-      {
-        name: '鳳凰座展翼七星',
-        pts: [
-          { x: 0.12, y: 0.68 },
-          { x: 0.26, y: 0.32 },
-          { x: 0.48, y: 0.18 },
-          { x: 0.52, y: 0.54 },
-          { x: 0.34, y: 0.84 },
-          { x: 0.72, y: 0.76 },
-          { x: 0.88, y: 0.30 }
-        ]
-      },
-      {
-        name: '昴宿七姊妹星團',
-        pts: [
-          { x: 0.14, y: 0.38 },
-          { x: 0.32, y: 0.20 },
-          { x: 0.56, y: 0.24 },
-          { x: 0.82, y: 0.34 },
-          { x: 0.74, y: 0.68 },
-          { x: 0.46, y: 0.80 },
-          { x: 0.22, y: 0.72 }
-        ]
-      }
-    ]
-  };
-
-  // 🌌 今日守護星座收集冊（不限模式，每完成 1 回合依序點亮 1 座）
-  const GUARDIAN_CONSTELLATIONS = [
-    { id: 'lyra', name: '天琴座', icon: '🎵', story: '象徵優雅與和諧的琴音，陪伴您穩定開啟今日的第一步。' },
-    { id: 'cassiopeia', name: '仙后座', icon: '👑', story: '閃耀於北方夜空的 W 型星群，見證您每一次跨越中線的努力。' },
-    { id: 'dipper', name: '北斗七星', icon: '🥄', story: '夜空中最可靠的指引之星，代表您的動作控制越來越精準。' },
-    { id: 'cygnus', name: '天鵝座', icon: '🦢', story: '展開雙翼飛越銀河的十字星群，讚美您流暢而穩定的伸展。' },
-    { id: 'orion', name: '獵戶座', icon: '🏹', story: '冬季星空最璀璨的守護者，象徵您的肌耐力與專注力持續提升。' },
-    { id: 'egasus', name: '飛馬座', icon: '🐎', story: '馳騁於廣闊星海的羽翼天馬，恭喜您完成今日圓滿的星空巡禮！' }
-  ];
-
-  // 多層次星空宇宙背景元素（遠景閃爍星海、四角四芒星、柔光星雲帶與偶發遠景流星）
-  const STAR_COLORS = ['#e0f2fe', '#fef08a', '#e9d5ff', '#bae6fd', '#fde68a'];
-  const ambientStars = Array.from({ length: 54 }, (_, idx) => {
-    // 讓更多星點分布在舞台四周與上下邊緣，中央保持清爽
-    let x = ((idx * 37 + 13) % 96 + 2) / 100;
-    let y = ((idx * 53 + 7) % 94 + 3) / 100;
-    if (x > 0.26 && x < 0.74 && y > 0.26 && y < 0.74 && idx % 3 !== 0) {
-      x = idx % 2 === 0 ? x * 0.38 : 1 - (1 - x) * 0.38;
+/********************************************************************
+ * 2. 螢幕防休眠恆亮引擎 (Screen Wake Lock API)
+ ********************************************************************/
+let wakeLockSentinel = null;
+async function requestScreenWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    if (!wakeLockSentinel) {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+      wakeLockSentinel.addEventListener('release', () => { wakeLockSentinel = null; });
     }
+  } catch {}
+}
+
+/********************************************************************
+ * 3. 18 種原名食材 & 28 款在地特色經典 + 無限動態組合菜單引擎
+ ********************************************************************/
+const INGREDIENTS = {
+  red_bean:       { id: 'red_bean',       name: '紅豆',     imgFile: 'ing-red_bean.png',       color: '#8B1E28', badgeColor: '#E63946', type: 'beans',       pitch: 440, role: 'topping' },
+  mung_bean:      { id: 'mung_bean',      name: '綠豆',     imgFile: 'ing-mung_bean.png',      color: '#7E8F35', badgeColor: '#84CC16', type: 'beans',       pitch: 466, role: 'topping' },
+  mango:          { id: 'mango',          name: '芒果',     imgFile: 'ing-mango.png',          color: '#FFA800', badgeColor: '#F59E0B', type: 'chunks',      pitch: 523, role: 'topping' },
+  taro_ball:      { id: 'taro_ball',      name: '芋圓',     imgFile: 'ing-taro_ball.png',      color: '#9B7EDE', badgeColor: '#A855F7', type: 'balls',       pitch: 493, secondaryColor: '#F59E0B', role: 'topping' },
+  boba:           { id: 'boba',           name: '粉圓',     imgFile: 'ing-boba.png',           color: '#2B1810', badgeColor: '#D97706', type: 'boba',        pitch: 392, role: 'topping' },
+  grass_jelly:    { id: 'grass_jelly',    name: '仙草',     imgFile: 'ing-grass_jelly.png',    color: '#231F20', badgeColor: '#64748B', type: 'jelly_cubes', pitch: 415, role: 'topping' },
+  fengkuei:       { id: 'fengkuei',       name: '粉粿',     imgFile: 'ing-fengkuei.png',       color: '#FFD60A', badgeColor: '#EAB308', type: 'jelly_cubes', pitch: 554, role: 'topping' },
+  aiyu:           { id: 'aiyu',           name: '愛玉',     imgFile: 'ing-aiyu.png',           color: '#F59E0B', badgeColor: '#FB923C', type: 'jelly_cubes', pitch: 587, role: 'topping' },
+  peanut:         { id: 'peanut',         name: '花生',     imgFile: 'ing-peanut.png',         color: '#D4A373', badgeColor: '#D97706', type: 'beans',       pitch: 440, role: 'topping' },
+  strawberry:     { id: 'strawberry',     name: '草莓',     imgFile: 'ing-strawberry.png',     color: '#E63946', badgeColor: '#F43F5E', type: 'strawberry',  pitch: 659, role: 'topping' },
+  pineapple:      { id: 'pineapple',      name: '鳳梨',     imgFile: 'ing-pineapple.png',      color: '#FACC15', badgeColor: '#EAB308', type: 'chunks',      pitch: 587, role: 'topping' },
+  tangyuan:       { id: 'tangyuan',       name: '湯圓',     imgFile: 'ing-tangyuan.png',       color: '#FF758F', badgeColor: '#EC4899', type: 'balls',       pitch: 523, secondaryColor: '#FFF8F0', role: 'topping' },
+  miancha_powder: { id: 'miancha_powder', name: '麵茶粉',   imgFile: 'ing-miancha_powder.png', color: '#C68B59', badgeColor: '#D97706', type: 'powder',      pitch: 523, role: 'topping' },
+  condensed_milk: { id: 'condensed_milk', name: '煉乳',     imgFile: 'ing-condensed_milk.png', color: '#FFFDF7', badgeColor: '#FDE047', type: 'syrup',       pitch: 698, role: 'sauce', sauceTitle: '煉乳' },
+  brown_sugar:    { id: 'brown_sugar',    name: '黑糖',     imgFile: 'ing-brown_sugar.png',    color: '#5C2C16', badgeColor: '#B45309', type: 'syrup',       pitch: 622, role: 'sauce', sauceTitle: '黑糖' },
+  strawberry_jam: { id: 'strawberry_jam', name: '草莓醬',   imgFile: 'ing-strawberry_jam.png', color: '#D90429', badgeColor: '#FB7185', type: 'syrup',       pitch: 740, role: 'sauce', sauceTitle: '草莓醬' },
+  matcha_syrup:   { id: 'matcha_syrup',   name: '抹茶',     imgFile: 'ing-matcha_syrup.png',   color: '#386641', badgeColor: '#22C55E', type: 'syrup',       pitch: 659, role: 'sauce', sauceTitle: '抹茶' },
+  passion_sauce:  { id: 'passion_sauce',  name: '百香果醬', imgFile: 'ing-passion_sauce.png',  color: '#F77F00', badgeColor: '#F97316', type: 'syrup',       pitch: 784, role: 'sauce', sauceTitle: '百香果醬', hasSeeds: true }
+};
+const ALL_INGREDIENT_IDS = Object.keys(INGREDIENTS);
+const TOPPING_IDS = ALL_INGREDIENT_IDS.filter(id => INGREDIENTS[id].role === 'topping');
+const SAUCE_IDS = ALL_INGREDIENT_IDS.filter(id => INGREDIENTS[id].role === 'sauce');
+ALL_INGREDIENT_IDS.forEach(id => getExternalAsset(INGREDIENTS[id].imgFile));
+
+const SIGNATURE_RECIPES = [
+  { id: 'sig1',  name: '相思紅豆湯圓煉乳冰',       steps: ['red_bean', 'tangyuan', 'condensed_milk'] },
+  { id: 'sig2',  name: '九份芋圓紅豆黑糖冰',       steps: ['taro_ball', 'red_bean', 'brown_sugar'] },
+  { id: 'sig3',  name: '夏日芒果愛玉煉乳冰',       steps: ['mango', 'aiyu', 'condensed_milk'] },
+  { id: 'sig4',  name: '古早味綠豆花生黑糖冰',     steps: ['mung_bean', 'peanut', 'brown_sugar'] },
+  { id: 'sig5',  name: '關西仙草芋圓煉乳冰',       steps: ['grass_jelly', 'taro_ball', 'condensed_milk'] },
+  { id: 'sig6',  name: '懷舊粉粿粉圓黑糖冰',       steps: ['fengkuei', 'boba', 'brown_sugar'] },
+  { id: 'sig7',  name: '大湖草莓煉乳冰',           steps: ['strawberry', 'strawberry_jam', 'condensed_milk'] },
+  { id: 'sig8',  name: '北港花生湯圓煉乳冰',       steps: ['peanut', 'tangyuan', 'condensed_milk'] },
+  { id: 'sig9',  name: '阿里山鳳梨愛玉百香果冰',   steps: ['pineapple', 'aiyu', 'passion_sauce'] },
+  { id: 'sig10', name: '黑糖珍奶粉圓粉粿煉乳冰',   steps: ['boba', 'fengkuei', 'condensed_milk'] },
+  { id: 'sig11', name: '宇治金時紅豆湯圓抹茶冰',   steps: ['red_bean', 'tangyuan', 'matcha_syrup'] },
+  { id: 'sig12', name: '鹿港麵茶粉湯圓黑糖冰',     steps: ['tangyuan', 'miancha_powder', 'brown_sugar'] },
+  { id: 'sig13', name: '百香雙響粉圓愛玉百香果冰', steps: ['boba', 'aiyu', 'passion_sauce'] },
+  { id: 'sig14', name: '彰化綠豆粉粿煉乳冰',       steps: ['mung_bean', 'fengkuei', 'condensed_milk'] },
+  { id: 'sig15', name: '寶島芒果草莓煉乳冰',       steps: ['mango', 'strawberry', 'condensed_milk'] },
+  { id: 'sig16', name: '燒仙草風味仙草粉圓黑糖冰', steps: ['grass_jelly', 'boba', 'brown_sugar'] },
+  { id: 'sig17', name: '雙豆經典紅豆綠豆煉乳冰',   steps: ['red_bean', 'mung_bean', 'condensed_milk'] },
+  { id: 'sig18', name: '京都風芋圓湯圓抹茶冰',     steps: ['taro_ball', 'tangyuan', 'matcha_syrup'] },
+  { id: 'sig19', name: '熱帶風情芒果鳳梨百香果冰', steps: ['mango', 'pineapple', 'passion_sauce'] },
+  { id: 'sig20', name: '懷舊古早花生麵茶粉黑糖冰', steps: ['peanut', 'miancha_powder', 'brown_sugar'] },
+  { id: 'sig21', name: '粉嫩草莓芋圓煉乳冰',       steps: ['strawberry', 'taro_ball', 'condensed_milk'] },
+  { id: 'sig22', name: '清涼退火仙草愛玉黑糖冰',   steps: ['grass_jelly', 'aiyu', 'brown_sugar'] },
+  { id: 'sig23', name: '抹茶控紅豆粉粿抹茶冰',     steps: ['red_bean', 'fengkuei', 'matcha_syrup'] },
+  { id: 'sig24', name: '酸甜滋味鳳梨粉圓百香果冰', steps: ['pineapple', 'boba', 'passion_sauce'] },
+  { id: 'sig25', name: '團圓好運湯圓粉圓黑糖冰',   steps: ['tangyuan', 'boba', 'brown_sugar'] },
+  { id: 'sig26', name: '香濃花生芋圓煉乳冰',       steps: ['peanut', 'taro_ball', 'condensed_milk'] },
+  { id: 'sig27', name: '黃金芒果粉粿煉乳冰',       steps: ['mango', 'fengkuei', 'condensed_milk'] },
+  { id: 'sig28', name: '莓果派對草莓粉圓草莓醬冰', steps: ['strawberry', 'boba', 'strawberry_jam'] }
+];
+
+const DYNAMIC_PREFIXES = [
+  '冰果室招牌', '古早味', '阿嬤手路', '夜市人氣', '巷口老店',
+  '懷舊限定', '夏日特調', '老闆推薦', '職人手作', '經典人氣',
+  '在地好味', '沁涼特選', '復古風味', '台灣味'
+];
+
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function generateDynamicRecipe(usedKeys) {
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const t1 = TOPPING_IDS[Math.floor(Math.random() * TOPPING_IDS.length)];
+    let t2 = TOPPING_IDS[Math.floor(Math.random() * TOPPING_IDS.length)];
+    if (t2 === t1) continue;
+    const sauce = SAUCE_IDS[Math.floor(Math.random() * SAUCE_IDS.length)];
+    const key = `${[t1, t2].sort().join('+')}+${sauce}`;
+    if (usedKeys.has(key)) continue;
+
+    usedKeys.add(key);
+    const prefix = DYNAMIC_PREFIXES[Math.floor(Math.random() * DYNAMIC_PREFIXES.length)];
+    const name = `${prefix}・${INGREDIENTS[t1].name}${INGREDIENTS[t2].name}${INGREDIENTS[sauce].sauceTitle}冰`;
     return {
-      x,
-      y,
-      r: 1.0 + (idx % 4) * 0.55,
-      phase: idx * 0.83,
-      color: STAR_COLORS[idx % STAR_COLORS.length],
-      isDiamond: idx % 5 === 0
+      id: `dyn_${key}_${Math.random().toString(36).slice(2, 6)}`,
+      name,
+      steps: [t1, t2, sauce]
+    };
+  }
+  return SIGNATURE_RECIPES[Math.floor(Math.random() * SIGNATURE_RECIPES.length)];
+}
+
+function buildSessionMenu(count) {
+  const usedKeys = new Set();
+  const sigShuffled = shuffleArray(SIGNATURE_RECIPES);
+  const menu = [];
+
+  let sigIdx = 0;
+  for (let i = 0; i < count; i++) {
+    if (i % 2 === 0 && sigIdx < sigShuffled.length) {
+      const r = sigShuffled[sigIdx++];
+      const key = `${[r.steps[0], r.steps[1]].sort().join('+')}+${r.steps[2]}`;
+      usedKeys.add(key);
+      menu.push({ ...r });
+    } else {
+      menu.push(generateDynamicRecipe(usedKeys));
+    }
+  }
+  return shuffleArray(menu);
+}
+
+/********************************************************************
+ * 4. Web Audio API 音效與台灣中文語音播報 (TTS)
+ ********************************************************************/
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+    this.bgmEnabled = true;
+    this.bgmVolume = 0.45;
+    this.bgmGain = null;
+    this.bgmTimer = null;
+    this.bgmStep = 0;
+  }
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        this.ctx = new AudioCtx();
+        this.bgmGain = this.ctx.createGain();
+        this.bgmGain.gain.setValueAtTime(this.bgmEnabled ? this.bgmVolume * 0.24 : 0, this.ctx.currentTime);
+        this.bgmGain.connect(this.ctx.destination);
+      }
+    }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.bgmEnabled && !this.bgmTimer) this.startBGM();
+  }
+  setBgmEnabled(on) {
+    this.bgmEnabled = on;
+    if (this.bgmGain && this.ctx) {
+      this.bgmGain.gain.setTargetAtTime(on ? this.bgmVolume * 0.24 : 0, this.ctx.currentTime, 0.05);
+    }
+    if (on) {
+      this.init();
+      this.startBGM();
+    } else {
+      this.stopBGM();
+    }
+  }
+  setBgmVolume(val01) {
+    this.bgmVolume = Math.max(0, Math.min(1, val01));
+    if (this.bgmGain && this.ctx) {
+      this.bgmGain.gain.setTargetAtTime(this.bgmEnabled ? this.bgmVolume * 0.24 : 0, this.ctx.currentTime, 0.04);
+    }
+  }
+  _playPluckNote(freq, dur = 0.26, isBass = false) {
+    if (!this.ctx || !this.bgmGain || !this.bgmEnabled || this.bgmVolume <= 0) return;
+    const t0 = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const env = this.ctx.createGain();
+    osc.type = isBass ? 'sine' : 'triangle';
+    osc.frequency.setValueAtTime(freq, t0);
+    env.gain.setValueAtTime(0.001, t0);
+    env.gain.linearRampToValueAtTime(isBass ? 0.42 : 0.34, t0 + 0.015);
+    env.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    osc.connect(env);
+    env.connect(this.bgmGain);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+  startBGM() {
+    if (this.bgmTimer || !this.bgmEnabled) return;
+    // 原創無版權台灣五聲音階「古早味冰果室」輕快小調循環 (C5=523.25, D5=587.33, E5=659.25, G5=783.99, A5=880)
+    const melody = [
+      523.25, 659.25, 783.99, 659.25, 880.00, 783.99, 659.25, 587.33,
+      523.25, 587.33, 659.25, 783.99, 659.25, 0,      587.33, 0,
+      783.99, 880.00, 1046.5, 880.00, 783.99, 659.25, 587.33, 659.25,
+      523.25, 659.25, 587.33, 440.00, 523.25, 0,      523.25, 0
+    ];
+    const bass = [
+      261.63, 0, 392.00, 0, 220.00, 0, 329.63, 0,
+      174.61, 0, 261.63, 0, 196.00, 0, 293.66, 0,
+      261.63, 0, 392.00, 0, 220.00, 0, 329.63, 0,
+      174.61, 0, 196.00, 0, 261.63, 0, 261.63, 0
+    ];
+    this.bgmTimer = setInterval(() => {
+      if (!this.bgmEnabled || !this.ctx || this.ctx.state !== 'running') return;
+      const idx = this.bgmStep % melody.length;
+      if (melody[idx] > 0) this._playPluckNote(melody[idx], 0.28, false);
+      if (bass[idx] > 0) this._playPluckNote(bass[idx], 0.34, true);
+      this.bgmStep++;
+    }, 310);
+  }
+  stopBGM() {
+    if (this.bgmTimer) {
+      clearInterval(this.bgmTimer);
+      this.bgmTimer = null;
+    }
+  }
+  tone(freq, type, dur, vol, delay = 0, slideTo = null) {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const t0 = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur * 0.88);
+    gain.gain.setValueAtTime(vol, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur);
+  }
+  playScoop() { this.tone(340, 'sine', 0.16, 0.22, 0, 700); }
+  playDwellTick(p) { this.tone(420 + p * 400, 'triangle', 0.06, 0.08); }
+  playStepSuccess(pitch = 523) {
+    [pitch, pitch * 1.25, pitch * 1.5].forEach((f, i) => this.tone(f, 'triangle', 0.22, 0.22, i * 0.055));
+  }
+  playWrongHint() { this.tone(300, 'sine', 0.24, 0.16, 0, 220); }
+  playBowlGrandFanfare() {
+    [[523.25, 0, 0.18], [659.25, 0.12, 0.18], [783.99, 0.24, 0.18], [1046.5, 0.36, 0.55], [783.99, 0.58, 0.18], [1046.5, 0.74, 0.75]]
+      .forEach(([f, t, d]) => this.tone(f, 'triangle', d, 0.28, t));
+  }
+}
+const sound = new SoundEngine();
+
+function speakText(text) {
+  if (!config.ttsEnabled || !('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'zh-TW';
+    utter.rate = 1.0;
+    utter.pitch = 1.04;
+    const twVoice = window.speechSynthesis.getVoices().find(v => v.lang && (v.lang.includes('zh-TW') || v.lang.includes('zh_TW')));
+    if (twVoice) utter.voice = twVoice;
+    window.speechSynthesis.speak(utter);
+  } catch {}
+}
+
+/********************************************************************
+ * 5. 全域設定、遊戲狀態與 InputTracker 整合
+ ********************************************************************/
+const config = {
+  gameMode: 'ACTION',      // 'ACTION' | 'FIND' | 'MEMORY_ORDER' | 'MEMORY_QUIZ'
+  trackMode: 'HAND',       // 'HAND' | 'COLOR' | 'TOUCH'
+  spaceLevel: 1,
+  level1Dir: 'L2R',
+  seqMode: 'ALT',
+  memorizeSeconds: 6,
+  dwellSeconds: 0.6,
+  requireReturn: true,
+  ttsEnabled: true,
+  zoneSizeScale: 1.15,
+  targetBowls: 5,
+};
+
+const state = {
+  paused: true,
+  inSummary: false,
+  cameraActive: false,
+  awaitingColorPick: false,
+
+  menuQueue: [],
+  currentBowlIndex: 0,
+  completedStepsSet: new Set(),
+  activeTargetIngId: null,
+  completedBowlsList: [],
+  totalActionsDone: 0,
+  sessionStartTime: performance.now(),
+
+  phase: 'GO_SCOOP',       // 'ORDER_MEMORIZE' | 'GO_SCOOP' | 'GO_POUR' | 'BOWL_QUIZ' | 'BOWL_CELEBRATE'
+  memorizeTimer: 0,
+  peekTimer: 0,
+  quizCooldownTimer: 0,
+  carryingIngredient: null,
+  quizOptions: [],
+  quizDwellId: null,
+  quizDwellElapsed: 0,
+  activeBasinZoneId: 'right',
+  basinMap: {},
+  altCounter: 0,
+
+  dwellElapsed: 0,
+  dwellBasinId: null,
+  lastDwellTickSound: 0,
+  lockedZoneId: null,
+  celebrateTimer: 0,
+  celebrateTotal: 2.5,
+
+  currentBowlLayers: [],
+  bowlBounceScale: 1,
+  fallingDrops: [],
+  burstParticles: [],
+  confettiParticles: [],
+  floatingTexts: [],
+  spoonTrail: [],
+
+  cursorX: 0.5,
+  cursorY: 0.55,
+  targetCursorX: 0.5,
+  targetCursorY: 0.55,
+  lastTrackValidTime: 0,
+};
+
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const video = document.getElementById('video');
+
+const isMultiBasinFindMode = () => ['FIND', 'MEMORY_ORDER', 'MEMORY_QUIZ'].includes(config.gameMode);
+const isColorPickingCleanScreen = () => (config.trackMode === 'COLOR' && state.cameraActive && (state.awaitingColorPick || !tracker.hasColorTarget()));
+
+function hasFreshTracking(now = performance.now()) {
+  if (!state.cameraActive || config.trackMode === 'TOUCH') return true;
+  return (now - state.lastTrackValidTime) <= 350;
+}
+
+function setTrackingStatusUI(dotClass, text) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('tracking-text');
+  if (dot) dot.className = `status-dot ${dotClass}`;
+  if (txt) txt.textContent = text;
+}
+
+function updateDiagnosticsUI(d) {
+  document.getElementById('diag-engine').textContent = d.engine;
+  document.getElementById('diag-sent').textContent = d.sentCount;
+  document.getElementById('diag-res').textContent = d.resultCount;
+  document.getElementById('diag-found').textContent = d.foundCount;
+  document.getElementById('diag-cursor').textContent = d.cursorUpdates;
+  document.getElementById('diag-err').textContent = d.errorCount;
+  document.getElementById('diag-coord').textContent = d.lastCoord;
+  document.getElementById('diag-last-ts').textContent = d.lastReturnTime;
+
+  const errEl = document.getElementById('diag-err-msg');
+  if (errEl) {
+    errEl.textContent = d.lastError === '無' ? '狀態正常' : `最近訊息：${d.lastError}`;
+    errEl.classList.toggle('has-error', d.lastError !== '無');
+  }
+}
+
+const tracker = new InputTracker(video, canvas, {
+  onPoint(nx, ny, ts) {
+    state.targetCursorX = nx;
+    state.targetCursorY = ny;
+    state.lastTrackValidTime = ts;
+    if (state.cameraActive) {
+      if (config.trackMode === 'HAND') {
+        setTrackingStatusUI('cam-on', '✋ 已偵測到手部');
+      } else if (config.trackMode === 'COLOR') {
+        setTrackingStatusUI('cam-on', '🎨 顏色追蹤中');
+      }
+    }
+  },
+  onLost() {
+    if (!state.cameraActive) return;
+    if (config.trackMode === 'HAND') {
+      setTrackingStatusUI('cam-warn', '📷 未偵測到手部（暫停判定）');
+    } else if (config.trackMode === 'COLOR' && tracker.hasColorTarget()) {
+      setTrackingStatusUI('cam-warn', '🔍 找不到選定顏色（暫停判定）');
+    }
+  },
+  onModelLoading() {
+    setTrackingStatusUI('cam-warn', '⏳ 載入手部 AI 模型中…');
+  },
+  onModelReady() {
+    setTrackingStatusUI('cam-warn', '📷 模型就緒，請將手舉起進入畫面');
+  },
+  onModelError(msg) {
+    setTrackingStatusUI('cam-warn', `⚠️ 模型載入失敗：${msg}`);
+  },
+  onModelFallback() {
+    setTrackingStatusUI('cam-warn', '⚠️ 無法載入手部模型，可改用顏色或觸控');
+  },
+  onDiagnostics(d) {
+    updateDiagnosticsUI(d);
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && !state.paused) requestScreenWakeLock();
+});
+
+async function startCameraMode(mode) {
+  config.trackMode = mode;
+  syncTrackModeButtons();
+  requestScreenWakeLock();
+
+  try {
+    if (mode === 'COLOR' && !tracker.hasColorTarget()) {
+      state.awaitingColorPick = true;
+    }
+    await tracker.start(mode);
+    state.cameraActive = true;
+    state.paused = false;
+    state.lastTrackValidTime = 0;
+
+    document.getElementById('repick-color-btn').classList.toggle('visible', mode === 'COLOR');
+    if (mode === 'COLOR') {
+      setTrackingStatusUI(tracker.hasColorTarget() ? 'cam-on' : 'cam-warn', tracker.hasColorTarget() ? '🎨 顏色追蹤中' : '👆 請點擊畫面上的彩色物品取色');
+    } else {
+      setTrackingStatusUI('cam-warn', '📷 鏡頭已啟動，請將手舉起');
+    }
+    updateHUD();
+  } catch (err) {
+    state.cameraActive = false;
+    config.trackMode = 'TOUCH';
+    syncTrackModeButtons();
+    setTrackingStatusUI('', `⚠️ 無法開啟鏡頭（${err?.message || '權限不足'}）`);
+    updateHUD();
+  }
+}
+
+function stopCameraMode() {
+  tracker.stop();
+  state.cameraActive = false;
+  state.awaitingColorPick = false;
+  config.trackMode = 'TOUCH';
+  syncTrackModeButtons();
+  document.getElementById('repick-color-btn').classList.remove('visible');
+  setTrackingStatusUI('', '👆 觸控／滑鼠模式');
+  updateHUD();
+}
+
+function toggleCamera() {
+  if (state.cameraActive) {
+    stopCameraMode();
+  } else {
+    startCameraMode('HAND');
+  }
+}
+
+/********************************************************************
+ * 6. 空間大區塊配置與 4 種遊戲模式邏輯
+ ********************************************************************/
+function getPlayAreaBounds(w, h) {
+  const isLandscapeSidebar = (w > h && w >= 680);
+  const hudEl = document.getElementById('top-hud');
+  const hudRect = hudEl ? hudEl.getBoundingClientRect() : null;
+
+  if (isLandscapeSidebar) {
+    const sidebarRight = (hudRect && hudRect.width > 0) ? hudRect.right : Math.min(265, w * 0.25);
+    const rawLeft = sidebarRight + 14;
+    const availW = w - rawLeft - 14;
+    const maxPlayW = Math.min(availW, 980);
+    const playLeft = rawLeft + (availW - maxPlayW) * 0.5;
+    return { left: playLeft, top: 12, width: maxPlayW, height: h - 24, centerX: playLeft + maxPlayW * 0.5, centerY: h * 0.52 };
+  }
+  const hudBottom = (hudRect && hudRect.height > 0) ? hudRect.bottom : ((w < 650) ? 126 : 118);
+  const topSafe = hudBottom + 10;
+  const bottomSafe = h - 78;
+  const playH = Math.max(210, bottomSafe - topSafe);
+  return { left: 8, top: topSafe, width: w - 16, height: playH, centerX: w * 0.5, centerY: topSafe + playH * 0.5 };
+}
+
+function getZoneRects(w, h) {
+  const area = getPlayAreaBounds(w, h);
+  const { left: L, top: T, width: PW, height: PH } = area;
+  const pad = Math.max(5, (1.25 - config.zoneSizeScale) * 28);
+  const zones = [];
+  const effLevel = isMultiBasinFindMode() ? Math.max(2, config.spaceLevel) : config.spaceLevel;
+
+  if (effLevel === 1) {
+    if (config.level1Dir === 'L2R') {
+      zones.push({ id: 'bowl', role: 'bowl', x: L + pad, y: T + pad, w: PW * 0.48 - pad * 1.5, h: PH - pad * 2 });
+      zones.push({ id: 'right', role: 'basin', x: L + PW * 0.52 + pad * 0.5, y: T + pad, w: PW * 0.48 - pad * 1.5, h: PH - pad * 2 });
+    } else if (config.level1Dir === 'R2L') {
+      zones.push({ id: 'bowl', role: 'bowl', x: L + PW * 0.52 + pad * 0.5, y: T + pad, w: PW * 0.48 - pad * 1.5, h: PH - pad * 2 });
+      zones.push({ id: 'left', role: 'basin', x: L + pad, y: T + pad, w: PW * 0.48 - pad * 1.5, h: PH - pad * 2 });
+    } else {
+      zones.push({ id: 'bowl', role: 'bowl', x: L + pad * 1.5, y: T + PH * 0.52, w: PW - pad * 3, h: PH * 0.48 - pad });
+      zones.push({ id: 'top', role: 'basin', x: L + pad * 1.5, y: T + pad, w: PW - pad * 3, h: PH * 0.48 - pad });
+    }
+  } else if (effLevel === 2) {
+    const colW = PW / 3;
+    zones.push({ id: 'left', role: 'basin', x: L + pad, y: T + pad, w: colW - pad * 1.4, h: PH - pad * 2 });
+    zones.push({ id: 'bowl', role: 'bowl', x: L + colW + pad * 0.4, y: T + pad, w: colW - pad * 0.8, h: PH - pad * 2 });
+    zones.push({ id: 'right', role: 'basin', x: L + colW * 2 + pad * 0.4, y: T + pad, w: colW - pad * 1.4, h: PH - pad * 2 });
+  } else if (effLevel === 3) {
+    const topH = PH * 0.38;
+    const botY = T + topH + pad;
+    const botH = PH - topH - pad * 2;
+    const colW = PW / 3;
+    zones.push({ id: 'top', role: 'basin', x: L + PW * 0.16, y: T + pad, w: PW * 0.68, h: topH - pad });
+    zones.push({ id: 'left', role: 'basin', x: L + pad, y: botY, w: colW - pad * 1.4, h: botH });
+    zones.push({ id: 'bowl', role: 'bowl', x: L + colW + pad * 0.4, y: botY, w: colW - pad * 0.8, h: botH });
+    zones.push({ id: 'right', role: 'basin', x: L + colW * 2 + pad * 0.4, y: botY, w: colW - pad * 1.4, h: botH });
+  } else {
+    const rowH = PH / 3;
+    const colW = PW / 3;
+    zones.push({ id: 'top', role: 'basin', x: L + colW * 0.22, y: T + pad * 0.6, w: colW * 2.56, h: rowH - pad });
+    zones.push({ id: 'bottom', role: 'basin', x: L + colW * 0.22, y: T + rowH * 2 + pad * 0.4, w: colW * 2.56, h: rowH - pad });
+    zones.push({ id: 'left', role: 'basin', x: L + pad, y: T + rowH + pad * 0.2, w: colW - pad * 1.2, h: rowH - pad * 0.4 });
+    zones.push({ id: 'bowl', role: 'bowl', x: L + colW + pad * 0.4, y: T + rowH + pad * 0.2, w: colW - pad * 0.8, h: rowH - pad * 0.4 });
+    zones.push({ id: 'right', role: 'basin', x: L + colW * 2 + pad * 0.2, y: T + rowH + pad * 0.2, w: colW - pad * 1.2, h: rowH - pad * 0.4 });
+  }
+  return zones;
+}
+
+const isPointInZone = (px, py, zone, expandPx = 0) => px >= zone.x - expandPx && px <= zone.x + zone.w + expandPx && py >= zone.y - expandPx && py <= zone.y + zone.h + expandPx;
+
+function initSession() {
+  state.inSummary = false;
+  document.getElementById('summary-modal').classList.remove('open');
+
+  state.menuQueue = buildSessionMenu(config.targetBowls);
+  state.currentBowlIndex = 0;
+  state.completedBowlsList = [];
+  state.totalActionsDone = 0;
+  state.sessionStartTime = performance.now();
+  state.currentBowlLayers = [];
+  state.fallingDrops = [];
+  state.burstParticles = [];
+  state.confettiParticles = [];
+  state.floatingTexts = [];
+
+  startNewBowl();
+}
+
+const getCurrentRecipe = () => state.menuQueue[state.currentBowlIndex] || SIGNATURE_RECIPES[0];
+const getRemainingIngIds = () => getCurrentRecipe().steps.filter(id => !state.completedStepsSet.has(id));
+const getActiveIngredient = () => {
+  const rem = getRemainingIngIds();
+  const targetId = (state.activeTargetIngId && rem.includes(state.activeTargetIngId)) ? state.activeTargetIngId : (rem[0] || getCurrentRecipe().steps[0]);
+  return INGREDIENTS[targetId];
+};
+
+function startNewBowl() {
+  state.currentBowlLayers = [];
+  state.completedStepsSet = new Set();
+  state.activeTargetIngId = getCurrentRecipe().steps[0];
+  state.peekTimer = 0;
+
+  if (config.gameMode === 'MEMORY_ORDER') {
+    state.phase = 'ORDER_MEMORIZE';
+    state.memorizeTimer = config.memorizeSeconds;
+    updateHUD();
+    if (!state.paused) {
+      const names = getCurrentRecipe().steps.map(id => INGREDIENTS[id].name).join('、');
+      speakText(`請記住：${names}`);
+    }
+  } else {
+    setupNextStep(true);
+  }
+}
+
+function getAvailableBasinZoneIds() {
+  const effLevel = isMultiBasinFindMode() ? Math.max(2, config.spaceLevel) : config.spaceLevel;
+  if (effLevel === 1) {
+    if (config.level1Dir === 'L2R') return ['right'];
+    if (config.level1Dir === 'R2L') return ['left'];
+    return ['top'];
+  }
+  const ids = ['left', 'right'];
+  if (effLevel >= 3) ids.push('top');
+  if (effLevel >= 4) ids.push('bottom');
+  return ids;
+}
+
+function assignBasinsForCurrentStep() {
+  const basinIds = getAvailableBasinZoneIds();
+  const remIds = getRemainingIngIds();
+  const primaryTargetId = remIds[0] || getCurrentRecipe().steps[0];
+  state.activeTargetIngId = primaryTargetId;
+  const targetIng = INGREDIENTS[primaryTargetId];
+
+  let chosenId = basinIds[0];
+  if (basinIds.length > 1) {
+    if (isMultiBasinFindMode()) {
+      const otherBasins = basinIds.filter(id => id !== state.activeBasinZoneId);
+      const pool = otherBasins.length > 0 ? otherBasins : basinIds;
+      chosenId = pool[Math.floor(Math.random() * pool.length)];
+    } else if (config.seqMode === 'FIXED_L' && basinIds.includes('left')) {
+      chosenId = 'left';
+    } else if (config.seqMode === 'FIXED_R' && basinIds.includes('right')) {
+      chosenId = 'right';
+    } else if (config.seqMode === 'RANDOM') {
+      chosenId = basinIds[Math.floor(Math.random() * basinIds.length)];
+    } else {
+      chosenId = basinIds[state.altCounter % basinIds.length];
+      state.altCounter++;
+    }
+  }
+
+  const prevMap = { ...state.basinMap };
+  state.activeBasinZoneId = chosenId;
+  state.basinMap = { [chosenId]: targetIng };
+
+  if (isMultiBasinFindMode()) {
+    const otherRemIds = (config.gameMode === 'MEMORY_ORDER')
+      ? shuffleArray(remIds.filter(id => id !== primaryTargetId)).slice(0, Math.max(0, basinIds.length - 2))
+      : [];
+    const distractors = shuffleArray(ALL_INGREDIENT_IDS.filter(id => !remIds.includes(id) && !state.completedStepsSet.has(id)));
+    const fillPool = [...otherRemIds, ...distractors];
+
+    let dIdx = 0;
+    basinIds.forEach(id => {
+      if (id !== chosenId) {
+        let pickId = fillPool[dIdx % fillPool.length];
+        if (prevMap[id] && prevMap[id].id === pickId && fillPool.length > basinIds.length) {
+          dIdx++;
+          pickId = fillPool[dIdx % fillPool.length];
+        }
+        state.basinMap[id] = INGREDIENTS[pickId];
+        dIdx++;
+      }
+    });
+  }
+}
+
+function setupNextStep(clearBowl = false) {
+  if (clearBowl) state.currentBowlLayers = [];
+  assignBasinsForCurrentStep();
+  state.phase = 'GO_SCOOP';
+  state.carryingIngredient = null;
+  state.dwellElapsed = 0;
+  state.dwellBasinId = null;
+  updateHUD();
+  if (!state.paused && config.gameMode !== 'MEMORY_ORDER') {
+    speakText(getActiveIngredient().name);
+  }
+}
+
+function updateHUD() {
+  const topHudEl = document.getElementById('top-hud');
+  if (topHudEl) topHudEl.style.visibility = isColorPickingCleanScreen() ? 'hidden' : 'visible';
+
+  const recipe = getCurrentRecipe();
+  const steps = recipe.steps;
+  const isMemOrder = (config.gameMode === 'MEMORY_ORDER');
+  const isMemQuiz = (config.gameMode === 'MEMORY_QUIZ');
+  const isPeeking = state.peekTimer > 0;
+
+  const hideTitle = (isMemQuiz && state.phase !== 'BOWL_CELEBRATE') || (isMemOrder && state.phase !== 'ORDER_MEMORIZE' && state.phase !== 'BOWL_CELEBRATE' && !isPeeking);
+  document.getElementById('hud-recipe-name').textContent = hideTitle ? '🥣 記憶特調剉冰' : `🥣 ${recipe.name}`;
+  document.getElementById('hud-bowl-text').textContent = `第 ${Math.min(state.currentBowlIndex + 1, config.targetBowls)} / ${config.targetBowls} 碗`;
+
+  document.getElementById('peek-order-btn').classList.toggle('visible', isMemOrder && (state.phase === 'GO_SCOOP' || state.phase === 'GO_POUR') && !isColorPickingCleanScreen());
+
+  const actionLine = document.getElementById('hud-action-line');
+  const currentIng = getActiveIngredient();
+  if (state.phase === 'BOWL_CELEBRATE') {
+    actionLine.innerHTML = `<img class="hud-mini-icon" src="./images/bowl-empty.png" onerror="this.style.display='none'" alt=""><span>${recipe.name}完成</span>`;
+  } else if (state.phase === 'BOWL_QUIZ') {
+    actionLine.innerHTML = `<img class="hud-mini-icon" src="./images/bowl-empty.png" onerror="this.style.display='none'" alt=""><span>想一想，剛剛做的是哪一碗冰？</span>`;
+  } else if (state.phase === 'ORDER_MEMORIZE') {
+    actionLine.innerHTML = `<img class="hud-mini-icon" src="./images/bowl-empty.png" onerror="this.style.display='none'" alt=""><span>記住這 3 樣（${Math.ceil(state.memorizeTimer)} 秒後開始）</span>`;
+  } else if (state.phase === 'GO_POUR') {
+    actionLine.innerHTML = `<img class="hud-mini-icon" src="./images/bowl-empty.png" onerror="this.style.display='none'" alt=""><span>放回冰碗</span>`;
+  } else if (isMemOrder && !isPeeking) {
+    const doneCount = state.completedStepsSet.size;
+    actionLine.innerHTML = `<img class="hud-mini-icon" src="./images/spoon.png" onerror="this.style.display='none'" alt=""><span>憑記憶找料（已完成 ${doneCount} / ${steps.length} 樣）</span>`;
+  } else {
+    actionLine.innerHTML = `<img class="hud-mini-icon" src="./images/${currentIng.imgFile}" onerror="this.style.display='none'" alt=""><span>${currentIng.name}</span>`;
+  }
+
+  const pillsContainer = document.getElementById('hud-step-pills');
+  pillsContainer.innerHTML = '';
+  steps.forEach((ingId) => {
+    const ing = INGREDIENTS[ingId];
+    const pill = document.createElement('div');
+    const isDone = state.completedStepsSet.has(ingId) || state.phase === 'BOWL_CELEBRATE' || state.phase === 'BOWL_QUIZ';
+    const isActive = !isDone && !isMemOrder && (ingId === state.activeTargetIngId) && !['BOWL_CELEBRATE', 'BOWL_QUIZ', 'ORDER_MEMORIZE'].includes(state.phase);
+    const maskFuture = isMemOrder && state.phase !== 'ORDER_MEMORIZE' && state.phase !== 'BOWL_CELEBRATE' && !isDone && !isPeeking;
+
+    pill.className = 'ing-step-pill' + (isDone ? ' done' : (isActive ? ' active' : ''));
+    if (isDone) pill.textContent = `✓ ${ing.name}`;
+    else if (maskFuture) pill.textContent = `?`;
+    else pill.textContent = isActive ? `● ${ing.name}` : ing.name;
+    pillsContainer.appendChild(pill);
+  });
+}
+
+function addIngredientToMainBowl(bowlZone, fromX, fromY, ing) {
+  const bowlX = bowlZone.x + bowlZone.w * 0.5;
+  const bowlY = bowlZone.y + bowlZone.h * 0.54;
+  const bowlR = getZoneBowlRadius(bowlZone);
+
+  const toppingIndex = state.currentBowlLayers.filter(l => l.ing.role === 'topping').length;
+  const sideOffset = (ing.role === 'topping') ? (toppingIndex === 0 ? -0.36 : 0.36) : 0;
+
+  const dropCount = ing.type === 'syrup' ? 12 : 15;
+  for (let i = 0; i < dropCount; i++) {
+    const spreadX = (sideOffset + (Math.random() - 0.5) * 0.55) * bowlR;
+    state.fallingDrops.push({
+      ing,
+      x: fromX + (Math.random() - 0.5) * 40,
+      y: fromY + (Math.random() - 0.5) * 40,
+      targetX: bowlX + spreadX,
+      targetY: bowlY - bowlR * 0.22 + (Math.random() - 0.5) * 16,
+      progress: 0,
+      speed: 2.5 + Math.random(),
+      size: ['chunks', 'jelly_cubes', 'strawberry'].includes(ing.type) ? 15 + Math.random() * 4 : 10 + Math.random() * 4,
+      rot: Math.random() * Math.PI * 2
+    });
+  }
+
+  const count = ing.type === 'syrup' ? 8 : (ing.type === 'powder' ? 22 : 12);
+  const layerItems = Array.from({ length: count }, (_, i) => {
+    const localRx = (Math.random() - 0.5) * 0.72;
+    const rx = ing.role === 'topping' ? (sideOffset * 1.45 + localRx) : (Math.random() - 0.5) * 1.3;
+    return {
+      rx,
+      ry: -0.16 - (1 - Math.min(1, rx * rx * 0.45)) * (0.18 + Math.random() * 0.42),
+      size: ['beans', 'boba'].includes(ing.type) ? 0.095 + Math.random() * 0.025 : 0.145 + Math.random() * 0.035,
+      rot: (Math.random() - 0.5) * 0.85,
+      variant: i % 2
     };
   });
 
-  const ambientNebulae = [
-    { x: 0.14, y: 0.18, rScale: 0.34, colorInner: 'rgba(139, 92, 246, 0.16)', colorMid: 'rgba(79, 70, 229, 0.07)', phase: 0.4 },
-    { x: 0.86, y: 0.20, rScale: 0.32, colorInner: 'rgba(56, 189, 248, 0.15)', colorMid: 'rgba(14, 165, 233, 0.06)', phase: 1.9 },
-    { x: 0.16, y: 0.82, rScale: 0.35, colorInner: 'rgba(16, 185, 129, 0.13)', colorMid: 'rgba(56, 189, 248, 0.05)', phase: 3.1 },
-    { x: 0.84, y: 0.80, rScale: 0.36, colorInner: 'rgba(192, 132, 252, 0.15)', colorMid: 'rgba(99, 102, 241, 0.06)', phase: 4.5 }
-  ];
+  state.currentBowlLayers.push({ ing, items: layerItems, animProgress: 0 });
+  state.bowlBounceScale = 1.2;
+}
 
-  const ambientMeteor = {
-    active: false,
-    x: 0.2,
-    y: 0.1,
-    vx: 0.35,
-    vy: 0.18,
-    born: 0,
-    duration: 1100,
-    nextAt: 4500
-  };
+function spawnSuccessParticles(x, y, color, count = 18) {
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
+    const speed = 120 + Math.random() * 210;
+    state.burstParticles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 60,
+      color: i % 2 === 0 ? '#FFD166' : color,
+      size: 5 + Math.random() * 5,
+      alpha: 1,
+      life: 0.6 + Math.random() * 0.3
+    });
+  }
+}
 
-  // 支援可選的外部透明圖片圖層
-  const customStarAssets = {
-    normal: { url: '', img: null, loaded: false, failed: false },
-    timed: { url: '', img: null, loaded: false, failed: false },
-    moving: { url: '', img: null, loaded: false, failed: false },
-    charge_static: { url: '', img: null, loaded: false, failed: false },
-    charge_moving: { url: '', img: null, loaded: false, failed: false }
-  };
-  window.setCustomStarImage = function (typeOrUrl, maybeUrl) {
-    const type = maybeUrl !== undefined ? typeOrUrl : 'normal';
-    const url = maybeUrl !== undefined ? maybeUrl : typeOrUrl;
-    const slot = customStarAssets[type] || customStarAssets.normal;
-    if (!url) {
-      slot.url = '';
-      slot.img = null;
-      slot.loaded = false;
-      slot.failed = false;
-      return;
-    }
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      slot.img = img;
-      slot.loaded = true;
-      slot.failed = false;
-    };
-    img.onerror = () => {
-      slot.img = null;
-      slot.loaded = false;
-      slot.failed = true;
-    };
-    slot.url = url;
-    img.src = url;
-  };
+function spawnGrandConfetti(cx, cy, w) {
+  const colors = ['#C8372D', '#E09126', '#A95E35', '#7B5942', '#F5B041'];
+  for (let i = 0; i < 22; i++) {
+    state.confettiParticles.push({
+      x: cx + (Math.random() - 0.5) * Math.min(w * 0.55, 420),
+      y: cy - 40 + (Math.random() - 0.5) * 110,
+      vx: (Math.random() - 0.5) * 300,
+      vy: -170 - Math.random() * 230,
+      w: 9 + Math.random() * 6,
+      h: 5 + Math.random() * 4,
+      rot: Math.random() * Math.PI * 2,
+      vRot: (Math.random() - 0.5) * 8,
+      color: colors[i % colors.length],
+      life: 2.2 + Math.random() * 0.5
+    });
+  }
+}
 
-  // MediaPipe CDN 來源
-  const scriptUrls = {
-    hand: [
-      'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js',
-      'https://unpkg.com/@mediapipe/hands/hands.js'
-    ],
-    head: [
-      'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js',
-      'https://unpkg.com/@mediapipe/face_mesh/face_mesh.js'
-    ]
-  };
+function spawnFloatingText(x, y, text, color = '#FFE28A', scale = 1) {
+  state.floatingTexts.push({ x, y, text, color, scale, alpha: 1, vy: -52 });
+}
 
-  // 系統與遊戲狀態機（加入 busySince 推論逾時解鎖與 lastValidNorm 座標緩衝）
-  const state = {
-    appState: 'camera_idle',
-    gameState: 'game_ready',
-    mode: 'hand',
-    active: false,
-    stream: null,
-    handModel: null,
-    headModel: null,
-    loopToken: 0,
-    busy: false,
-    busySince: 0,
-    rafId: 0,
-    previousVideoTime: -1,
-    colorTarget: null,
-    lastColorPos: null,
-    lastColorArea: 0,
-    colorLostFrames: 0,
-    tolerance: 16,
-    lastSeenTime: 0,
-    missCount: 0,
-    modeReady: false,
-    stableMs: 0,
-    lastFrameTs: 0,
-    calibratingRange: false
-  };
+function updateGameLogic(dt, w, h) {
+  if (state.paused || state.inSummary || isColorPickingCleanScreen()) return;
 
-  // 三模式共用的標準化追蹤輸出介面：{found, x, y, mode, timestamp}
-  const trackerOutput = {
-    found: false,
-    x: 0.5,
-    y: 0.5,
-    mode: 'hand',
-    timestamp: 0,
-    colorRadiusPx: 0
-  };
+  const now = performance.now();
+  const trackingFresh = hasFreshTracking(now);
 
-  // V3 完整設定（8 大星空復健模式）
-  const config = {
-    gamePlayMode: 'collect',     // 'collect' | 'connect' | 'track' | 'select' | 'traffic' | 'nebula' | 'magnet' | 'falling'
-    collectActionType: 'touch',  // 'touch' (碰觸收集) | 'charge_static' | 'charge_moving' | 'charge_mixed'
-    specialFreq: 'low',          // 'off' | 'low' | 'high'
-    chargeTypeMode: 'mixed',     // 'static' | 'moving' | 'mixed'
-    chargeDurationSec: 2,        // 1 | 2 | 3
-    connectSubMode: 'number',    // 'number' | 'memory'
-    connectRouteMode: 'varied',  // 'varied' (星座+隨機交錯) | 'random' (全隨機不重疊) | 'constellation' (多組星座輪播)
-    connectStarCount: 3,         // 2 | 3 | 4 | 5 | 6 | 7
-    memoryViewSec: 5,            // 3 | 5 | 0
-    trackShape: 'arc',           // 'line' | 'arc' | 'wave'
-    selectOptionCount: 2,        // 2 | 3
-    selectLayoutMode: 'random',  // 'random' (進階防重疊隨機散落) | 'fixed' (初階固定對稱)
-    selectPromptMode: 'both',    // 'both' (圖文+語音) | 'audio_only' (純聽覺出題)
-    trafficVariant: 'single',    // 'single' (單星) | 'dual' (雙星交替找綠燈) | 'cruise' (巡航紅綠燈)
-    trafficPace: 'relaxed',      // 'relaxed' | 'normal'
-    nebulaDensity: 'light',      // 'light' (寬幅輕星雲) | 'dense' (寬幅濃星雲) | 'regen' (緩慢飄回)
-    magnetStarCount: 2,          // 2 | 3
-    fallingSpeed: 'medium',      // 'slow' | 'medium' | 'fast'
-    blackHoleOn: false,          // 🌀 太空黑洞障礙開關
-    midlineGuideOn: true,        // 🔀 跨中線視覺引導開關
-    cosmicBgMode: 'dreamy',      // 'dreamy' | 'clear'
-    challengeType: 'count',      // 'count' | 'timed'
-    targetCount: 10,             // 5 | 10 | 20
-    challengeDurationSec: 60,    // 30 | 60 | 120
-    rangeMode: 'lr',             // 'lr' | 'ud' | 'free'
-    targetSize: 'large',         // 'large' | 'medium' | 'small'
-    dwellMode: 'dwell',          // 'dwell' | 'instant'
-    voiceOn: true,
-    soundOn: true,
-    bgmOn: true,
-    bgmVolume: 0.35,
-    sfxVolume: 0.80,
-    cameraFit: 'fit-width'
-  };
-
-  // 三種追蹤模式各自獨立儲存的「使用者設定活動範圍」
-  const STORAGE_KEY_RANGES = 'motion_sense_mode_ranges_v4';
-  const STORAGE_KEY_SESSION = 'motion_sense_daily_session_v3';
-  const modeRanges = {
-    hand: { isCustom: false, box: null },
-    head: { isCustom: false, box: null },
-    color: { isCustom: false, box: null }
-  };
-
-  // 今日累積總結與星座收集冊記錄
-  const dailySession = {
-    dateKey: new Date().toLocaleDateString('zh-TW'),
-    roundsCompleted: 0,
-    totalDurationMs: 0,
-    historyRecords: [], // [{ modeTitle, trackMode, detailText, durationSec }]
-    unlockedConstellations: 0
-  };
-
-  function isValidNormalizedBox(b) {
-    return (
-      b &&
-      Number.isFinite(b.minX) &&
-      Number.isFinite(b.maxX) &&
-      Number.isFinite(b.minY) &&
-      Number.isFinite(b.maxY) &&
-      b.maxX - b.minX >= 0.12 &&
-      b.maxY - b.minY >= 0.10
-    );
+  if (trackingFresh) {
+    const smooth = Math.min(1, dt * 16);
+    state.cursorX += (state.targetCursorX - state.cursorX) * smooth;
+    state.cursorY += (state.targetCursorY - state.cursorY) * smooth;
   }
 
-  function loadSavedRanges() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY_RANGES);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        ['hand', 'head', 'color'].forEach(m => {
-          const item = parsed?.[m];
-          if (item && typeof item === 'object' && isValidNormalizedBox(item.box)) {
-            modeRanges[m].isCustom = Boolean(item.isCustom);
-            modeRanges[m].box = clampUserBoxToCameraStage(item.box);
-          }
+  const px = state.cursorX * w;
+  const py = state.cursorY * h;
+
+  if (state.bowlBounceScale > 1) state.bowlBounceScale = Math.max(1, state.bowlBounceScale - dt * 1.2);
+
+  if (state.peekTimer > 0) {
+    state.peekTimer = Math.max(0, state.peekTimer - dt);
+    if (state.peekTimer === 0) updateHUD();
+  }
+
+  if (trackingFresh) {
+    state.spoonTrail.push({ x: px, y: py, alpha: 1 });
+    if (state.spoonTrail.length > 10) state.spoonTrail.shift();
+  }
+  state.spoonTrail.forEach(pt => { pt.alpha -= dt * 3.8; });
+  state.spoonTrail = state.spoonTrail.filter(pt => pt.alpha > 0);
+
+  state.fallingDrops.forEach(d => { d.progress = Math.min(1, d.progress + dt * d.speed); });
+  state.fallingDrops = state.fallingDrops.filter(d => d.progress < 1);
+
+  state.currentBowlLayers.forEach(layer => {
+    if (layer.animProgress < 1) layer.animProgress = Math.min(1, layer.animProgress + dt * 2.4);
+  });
+
+  state.burstParticles.forEach(p => {
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 320 * dt;
+    p.life -= dt; p.alpha = Math.max(0, p.life);
+  });
+  state.burstParticles = state.burstParticles.filter(p => p.life > 0);
+
+  state.confettiParticles.forEach(c => {
+    c.x += c.vx * dt; c.y += c.vy * dt; c.vy += 260 * dt;
+    c.rot += c.vRot * dt; c.life -= dt;
+  });
+  state.confettiParticles = state.confettiParticles.filter(c => c.life > 0);
+
+  state.floatingTexts.forEach(ft => { ft.y += ft.vy * dt; ft.alpha -= dt * 0.85; });
+  state.floatingTexts = state.floatingTexts.filter(ft => ft.alpha > 0);
+
+  if (state.phase === 'ORDER_MEMORIZE') {
+    const prevCeil = Math.ceil(state.memorizeTimer);
+    state.memorizeTimer -= dt;
+    if (Math.ceil(state.memorizeTimer) !== prevCeil) updateHUD();
+    if (state.memorizeTimer <= 0) {
+      setupNextStep(true);
+    }
+    return;
+  }
+
+  if (state.phase === 'BOWL_CELEBRATE') {
+    state.celebrateTimer -= dt;
+    if (state.celebrateTimer <= 0) {
+      state.currentBowlIndex++;
+      if (state.currentBowlIndex >= config.targetBowls) triggerSessionSummary();
+      else startNewBowl();
+    }
+    return;
+  }
+
+  if (!trackingFresh) {
+    state.dwellElapsed = Math.max(0, state.dwellElapsed - dt * 1.2);
+    state.quizDwellElapsed = Math.max(0, state.quizDwellElapsed - dt * 1.2);
+    return;
+  }
+
+  if (state.phase === 'BOWL_QUIZ') {
+    if (state.quizCooldownTimer > 0) {
+      state.quizCooldownTimer = Math.max(0, state.quizCooldownTimer - dt);
+      return;
+    }
+
+    const cards = getQuizCardRects(getPlayAreaBounds(w, h));
+    const hovered = cards.find(c => isPointInZone(px, py, c, 4));
+    const holdNeed = Math.max(1.2, config.dwellSeconds);
+
+    if (hovered && state.lockedZoneId !== hovered.recipe.id) {
+      if (state.quizDwellId !== hovered.recipe.id) {
+        state.quizDwellId = hovered.recipe.id;
+        state.quizDwellElapsed = 0;
+      }
+      state.quizDwellElapsed += dt;
+      if (state.quizDwellElapsed >= holdNeed) {
+        const targetRecipe = getCurrentRecipe();
+        state.lockedZoneId = hovered.recipe.id;
+        state.quizDwellElapsed = 0;
+        if (hovered.recipe.id === targetRecipe.id) {
+          triggerBowlCelebrate(targetRecipe, w, h);
+        } else {
+          sound.playWrongHint();
+          const ingNames = targetRecipe.steps.map(id => INGREDIENTS[id].name).join('、');
+          speakText(ingNames);
+          spawnFloatingText(hovered.x + hovered.w * 0.5, hovered.y + hovered.h * 0.4, `提示：${ingNames}`, '#FFE49E', 0.95);
+        }
+      }
+    } else if (!hovered) {
+      state.quizDwellId = null;
+      state.quizDwellElapsed = 0;
+      state.lockedZoneId = null;
+    }
+    return;
+  }
+
+  const zones = getZoneRects(w, h);
+  const bowlZone = zones.find(z => z.role === 'bowl');
+
+  if (state.lockedZoneId) {
+    const lockedZone = zones.find(z => z.id === state.lockedZoneId);
+    if (!lockedZone || !isPointInZone(px, py, lockedZone, 16)) state.lockedZoneId = null;
+  }
+
+  if (state.phase === 'GO_SCOOP') {
+    const remIds = getRemainingIngIds();
+    const validZones = zones.filter(z => {
+      if (z.role !== 'basin' || !state.basinMap[z.id]) return false;
+      if (config.gameMode === 'MEMORY_ORDER') return remIds.includes(state.basinMap[z.id].id);
+      return z.id === state.activeBasinZoneId;
+    });
+
+    const expandMargin = state.dwellElapsed > 0 ? 28 : 8;
+    const hitValidZone = validZones.find(z => isPointInZone(px, py, z, expandMargin) && state.lockedZoneId !== z.id);
+
+    if (hitValidZone) {
+      const pickedIng = state.basinMap[hitValidZone.id];
+      state.activeTargetIngId = pickedIng.id;
+
+      if (config.dwellSeconds <= 0) {
+        onScoopCompleted(hitValidZone, pickedIng, bowlZone, px, py, w, h);
+      } else {
+        if (state.dwellBasinId !== hitValidZone.id) {
+          state.dwellBasinId = hitValidZone.id;
+          state.dwellElapsed = 0;
+        }
+        state.dwellElapsed += dt;
+        if (state.dwellElapsed - state.lastDwellTickSound >= 0.2) {
+          state.lastDwellTickSound = state.dwellElapsed;
+          sound.playDwellTick(Math.min(1, state.dwellElapsed / config.dwellSeconds));
+        }
+        if (state.dwellElapsed >= config.dwellSeconds) {
+          onScoopCompleted(hitValidZone, pickedIng, bowlZone, px, py, w, h);
+        }
+      }
+    } else {
+      if (isMultiBasinFindMode()) {
+        const wrongZone = zones.find(z => {
+          if (z.role !== 'basin' || !state.basinMap[z.id]) return false;
+          const isValid = validZones.some(vz => vz.id === z.id);
+          return !isValid && isPointInZone(px, py, z, -8);
         });
-      }
-      const rawSession = localStorage.getItem(STORAGE_KEY_SESSION);
-      if (rawSession) {
-        const parsedSession = JSON.parse(rawSession);
-        const today = new Date().toLocaleDateString('zh-TW');
-        if (parsedSession && parsedSession.dateKey === today) {
-          dailySession.roundsCompleted = Number(parsedSession.roundsCompleted) || 0;
-          dailySession.totalDurationMs = Number(parsedSession.totalDurationMs) || 0;
-          dailySession.unlockedConstellations = Number(parsedSession.unlockedConstellations) || 0;
-          if (Array.isArray(parsedSession.historyRecords)) {
-            dailySession.historyRecords = parsedSession.historyRecords;
-          }
+        if (wrongZone && state.lockedZoneId !== wrongZone.id) {
+          state.lockedZoneId = wrongZone.id;
+          const wrongIng = state.basinMap[wrongZone.id];
+          const rightIng = getActiveIngredient();
+          sound.playWrongHint();
+          const msg = config.gameMode === 'MEMORY_ORDER' ? `這碗沒有${wrongIng.name}喔，再想一想` : `這是${wrongIng.name}，要找${rightIng.name}`;
+          spawnFloatingText(wrongZone.x + wrongZone.w * 0.5, wrongZone.y + wrongZone.h * 0.45, msg, '#FFE49E', 0.95);
         }
       }
-    } catch {
-      // 忽略 localStorage 讀取限制
+      state.dwellElapsed = Math.max(0, state.dwellElapsed - dt * 1.6);
+      if (state.dwellElapsed === 0) state.dwellBasinId = null;
     }
+  } else if (state.phase === 'GO_POUR' && bowlZone && state.lockedZoneId !== 'bowl') {
+    if (isPointInZone(px, py, bowlZone, 14)) completePourIntoBowl(bowlZone, px, py, w, h);
+  }
+}
+
+function onScoopCompleted(basinZone, pickedIng, bowlZone, px, py, w, h) {
+  state.lockedZoneId = basinZone.id;
+  state.dwellElapsed = 0;
+  state.dwellBasinId = null;
+  sound.playScoop();
+  spawnSuccessParticles(px, py, pickedIng.badgeColor, 16);
+
+  if (config.requireReturn) {
+    state.carryingIngredient = pickedIng;
+    state.phase = 'GO_POUR';
+    speakText('放回冰碗');
+    updateHUD();
+  } else {
+    state.carryingIngredient = pickedIng;
+    completePourIntoBowl(bowlZone, basinZone.x + basinZone.w * 0.5, basinZone.y + basinZone.h * 0.5, w, h);
+  }
+}
+
+function completePourIntoBowl(bowlZone, fromX, fromY, w, h) {
+  const ing = state.carryingIngredient || getActiveIngredient();
+  state.lockedZoneId = 'bowl';
+  state.carryingIngredient = null;
+  state.totalActionsDone++;
+  state.completedStepsSet.add(ing.id);
+
+  addIngredientToMainBowl(bowlZone, fromX, fromY, ing);
+
+  const recipe = getCurrentRecipe();
+  const rem = getRemainingIngIds();
+
+  if (rem.length === 0) {
+    if (config.gameMode === 'MEMORY_QUIZ') startBowlMemoryQuiz(recipe);
+    else triggerBowlCelebrate(recipe, w, h);
+  } else {
+    const bx = bowlZone.x + bowlZone.w * 0.5;
+    const by = bowlZone.y + bowlZone.h * 0.36;
+    sound.playStepSuccess(ing.pitch);
+    spawnSuccessParticles(bx, by, ing.badgeColor, 18);
+    spawnFloatingText(bx, by, ing.name, '#FFE49E', 1.05);
+    setupNextStep(false);
+  }
+}
+
+function triggerBowlCelebrate(recipe, w, h) {
+  state.phase = 'BOWL_CELEBRATE';
+  state.celebrateTimer = 2.5;
+  state.completedBowlsList.push(recipe.name);
+  sound.playBowlGrandFanfare();
+  speakText(`${recipe.name}完成`);
+  const area = getPlayAreaBounds(w, h);
+  spawnGrandConfetti(area.centerX, area.centerY, w);
+  spawnSuccessParticles(area.centerX, area.centerY, '#FFD166', 24);
+  updateHUD();
+}
+
+function startBowlMemoryQuiz(targetRecipe) {
+  state.phase = 'BOWL_QUIZ';
+  state.quizDwellId = null;
+  state.quizDwellElapsed = 0;
+  state.quizCooldownTimer = 1.5;
+  state.lockedZoneId = null;
+
+  const usedKeys = new Set([`${[targetRecipe.steps[0], targetRecipe.steps[1]].sort().join('+')}+${targetRecipe.steps[2]}`]);
+  const distractors = [];
+  const diffSaucePool = shuffleArray(SIGNATURE_RECIPES.filter(r => r.steps[2] !== targetRecipe.steps[2] && r.steps[0] !== targetRecipe.steps[0]));
+  for (const cand of diffSaucePool) {
+    if (distractors.length >= 2) break;
+    const k = `${[cand.steps[0], cand.steps[1]].sort().join('+')}+${cand.steps[2]}`;
+    if (!usedKeys.has(k)) { usedKeys.add(k); distractors.push(cand); }
+  }
+  while (distractors.length < 2) {
+    distractors.push(generateDynamicRecipe(usedKeys));
   }
 
-  function saveRangesToStorage() {
-    try {
-      localStorage.setItem(STORAGE_KEY_RANGES, JSON.stringify(modeRanges));
-    } catch {}
+  state.quizOptions = shuffleArray([targetRecipe, ...distractors]);
+  sound.playStepSuccess(659);
+  speakText('剛剛做的是哪一碗冰？');
+  updateHUD();
+}
+
+function getQuizCardRects(area) {
+  const count = state.quizOptions.length || 3;
+  const isWide = area.width >= 560;
+  if (isWide) {
+    const gap = 14;
+    const cardW = Math.min(235, (area.width - gap * (count + 1)) / count);
+    const cardH = Math.min(255, area.height * 0.56);
+    const startX = area.centerX - (cardW * count + gap * (count - 1)) * 0.5;
+    const cardY = area.centerY - cardH * 0.35;
+    return state.quizOptions.map((recipe, i) => ({ recipe, x: startX + i * (cardW + gap), y: cardY, w: cardW, h: cardH }));
+  }
+  const gap = 10;
+  const cardW = Math.min(350, area.width - 24);
+  const cardH = Math.min(94, (area.height * 0.64 - gap * (count - 1)) / count);
+  const startY = area.centerY - (cardH * count + gap * (count - 1)) * 0.32;
+  const cardX = area.centerX - cardW * 0.5;
+  return state.quizOptions.map((recipe, i) => ({ recipe, x: cardX, y: startY + i * (cardH + gap), w: cardW, h: cardH }));
+}
+
+function triggerSessionSummary() {
+  state.inSummary = true;
+  const elapsedSec = Math.max(1, Math.round((performance.now() - state.sessionStartTime) / 1000));
+  document.getElementById('sum-bowls').textContent = `${state.completedBowlsList.length} 碗`;
+  document.getElementById('sum-actions').textContent = `${state.totalActionsDone} 次`;
+  document.getElementById('sum-time').textContent = `${String(Math.floor(elapsedSec / 60)).padStart(2, '0')}:${String(elapsedSec % 60).padStart(2, '0')}`;
+
+  const showcase = document.getElementById('sum-showcase');
+  showcase.innerHTML = '';
+  state.completedBowlsList.forEach((name, idx) => {
+    const tag = document.createElement('span');
+    tag.className = 'showcase-tag';
+    tag.textContent = `🥣 第 ${idx + 1} 碗：${name}`;
+    showcase.appendChild(tag);
+  });
+  document.getElementById('summary-modal').classList.add('open');
+}
+
+/********************************************************************
+ * 7. 畫布視覺渲染引擎
+ ********************************************************************/
+const getZoneBowlRadius = (zone) => Math.max(44, Math.min(126, Math.min(zone.w, zone.h) * 0.38));
+
+function drawRetroTouchBackdrop(w, h) {
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+  bgGrad.addColorStop(0, '#F7F1E3');
+  bgGrad.addColorStop(0.55, '#EFE5D3');
+  bgGrad.addColorStop(1, '#E2D2BA');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  const tileStartY = h * 0.44;
+  const tileEndY = h * 0.72;
+  ctx.fillStyle = '#EAE0CE';
+  ctx.fillRect(0, tileStartY, w, tileEndY - tileStartY);
+
+  ctx.strokeStyle = 'rgba(139, 108, 78, 0.14)';
+  ctx.lineWidth = 1;
+  const tileSz = 28;
+  for (let x = 0; x < w; x += tileSz) {
+    ctx.beginPath(); ctx.moveTo(x, tileStartY); ctx.lineTo(x, tileEndY); ctx.stroke();
+  }
+  for (let y = tileStartY; y <= tileEndY; y += tileSz) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
   }
 
-  function saveDailySessionToStorage() {
-    try {
-      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(dailySession));
-    } catch {}
-  }
-
-  const calibState = {
-    workingBox: null,
-    dragHandle: null,
-    dragStartNorm: null,
-    dragStartBox: null
-  };
-
-  // V3 遊戲執行期狀態
-  const game = {
-    completedTargets: 0,         // 累積成功碰觸的星星／節點總數
-    completedSets: 0,            // 累積完成的星座連線組數或星河軌道條數
-    score: 0,
-    elapsedActiveMs: 0,
-    remainingMs: 60000,
-    countsByType: {
-      normal: 0,
-      timed: 0,
-      moving: 0,
-      charge_static: 0,
-      charge_moving: 0,
-      connect: 0,
-      track_orb: 0,
-      select: 0,
-      traffic: 0,
-      nebula: 0,
-      magnet: 0,
-      falling: 0
-    },
-    shuffleBag: [],
-    targets: [],
-    // 星座連線狀態
-    connectNextOrder: 1,
-    connectConstellationName: '',
-    connectMemoryPhase: false,
-    connectMemoryRemainMs: 0,
-    connectAutoHintRemainMs: 0,
-    connectIdleMs: 0,
-    connectRadiusScale: 1.0,
-    // 🌈 星河軌道（牽引光球滑軌＋脫軌停住）專屬狀態
-    trackCurvePoints: [],
-    trackOrbProgressIdx: 0,      // 光球目前推進到的曲線點索引 (0 .. trackCurvePoints.length-1)
-    trackOrbEngaged: false,      // 綠色追蹤環是否已套住光球牽引中
-    trackDerailedWarn: false,    // 是否剛發生跑出軌道脫鉤
-    trackReverseDir: false,
-    // 🎯 星象選擇專屬狀態
-    selectTargetShape: null,
-    selectHadWrong: false,
-    selectLastShapeId: '',
-    // 🧲 星際引力專屬狀態（星門座標）
-    magnetPortal: null,          // { x, y, rNorm }
-    // 🌀 太空黑洞障礙與 2 秒重力漩渦吸住狀態
-    blackHole: null,             // { x, y, vx, vy, cooldownMs }
-    blackHoleTrappedMs: 0,       // 剩餘被黑洞吸住鎖定的毫秒數 (>0 時無法吃星／推軌)
-    blackHoleTrapOrigin: null,   // { x, y }
-    prevHitPoint: null,
-    nextSpawnAt: 0,
-    lrNextSide: 'left',
-    udNextSide: 'top',
-    allStepIndex: 0,
-    connectVariantCounter: 0,
-    lastConstellationName: '',
-    prevTrackerNorm: null,
-    trackerVxPxPerSec: 0,
-    trackerVyPxPerSec: 0,
-    trackerHistory: [],
-    nebulaIdleWarnAt: 0,
-    fallingLiftWarnAt: 0,
-    risingStars: [],
-    particles: [],
-    collectBursts: [],
-    milestoneRipples: [],
-    floatingTexts: [],
-    constellationBurst: null,
-    lastTickTs: 0
-  };
-
-  function isMultiNodeMode(gm = config.gamePlayMode) {
-    return gm === 'connect' || gm === 'track';
-  }
-
-  function getPrimaryCount() {
-    return isMultiNodeMode() ? game.completedSets : game.completedTargets;
-  }
-
-  function getPrimaryUnitLabel() {
-    if (config.gamePlayMode === 'connect') return '組';
-    if (config.gamePlayMode === 'track') return '條';
-    return '次';
-  }
-
-  // ==================== 音效與繁體中文語音報數管理（由 js/sound.js 提供） ====================
-  function syncAudioConfig() {
-    window.StarMotionSound.setConfig({
-      bgmOn: config.bgmOn,
-      bgmVolume: config.bgmVolume,
-      soundOn: config.soundOn,
-      sfxVolume: config.sfxVolume,
-      voiceOn: config.voiceOn
-    });
-  }
-  const unlockAudio = () => {
-    syncAudioConfig();
-    window.StarMotionSound.unlockAudio();
-  };
-  const playGameSound = (kind = 'normal', stepIndex = 0) => {
-    window.StarMotionSound.playGameSound(kind, stepIndex);
-  };
-  const speakText = phrase => window.StarMotionSound.speakText(phrase);
-  const speakCompletionCount = (count, isRoundEnd = false, followUpPrompt = '') => {
-    window.StarMotionSound.speakCompletionCount(count, isRoundEnd, followUpPrompt);
-  };
-
-  // ==================== 名稱與狀態輔助函式 ====================
-
-  function modeName(m = state.mode) {
-    return m === 'hand' ? '手部' : m === 'head' ? '頭部' : '顏色';
-  }
-
-  function gamePlayModeName(gm = config.gamePlayMode) {
-    switch (gm) {
-      case 'collect':
-        return config.collectActionType === 'touch'
-          ? '星星收集'
-          : '星星收集（能量充能）';
-      case 'charge':
-        return '星星充能';
-      case 'connect':
-        return `星座連線（${config.connectStarCount}顆・${config.connectSubMode === 'memory' ? '記憶' : '數字'}）`;
-      case 'track':
-        return config.trackShape === 'line'
-          ? '星河軌道（直線牽引）'
-          : config.trackShape === 'wave'
-          ? '星河軌道（S波浪牽引）'
-          : '星河軌道（彩虹弧牽引）';
-      case 'select':
-        return `星象選擇（${config.selectOptionCount}選1）`;
-      case 'traffic':
-        return config.trafficVariant === 'dual'
-          ? '脈衝紅綠燈（雙星交替）'
-          : config.trafficVariant === 'cruise'
-          ? '脈衝紅綠燈（巡航）'
-          : '脈衝紅綠燈';
-      case 'nebula':
-        return '撥開星雲';
-      case 'magnet':
-        return '星際引力';
-      case 'falling':
-        return '托起墜落星';
-      default:
-        return '星星收集';
-    }
-  }
-
-  function gamePlayShortTitle(gm = config.gamePlayMode) {
-    switch (gm) {
-      case 'collect':
-        return config.collectActionType === 'touch' ? '星星收集' : '星星充能';
-      case 'charge': return '星星充能';
-      case 'connect': return '星座連線';
-      case 'track': return '星河軌道';
-      case 'select': return '星象選擇';
-      case 'traffic': return '脈衝紅綠燈';
-      case 'nebula': return '撥開星雲';
-      case 'magnet': return '星際引力';
-      case 'falling': return '托起墜落星';
-      default: return '星星收集';
-    }
-  }
-
-  function rangeModeLabel(rm = config.rangeMode) {
-    switch (rm) {
-      case 'lr': return '左右移動';
-      case 'ud': return '上下移動';
-      case 'free': return '自由移動';
-      default: return '左右移動';
-    }
-  }
-
-  function formatDurationText(ms) {
-    const totalSec = Math.max(1, Math.round(ms / 1000));
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec % 60;
-    if (mins <= 0) return `${secs} 秒`;
-    return `${mins} 分 ${secs} 秒`;
-  }
-
-  function getBaseStarRadiusPx() {
-    const minDim = Math.min(stage.clientWidth || 360, stage.clientHeight || 480);
-    const scale = Math.max(0.82, Math.min(1.25, minDim / 420));
-    let base = 44;
-    if (config.targetSize === 'medium') base = 34;
-    else if (config.targetSize === 'small') base = 26;
-    return Math.round(base * scale);
-  }
-
-  function getStarRadiusPx() {
-    const baseR = getBaseStarRadiusPx();
-    if (isMultiNodeMode() || config.gamePlayMode === 'select') {
-      return Math.max(19, Math.round(baseR * (game.connectRadiusScale || 1.0)));
-    }
-    return baseR;
-  }
-
-  function getDwellRequiredMs() {
-    return config.dwellMode === 'instant' ? 0 : 280;
-  }
-
-  function getChargeRequiredMs(isMoving = false) {
-    const baseMs = config.chargeDurationSec * 1000;
-    return isMoving ? Math.round(baseMs * 0.75) : baseMs;
-  }
-
-  function updateStatusUI(pillText, tone = '', bannerText) {
-    const pill = $('statusPill');
-    pill.textContent = pillText;
-    pill.className = 'pill' + (tone ? ' ' + tone : '');
-    if (bannerText !== undefined) {
-      const banner = $('messageBanner');
-      banner.textContent = bannerText;
-      banner.className =
-        'bottom-banner' +
-        (tone === 'good' ? ' good' : tone === 'warn' ? ' warn' : tone === 'info' ? ' info' : '');
-    }
-  }
-
-  function updateCustomRangeLabels() {
-    const m = state.mode;
-    const hasCustom = modeRanges[m].isCustom && isValidNormalizedBox(modeRanges[m].box);
-    const rangeTag = hasCustom
-      ? '自訂範圍'
-      : m === 'head'
-      ? '頭部預設範圍'
-      : '預設範圍';
-    $('rangePill').textContent = `${gamePlayShortTitle()}｜${rangeModeLabel(config.rangeMode)}（${rangeTag}）`;
-    $('appTitleText').textContent = `星動體感訓練｜${gamePlayShortTitle()}`;
-
-    const statusEl = $('customRangeStatusText');
-    if (statusEl) {
-      statusEl.textContent = `${modeName(m)}：${hasCustom ? '已設定自訂範圍' : '預設範圍'}`;
-    }
-  }
-
-  function updateScoreAndTimerUI() {
-    const timerBadge = $('timerBadge');
-    const primaryCount = getPrimaryCount();
-    const unit = getPrimaryUnitLabel();
-
-    if (config.challengeType === 'timed') {
-      timerBadge.hidden = false;
-      const secLeft = Math.max(0, Math.ceil(game.remainingMs / 1000));
-      $('timerText').textContent = `${secLeft}s`;
-      timerBadge.className = 'timer-badge' + (secLeft <= 10 ? ' urgent' : '');
-      $('scoreText').textContent = `${game.score} 分 (${primaryCount}${unit})`;
-    } else {
-      timerBadge.hidden = true;
-      if (config.gamePlayMode === 'connect') {
-        $('scoreText').textContent = `${game.completedSets} / ${config.targetCount} 組`;
-      } else if (config.gamePlayMode === 'track') {
-        $('scoreText').textContent = `${game.completedSets} / ${config.targetCount} 條`;
-      } else {
-        $('scoreText').textContent = `${game.completedTargets} / ${config.targetCount}`;
-      }
-    }
-    updateCustomRangeLabels();
-  }
-
-  function syncSettingsVisibility() {
-    const gm = config.gamePlayMode;
-    $('subSettingCollect').hidden = gm !== 'collect' && gm !== 'charge';
-    const isChargingCollect =
-      gm === 'charge' || (gm === 'collect' && config.collectActionType !== 'touch');
-    $('subCollectSpecialRow').hidden = isChargingCollect;
-    $('subSettingCharge').hidden = !isChargingCollect;
-
-    $('subSettingConnect').hidden = gm !== 'connect';
-    $('subSettingTrack').hidden = gm !== 'track';
-    $('subSettingSelect').hidden = gm !== 'select';
-    $('subSettingTraffic').hidden = gm !== 'traffic';
-    $('subSettingNebula').hidden = gm !== 'nebula';
-    $('subSettingMagnet').hidden = gm !== 'magnet';
-    $('subSettingFalling').hidden = gm !== 'falling';
-
-    $('subSettingMemoryTime').hidden =
-      gm !== 'connect' || config.connectSubMode !== 'memory';
-
-    $('subSettingTargetCount').hidden = config.challengeType !== 'count';
-    $('subSettingChallengeTime').hidden = config.challengeType !== 'timed';
-
-    const countLabel = $('targetCountLabel');
-    if (countLabel) {
-      if (gm === 'connect') {
-        countLabel.textContent = '每回合目標組數（完成整組星座連線才算 1 組）';
-      } else if (gm === 'track') {
-        countLabel.textContent = '每回合目標軌道數（把光球推到終點星門才算 1 條）';
-      } else {
-        countLabel.textContent = '每回合目標次數（完成一個完整任務算 1 次）';
-      }
-    }
-  }
-
-  function setAppState(nextState) {
-    state.appState = nextState;
-    stage.dataset.appState = nextState;
-    stage.dataset.gameState = state.gameState;
-  }
-
-  function setGameState(nextGameState) {
-    state.gameState = nextGameState;
-    stage.dataset.gameState = nextGameState;
-  }
-
-  // ==================== 活動範圍與三種方向邊界計算 ====================
-
-  function clampUserBoxToCameraStage(box) {
-    const minSpanX = 0.16;
-    const minSpanY = 0.14;
-    let minX = Math.max(0, Math.min(1 - minSpanX, box.minX));
-    let maxX = Math.min(1, Math.max(minX + minSpanX, box.maxX));
-    let minY = Math.max(0, Math.min(1 - minSpanY, box.minY));
-    let maxY = Math.min(1, Math.max(minY + minSpanY, box.maxY));
-    return { minX, maxX, minY, maxY };
-  }
-
-  function getDefaultUserRangeBox(mode = state.mode) {
-    if (mode === 'head') {
-      return {
-        minX: 0.27,
-        maxX: 0.73,
-        minY: 0.35,
-        maxY: 0.65
-      };
-    }
-    return {
-      minX: 0.06,
-      maxX: 0.94,
-      minY: 0.12,
-      maxY: 0.86
-    };
-  }
-
-  function getUserActiveRangeBox(mode = state.mode) {
-    const custom = modeRanges[mode];
-    if (custom && custom.isCustom && isValidNormalizedBox(custom.box)) {
-      return clampUserBoxToCameraStage(custom.box);
-    }
-    return getDefaultUserRangeBox(mode);
-  }
-
-  function getStarCenterHardwareSafeBounds(customR = null) {
-    const W = Math.max(200, stage.clientWidth || 360);
-    const H = Math.max(200, stage.clientHeight || 480);
-    const starR = customR || getStarRadiusPx();
-    const padPx = starR + 12;
-
-    const statusBarEl = $('statusBar');
-    const bottomBannerEl = $('messageBanner');
-    const topBarPx = statusBarEl && !statusBarEl.hidden ? statusBarEl.offsetTop + statusBarEl.offsetHeight : 8;
-    const bottomBarPx = bottomBannerEl && !bottomBannerEl.hidden ? Math.max(48, H - bottomBannerEl.offsetTop) : 8;
-
-    const minX = Math.min(0.35, Math.max(0.06, padPx / W));
-    const maxX = Math.max(0.65, Math.min(0.94, 1 - padPx / W));
-    const minY = Math.min(0.38, Math.max(0.08, (topBarPx + padPx * 0.85) / H));
-    const maxY = Math.max(0.62, Math.min(0.92, 1 - (bottomBarPx + padPx * 0.85) / H));
-
-    return { minX, maxX, minY, maxY, W, H, starR, padPx };
-  }
-
-  function getEffectiveStarSpawnBounds(mode = state.mode, customR = null) {
-    const userBox = getUserActiveRangeBox(mode);
-    const hw = getStarCenterHardwareSafeBounds(customR);
-    const rxNorm = (hw.starR * 0.85) / hw.W;
-    const ryNorm = (hw.starR * 0.85) / hw.H;
-
-    const uCx = (userBox.minX + userBox.maxX) * 0.5;
-    const uCy = (userBox.minY + userBox.maxY) * 0.5;
-
-    let minX = Math.min(uCx - 0.04, userBox.minX + rxNorm * 0.5);
-    let maxX = Math.max(uCx + 0.04, userBox.maxX - rxNorm * 0.5);
-    let minY = Math.min(uCy - 0.03, userBox.minY + ryNorm * 0.5);
-    let maxY = Math.max(uCy + 0.03, userBox.maxY - ryNorm * 0.5);
-
-    minX = Math.max(hw.minX, Math.min(hw.maxX - 0.08, minX));
-    maxX = Math.min(hw.maxX, Math.max(minX + 0.08, maxX));
-    minY = Math.max(hw.minY, Math.min(hw.maxY - 0.06, minY));
-    maxY = Math.min(hw.maxY, Math.max(minY + 0.06, maxY));
-
-    return {
-      minX,
-      maxX,
-      minY,
-      maxY,
-      W: hw.W,
-      H: hw.H,
-      starR: hw.starR
-    };
-  }
-
-  function getDirectionalSubBounds(mode = state.mode, customR = null) {
-    const b = getEffectiveStarSpawnBounds(mode, customR);
-    const spanX = Math.max(0.08, b.maxX - b.minX);
-    const spanY = Math.max(0.06, b.maxY - b.minY);
-    const midX = (b.minX + b.maxX) * 0.5;
-    const midY = (b.minY + b.maxY) * 0.5;
-
-    if (config.rangeMode === 'lr') {
-      const halfBandY = mode === 'head' ? Math.min(0.032, spanY * 0.16) : Math.min(0.055, spanY * 0.20);
-      return {
-        ...b,
-        minY: Math.max(b.minY, midY - halfBandY),
-        maxY: Math.min(b.maxY, midY + halfBandY)
-      };
-    }
-
-    if (config.rangeMode === 'ud') {
-      const halfBandX = mode === 'head' ? Math.min(0.04, spanX * 0.18) : Math.min(0.065, spanX * 0.20);
-      return {
-        ...b,
-        minX: Math.max(b.minX, midX - halfBandX),
-        maxX: Math.min(b.maxX, midX + halfBandX)
-      };
-    }
-
-    return b;
-  }
-
-  function ensureCurrentTargetsInsideBounds() {
-    if (!game.targets.length) return;
-    const b = getEffectiveStarSpawnBounds(state.mode);
-    let anyOut = false;
-    for (const t of game.targets) {
-      if (t.x < b.minX - 0.01 || t.x > b.maxX + 0.01 || t.y < b.minY - 0.01 || t.y > b.maxY + 0.01) {
-        anyOut = true;
-        break;
-      }
-    }
-    if (anyOut) {
-      spawnNextTargets(performance.now(), false);
-    }
-  }
-
-  function resizeStage() {
-    const r = stage.getBoundingClientRect();
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = Math.max(1, Math.round(r.width * dpr));
-    canvas.height = Math.max(1, Math.round(r.height * dpr));
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const workScale = Math.min(1, 340 / Math.max(1, r.width), 550 / Math.max(1, r.height));
-    work.width = Math.max(90, Math.round(r.width * workScale));
-    work.height = Math.max(90, Math.round(r.height * workScale));
-
-    const b = getEffectiveStarSpawnBounds(state.mode);
-    game.targets.forEach(t => {
-      t.x = Math.max(b.minX, Math.min(b.maxX, t.x));
-      t.y = Math.max(b.minY, Math.min(b.maxY, t.y));
-    });
-  }
-
-  function normalizeCameraPoint(rawPoint) {
-    if (!rawPoint || !Number.isFinite(rawPoint.x) || !Number.isFinite(rawPoint.y)) return null;
-    const vw = video.videoWidth || 640;
-    const vh = video.videoHeight || 480;
-    const W = Math.max(1, stage.clientWidth);
-    const H = Math.max(1, stage.clientHeight);
-    const s = config.cameraFit === 'cover' ? Math.max(W / vw, H / vh) : (W / vw);
-
-    const px = (1 - rawPoint.x) * vw * s - (vw * s - W) / 2;
-    const py = rawPoint.y * vh * s - (vh * s - H) / 2;
-    const nx = px / W;
-    const ny = py / H;
-
-    if (!Number.isFinite(nx) || !Number.isFinite(ny)) return null;
-    // 放寬邊緣容忍度（-0.08 ~ 1.08），避免手靠近畫面邊緣時被誤判為離開鏡頭
-    if (nx < -0.08 || nx > 1.08 || ny < -0.08 || ny > 1.08) return null;
-
-    return {
-      x: Math.max(0, Math.min(1, nx)),
-      y: Math.max(0, Math.min(1, ny))
-    };
-  }
-
-  function resetModeInitialization() {
-    state.modeReady = false;
-    state.stableMs = 0;
-    state.lastFrameTs = performance.now();
-    trackerOutput.found = false;
-    trackerOutput.colorRadiusPx = 0;
-    game.blackHoleTrappedMs = 0;
-    game.targets.forEach(t => {
-      if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
-        t.dwellMs = 0;
-      }
-    });
-  }
-
-  // 統一更新追蹤輸出介面（將 1 秒穩定確認改為「滑動增減制」，單幀漏抓不再瞬間歸零！）
-  function publishTrackingState(found, normX, normY, ts = performance.now(), colorRadiusPx = 0) {
-    const dt = state.lastFrameTs ? Math.min(90, Math.max(0, ts - state.lastFrameTs)) : 16;
-    state.lastFrameTs = ts;
-
-    trackerOutput.mode = state.mode;
-    trackerOutput.timestamp = ts;
-    trackerOutput.colorRadiusPx = colorRadiusPx;
-
-    if (found && Number.isFinite(normX) && Number.isFinite(normY)) {
-      const clampedX = Math.max(0, Math.min(1, normX));
-      const clampedY = Math.max(0, Math.min(1, normY));
-      const W = Math.max(200, stage.clientWidth || 360);
-      const H = Math.max(200, stage.clientHeight || 480);
-
-      if (game.prevTrackerNorm && dt > 0) {
-        const instVx = ((clampedX - game.prevTrackerNorm.x) * W) / (dt / 1000);
-        const instVy = ((clampedY - game.prevTrackerNorm.y) * H) / (dt / 1000);
-        game.trackerVxPxPerSec = game.trackerVxPxPerSec * 0.45 + instVx * 0.55;
-        game.trackerVyPxPerSec = game.trackerVyPxPerSec * 0.45 + instVy * 0.55;
-      }
-      game.prevTrackerNorm = { x: clampedX, y: clampedY, ts };
-      game.trackerHistory.push({ x: clampedX, y: clampedY, ts });
-      while (game.trackerHistory.length > 16 || (game.trackerHistory.length > 2 && ts - game.trackerHistory[0].ts > 260)) {
-        game.trackerHistory.shift();
-      }
-
-      trackerOutput.found = true;
-      trackerOutput.x = clampedX;
-      trackerOutput.y = clampedY;
-      setAppState('tracking_found');
-
-      if (!state.modeReady && !state.calibratingRange) {
-        state.stableMs = Math.min(MODE_INIT_STABLE_MS, state.stableMs + dt * 1.15);
-        if (state.stableMs >= MODE_INIT_STABLE_MS) {
-          state.modeReady = true;
-          ensureCurrentTargetsInsideBounds();
-          if (config.gamePlayMode === 'select' && game.selectTargetShape) {
-            speakText(`請找，${game.selectTargetShape.label}`);
-          }
-        }
-      }
-    } else {
-      trackerOutput.found = false;
-      // 若尚未完成模式確認，漏抓時只溫和回退 35% 的 dt（而非直接歸零），徹底解決手微抖或眨眼就卡住的問題
-      if (!state.modeReady) {
-        state.stableMs = Math.max(0, state.stableMs - dt * 0.35);
-      }
-      game.targets.forEach(t => {
-        if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
-          t.dwellMs = 0;
-        }
-      });
-      if (
-        state.appState !== 'model_loading' &&
-        state.appState !== 'camera_loading' &&
-        state.appState !== 'error' &&
-        state.appState !== 'camera_idle'
-      ) {
-        setAppState('tracking_search');
-      }
-    }
-  }
-
-  function refreshTrackingBanner(m = state.mode) {
-    if (state.calibratingRange || state.gameState === 'game_complete') return;
-
-    if (m === 'color' && !state.colorTarget) {
-      updateStatusUI(
-        '等待點選物品',
-        'warn',
-        '請點一下畫面中的彩色或黑／灰物品中央取樣，完成後開始遊戲'
-      );
-      return;
-    }
-
-    if (!trackerOutput.found) {
-      updateStatusUI(
-        '正在尋找' + modeName(m),
-        'warn',
-        m === 'color'
-          ? '正在尋找目標物品，請將物品放入畫面內（自動恢復追蹤）'
-          : `正在尋找${modeName(m)}，請將${m === 'hand' ? '手部' : '臉部'}放入鏡頭畫面內`
-      );
-      return;
-    }
-
-    if (!state.modeReady) {
-      const pct = Math.min(99, Math.max(1, Math.round((state.stableMs / MODE_INIT_STABLE_MS) * 100)));
-      updateStatusUI(
-        `追蹤確認中 (${pct}%)`,
-        'info',
-        `追蹤確認中… 請保持${modeName(m)}在畫面內約 1 秒以開始遊戲`
-      );
-      return;
-    }
-
-    // 若正被黑洞吸住鎖定 2 秒，優先顯示黑洞提示
-    if (game.blackHoleTrappedMs > 0) {
-      const trapSec = (game.blackHoleTrappedMs / 1000).toFixed(1);
-      updateStatusUI(
-        `🌀 被黑洞吸住 (${trapSec}s)`,
-        'warn',
-        `🌀 被黑洞重力束吸住了！請稍候 ${trapSec} 秒解除鎖定後繼續`
-      );
-      return;
-    }
-
-    const gm = config.gamePlayMode;
-
-    if (gm === 'connect') {
-      if (game.connectMemoryPhase) {
-        const sec = Math.max(1, Math.ceil(game.connectMemoryRemainMs / 1000));
-        updateStatusUI(
-          `記憶${game.connectConstellationName} (${sec}s)`,
-          'info',
-          `請記住「${game.connectConstellationName}」1 ～ ${game.targets.length} 號位置，${sec} 秒後隱藏！`
-        );
-        return;
-      }
-      const progressText =
-        config.challengeType === 'count'
-          ? `已完成 ${game.completedSets}/${config.targetCount} 組`
-          : `已完成 ${game.completedSets} 組`;
-      updateStatusUI(
-        `${game.connectConstellationName}｜請碰 ${game.connectNextOrder} 號`,
-        'good',
-        `● 請依序碰觸第 ${game.connectNextOrder} / ${game.targets.length} 號星點亮${game.connectConstellationName}（${progressText}）`
-      );
-      return;
-    }
-
-    if (gm === 'track') {
-      const progressText =
-        config.challengeType === 'count'
-          ? `已完成 ${game.completedSets}/${config.targetCount} 條`
-          : `已完成 ${game.completedSets} 條`;
-      if (game.trackDerailedWarn) {
-        updateStatusUI(
-          '⚠️ 偏離軌道脫鉤！',
-          'warn',
-          '⚠️ 跑出軌道外囉！光球已停在原地，請將綠色追蹤環移回光球上重新接住繼續推'
-        );
-      } else if (game.trackOrbEngaged) {
-        updateStatusUI(
-          '🌈 牽引光球滑行中…',
-          'good',
-          `● 太棒了！請保持在軌道走廊內，將光球平穩推向終點星門（${progressText}）`
-        );
-      } else {
-        updateStatusUI(
-          '🌈 請套住起點光球',
-          'info',
-          `● 請先將綠色追蹤環移到「亮青色星河光球」上套住它，再順著軌道推向終點（${progressText}）`
-        );
-      }
-      return;
-    }
-
-    if (gm === 'select' && game.selectTargetShape) {
-      const s = game.selectTargetShape;
-      if (config.selectPromptMode === 'audio_only') {
-        updateStatusUI(
-          '🎧 聽語音找星象',
-          'good',
-          `🎧 請聽語音指令找出正確星象圖案（已完成 ${game.completedTargets} 題）`
-        );
-      } else {
-        updateStatusUI(
-          `請找：${s.icon} ${s.label}`,
-          'good',
-          `🎯 題目：請移動綠色定位環去碰觸【${s.icon} ${s.label}】（已完成 ${game.completedTargets} 題）`
-        );
-      }
-      return;
-    }
-
-    if (gm === 'traffic' && game.targets.length) {
-      if (config.trafficVariant === 'dual') {
-        updateStatusUI(
-          '🔀 雙星號誌｜請找🟢綠燈星',
-          'good',
-          `🟢 請看準目前是「綠燈（行）」的那顆星星移過去收集，避開紅燈星！（已完成 ${game.completedTargets} 次）`
-        );
-        return;
-      }
-      const t = game.targets[0];
-      if (t.trafficLight === 'red') {
-        updateStatusUI(
-          '🔴 紅燈停！請在圈外等待',
-          'warn',
-          '🔴 紅燈警戒中！停在紅圈外等待轉綠燈，可升級為「金色獎勵星」喔！'
-        );
-      } else if (t.trafficLight === 'yellow') {
-        updateStatusUI(
-          '🟡 黃燈預告（準備紅燈）',
-          'info',
-          '🟡 即將轉為紅燈，請留意減速或在圈外準備等待'
-        );
-      } else {
-        updateStatusUI(
-          '🟢 綠燈通行｜可碰觸星星',
-          'good',
-          `🟢 綠燈通行！請移動${modeName(m)}碰觸信號星星（已完成 ${game.completedTargets} 次）`
-        );
-      }
-      return;
-    }
-
-    if (gm === 'nebula') {
-      const remClouds = game.targets.filter(t => t.type === 'nebula_cloud' && !t.cleared).length;
-      updateStatusUI(
-        `☁️ 撥開星雲（剩 ${remClouds} 團）`,
-        'good',
-        `● 大動作揮動${modeName(m)}像擦窗戶一樣把紫色星雲撥開，喚醒底下的大星星！`
-      );
-      return;
-    }
-
-    if (gm === 'magnet') {
-      const unattached = game.targets.filter(t => t.type === 'magnet_star' && !t.delivered).length;
-      const attached = game.targets.filter(t => t.type === 'magnet_star' && t.attached && !t.delivered).length;
-      updateStatusUI(
-        `🧲 星際引力（已吸 ${attached}/${unattached} 顆）`,
-        'good',
-        attached > 0
-          ? '● 已吸住小星星！請帶著它們一起移進畫面上的「🌀 藍綠星門」放進去得分！'
-          : '● 將綠色磁力環靠近散落的小星星吸住，再一起帶進「🌀 藍綠星門」！'
-      );
-      return;
-    }
-
-    if (gm === 'falling') {
-      updateStatusUI(
-        '🌠 托起墜落星',
-        'good',
-        `● 將綠色追蹤環移到緩緩飄落的流星下方，往上「托／頂」一下讓它彈回夜空！（已完成 ${game.completedTargets} 次）`
-      );
-      return;
-    }
-
-    if (gm === 'charge' || (gm === 'collect' && config.collectActionType !== 'touch')) {
-      updateStatusUI(
-        '已準備好｜星星充能',
-        'good',
-        `● 將綠色定位環停留在能量星內直到圓環集滿（已完成 ${game.completedTargets} 次）`
-      );
-      return;
-    }
-
-    updateStatusUI(
-      '已準備好｜正在追蹤' + modeName(m),
-      'good',
-      `● 移動${modeName(m)}碰觸星星（已完成 ${game.completedTargets} 次）`
-    );
-  }
-
-  // ==================== V3 八大星空模式生成引擎 ====================
-
-  function drawNextCollectStarType() {
-    if (config.gamePlayMode === 'charge' || config.collectActionType !== 'touch') {
-      if (config.collectActionType === 'charge_static' || (config.gamePlayMode === 'charge' && config.chargeTypeMode === 'static')) {
-        return 'charge_static';
-      }
-      if (config.collectActionType === 'charge_moving' || (config.gamePlayMode === 'charge' && config.chargeTypeMode === 'moving')) {
-        return 'charge_moving';
-      }
-      return game.completedTargets % 2 === 0 ? 'charge_static' : 'charge_moving';
-    }
-
-    if (config.specialFreq === 'off') return 'normal';
-    if (!game.shuffleBag.length) {
-      const bag =
-        config.specialFreq === 'high'
-          ? ['normal', 'timed', 'timed', 'moving', 'moving']
-          : ['normal', 'normal', 'normal', 'timed', 'moving'];
-      for (let i = bag.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [bag[i], bag[j]] = [bag[j], bag[i]];
-      }
-      game.shuffleBag = bag;
-    }
-    return game.shuffleBag.pop();
-  }
-
-  function pickSingleStarPosition(b, avoidX, avoidY) {
-    const midX = (b.minX + b.maxX) * 0.5;
-    const midY = (b.minY + b.maxY) * 0.5;
-    const spanX = Math.max(0.08, b.maxX - b.minX);
-    const spanY = Math.max(0.06, b.maxY - b.minY);
-    const minDistNorm = Math.min(
-      Math.max(spanX, spanY) * 0.45,
-      Math.max(0.11, (b.starR * 1.85) / Math.min(b.W, b.H))
-    );
-
-    let cx = midX;
-    let cy = midY;
-
-    if (config.rangeMode === 'lr') {
-      const side = game.lrNextSide;
-      game.lrNextSide = side === 'left' ? 'right' : 'left';
-      const leftZone = b.minX + spanX * (0.06 + Math.random() * 0.16);
-      const rightZone = b.maxX - spanX * (0.06 + Math.random() * 0.16);
-      cx = side === 'left' ? leftZone : rightZone;
-      const yJitter = state.mode === 'head' ? Math.min(0.025, spanY * 0.12) : Math.min(0.05, spanY * 0.14);
-      cy = midY + (Math.random() - 0.5) * yJitter;
-    } else if (config.rangeMode === 'ud') {
-      const side = game.udNextSide;
-      game.udNextSide = side === 'top' ? 'bottom' : 'top';
-      const topZone = b.minY + spanY * (0.06 + Math.random() * 0.16);
-      const bottomZone = b.maxY - spanY * (0.06 + Math.random() * 0.16);
-      cy = side === 'top' ? topZone : bottomZone;
-      const xJitter = state.mode === 'head' ? Math.min(0.03, spanX * 0.12) : Math.min(0.055, spanX * 0.14);
-      cx = midX + (Math.random() - 0.5) * xJitter;
-    } else {
-      // 自由移動時，若開啟「跨中線引導」，優先讓目標在左右兩側交替出現，強化跨中線伸展
-      if (config.midlineGuideOn && Math.random() < 0.72) {
-        const side = game.lrNextSide;
-        game.lrNextSide = side === 'left' ? 'right' : 'left';
-        cx =
-          side === 'left'
-            ? b.minX + spanX * (0.06 + Math.random() * 0.28)
-            : b.maxX - spanX * (0.06 + Math.random() * 0.28);
-        cy = b.minY + Math.random() * spanY;
-      } else {
-        for (let attempt = 0; attempt < 14; attempt++) {
-          const rx = b.minX + Math.random() * spanX;
-          const ry = b.minY + Math.random() * spanY;
-          cx = rx;
-          cy = ry;
-          if (avoidX === null || Math.hypot(rx - avoidX, ry - avoidY) >= minDistNorm) {
-            break;
-          }
-        }
-      }
-    }
-
-    return {
-      x: Math.max(b.minX, Math.min(b.maxX, cx)),
-      y: Math.max(b.minY, Math.min(b.maxY, cy))
-    };
-  }
-
-  function createMovingVelocity(type) {
-    const moveBounds = getDirectionalSubBounds(state.mode);
-    const spanX = Math.max(0.08, moveBounds.maxX - moveBounds.minX);
-    const spanY = Math.max(0.06, moveBounds.maxY - moveBounds.minY);
-    const speedScale = type === 'charge_moving' ? 0.085 : 0.115;
-    const dirX = Math.random() < 0.5 ? 1 : -1;
-    const dirY = Math.random() < 0.5 ? 1 : -1;
-
-    if (config.rangeMode === 'lr') {
-      return { vx: spanX * speedScale * dirX, vy: 0 };
-    }
-    if (config.rangeMode === 'ud') {
-      return { vx: 0, vy: spanY * speedScale * dirY };
-    }
-    return {
-      vx: spanX * speedScale * dirX,
-      vy: spanY * speedScale * 0.72 * dirY
-    };
-  }
-
-  // 生成或更新「🌀 太空黑洞」障礙物位置（具備星河軌道嚴格淨空保護 + 星星收集路徑側翼攔截）
-  function spawnOrUpdateBlackHole(b, extraAvoidPoints = []) {
-    if (!config.blackHoleOn) {
-      game.blackHole = null;
-      return;
-    }
-    const gm = config.gamePlayMode;
-    if (gm !== 'collect' && gm !== 'track' && gm !== 'magnet') {
-      game.blackHole = null;
-      return;
-    }
-
-    const W = Math.max(200, b.W || stage.clientWidth || 360);
-    const H = Math.max(200, b.H || stage.clientHeight || 480);
-    const starR = b.starR || getStarRadiusPx();
-    const midX = (b.minX + b.maxX) * 0.5;
-    const midY = (b.minY + b.maxY) * 0.5;
-    const spanX = Math.max(0.10, b.maxX - b.minX);
-    const spanY = Math.max(0.10, b.maxY - b.minY);
-
-    let bx = midX;
-    let by = midY;
-
-    if (gm === 'track' && game.trackCurvePoints.length >= 10) {
-      // 🌈 星河軌道：嚴格軌道淨空保護（Clearance Guard），確保黑洞絕不壓在軌道正中間！
-      const curve = game.trackCurvePoints;
-      const corridorHalfPx = Math.max(24, starR * 0.78);
-      const bhRadiusPx = Math.max(26, starR * 0.78);
-      const requiredClearancePx = corridorHalfPx + bhRadiusPx + 24;
-
-      const startPt = curve[0];
-      const endPt = curve[curve.length - 1];
-      const peakPt = curve[Math.floor(curve.length * 0.5)];
-      const chordMidX = (startPt.x + endPt.x) * 0.5;
-      const chordMidY = (startPt.y + endPt.y) * 0.5;
-
-      // 產生候選點：優先放在弧線內側切西瓜處，若為直線或波浪則放在軌道中段上下／左右側翼
-      const candidates = [];
-      const dxChord = endPt.x - startPt.x;
-      const dyChord = endPt.y - startPt.y;
-      const lenChord = Math.max(0.01, Math.hypot(dxChord, dyChord));
-      const nx = -dyChord / lenChord;
-      const ny = dxChord / lenChord;
-
-      if (config.trackShape === 'arc') {
-        for (const pushRatio of [0.35, 0.55, 0.75, 0.95]) {
-          candidates.push({
-            x: chordMidX + (chordMidX - peakPt.x) * pushRatio,
-            y: chordMidY + (chordMidY - peakPt.y) * pushRatio
-          });
-        }
-      }
-      for (const sideSign of [1, -1]) {
-        for (const offsetPx of [requiredClearancePx + 14, requiredClearancePx + 34, requiredClearancePx + 58]) {
-          for (const tFrac of [0.5, 0.36, 0.64]) {
-            const refPt = curve[Math.floor((curve.length - 1) * tFrac)];
-            candidates.push({
-              x: refPt.x + (nx * sideSign * offsetPx) / W,
-              y: refPt.y + (ny * sideSign * offsetPx) / H
-            });
-          }
-        }
-      }
-      for (let i = 0; i < 24; i++) {
-        candidates.push({
-          x: b.minX + 0.05 + Math.random() * Math.max(0.04, spanX - 0.10),
-          y: b.minY + 0.05 + Math.random() * Math.max(0.04, spanY - 0.10)
-        });
-      }
-
-      let bestCandidate = null;
-      let bestMinDistPx = -1;
-
-      for (const cand of candidates) {
-        const cx = Math.max(b.minX + 0.04, Math.min(b.maxX - 0.04, cand.x));
-        const cy = Math.max(b.minY + 0.04, Math.min(b.maxY - 0.04, cand.y));
-        let minCurveDistPx = Infinity;
-        for (let k = 0; k < curve.length; k++) {
-          const dPx = Math.hypot((cx - curve[k].x) * W, (cy - curve[k].y) * H);
-          if (dPx < minCurveDistPx) minCurveDistPx = dPx;
-        }
-        // 起點與終點額外加大安全距離
-        const startDistPx = Math.hypot((cx - startPt.x) * W, (cy - startPt.y) * H);
-        const endDistPx = Math.hypot((cx - endPt.x) * W, (cy - endPt.y) * H);
-        const effectiveClearPx = Math.min(minCurveDistPx, startDistPx - 16, endDistPx - 16);
-
-        if (effectiveClearPx >= requiredClearancePx) {
-          bestCandidate = { x: cx, y: cy };
-          bestMinDistPx = effectiveClearPx;
-          break;
-        }
-        if (effectiveClearPx > bestMinDistPx) {
-          bestMinDistPx = effectiveClearPx;
-          bestCandidate = { x: cx, y: cy };
-        }
-      }
-
-      if (bestCandidate && bestMinDistPx >= corridorHalfPx + 14) {
-        bx = bestCandidate.x;
-        by = bestCandidate.y;
-      } else {
-        // 若活動框太窄無法安全放置黑洞而不擋路，則暫不放置以免卡關
-        game.blackHole = null;
-        return;
-      }
-    } else if (gm === 'collect' && extraAvoidPoints.length >= 1) {
-      // ⭐ 星星收集：將黑洞放在「上一顆位置／目前游標」與「新目標星」連線的中段側翼，引導弧形繞障！
-      const targetPt = extraAvoidPoints[0];
-      const originPt = trackerOutput.found
-        ? { x: trackerOutput.x, y: trackerOutput.y }
-        : game.prevHitPoint || { x: midX, y: midY };
-
-      const segMidX = (originPt.x + targetPt.x) * 0.5;
-      const segMidY = (originPt.y + targetPt.y) * 0.5;
-      const dxPx = (targetPt.x - originPt.x) * W;
-      const dyPx = (targetPt.y - originPt.y) * H;
-      const segLenPx = Math.hypot(dxPx, dyPx);
-      const minSafePx = Math.max(68, starR * 1.95);
-
-      if (segLenPx >= minSafePx * 1.45) {
-        const perpX = -dyPx / segLenPx;
-        const perpY = dxPx / segLenPx;
-        const flankSign = (game.completedTargets % 2 === 0 ? 1 : -1);
-        const flankOffsetPx = Math.min(segLenPx * 0.32, starR * 1.35);
-        bx = segMidX + (perpX * flankSign * flankOffsetPx) / W;
-        by = segMidY + (perpY * flankSign * flankOffsetPx) / H;
-      } else {
-        for (let attempt = 0; attempt < 20; attempt++) {
-          const rx = b.minX + spanX * (0.18 + Math.random() * 0.64);
-          const ry = b.minY + spanY * (0.18 + Math.random() * 0.64);
-          bx = rx;
-          by = ry;
-          const distTargetPx = Math.hypot((rx - targetPt.x) * W, (ry - targetPt.y) * H);
-          const distOriginPx = Math.hypot((rx - originPt.x) * W, (ry - originPt.y) * H);
-          if (distTargetPx >= minSafePx && distOriginPx >= minSafePx * 0.88) break;
-        }
-      }
-    } else {
-      // 🧲 星際引力或其他模式：避開星門與小星星
-      const minSafePx = Math.max(66, starR * 1.85);
-      for (let attempt = 0; attempt < 20; attempt++) {
-        const rx = b.minX + spanX * (0.22 + Math.random() * 0.56);
-        const ry = b.minY + spanY * (0.22 + Math.random() * 0.56);
-        bx = rx;
-        by = ry;
-        const farEnough = extraAvoidPoints.every(
-          pt => Math.hypot((rx - pt.x) * W, (ry - pt.y) * H) >= minSafePx
-        );
-        if (farEnough) break;
-      }
-    }
-
-    game.blackHole = {
-      x: Math.max(b.minX + 0.04, Math.min(b.maxX - 0.04, bx)),
-      y: Math.max(b.minY + 0.04, Math.min(b.maxY - 0.04, by)),
-      vx: gm === 'track' ? 0 : spanX * 0.042 * (Math.random() < 0.5 ? 1 : -1),
-      vy: gm === 'track' ? 0 : spanY * 0.042 * (Math.random() < 0.5 ? 1 : -1),
-      cooldownMs: 0
-    };
-  }
-
-  // 動態產生「不重疊、不打結」的隨機星際連線路徑（泊松盤最小間距取樣 + 2-opt 解交叉排序）
-  function generateRandomNonOverlappingRoute(desiredCount, b, W, H, starR) {
-    const spanX = Math.max(0.08, b.maxX - b.minX);
-    const spanY = Math.max(0.08, b.maxY - b.minY);
-    const midX = (b.minX + b.maxX) * 0.5;
-    const midY = (b.minY + b.maxY) * 0.5;
-    const minDistPx = Math.max(54, starR * 2.38);
-
-    const pts = [];
-    for (let i = 0; i < desiredCount; i++) {
-      let bestPt = null;
-      let bestClearance = -1;
-
-      for (let attempt = 0; attempt < 45; attempt++) {
-        let rx = b.minX + spanX * (0.06 + Math.random() * 0.88);
-        let ry = b.minY + spanY * (0.06 + Math.random() * 0.88);
-
-        if (config.rangeMode === 'lr') {
-          const band = Math.min(0.14, spanY * 0.42);
-          ry = Math.max(b.minY, Math.min(b.maxY, midY + (Math.random() - 0.5) * 2 * band));
-        } else if (config.rangeMode === 'ud') {
-          const band = Math.min(0.16, spanX * 0.42);
-          rx = Math.max(b.minX, Math.min(b.maxX, midX + (Math.random() - 0.5) * 2 * band));
-        } else if (config.midlineGuideOn && i > 0) {
-          // 鼓勵左右交替跨中線分布
-          const preferRight = i % 2 === 1;
-          rx = preferRight
-            ? b.minX + spanX * (0.48 + Math.random() * 0.46)
-            : b.minX + spanX * (0.06 + Math.random() * 0.46);
-        }
-
-        let minDistToExisting = Infinity;
-        for (const p of pts) {
-          const d = Math.hypot((rx - p.x) * W, (ry - p.y) * H);
-          if (d < minDistToExisting) minDistToExisting = d;
-        }
-
-        if (minDistToExisting >= minDistPx) {
-          bestPt = { x: rx, y: ry };
-          break;
-        }
-        if (minDistToExisting > bestClearance) {
-          bestClearance = minDistToExisting;
-          bestPt = { x: rx, y: ry };
-        }
-      }
-      pts.push(bestPt);
-    }
-
-    // 若非記憶跨中線交錯，使用 2-opt 消除折線嚴重自交，讓星路自然順暢且每局走向都不同
-    if (pts.length >= 4 && !config.midlineGuideOn) {
-      const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
-      const segmentsIntersect = (A, B, C, D) => ccw(A, C, D) !== ccw(B, C, D) && ccw(A, B, C) !== ccw(A, B, D);
-      for (let pass = 0; pass < 6; pass++) {
-        let improved = false;
-        for (let i = 0; i < pts.length - 3; i++) {
-          for (let j = i + 2; j < pts.length - 1; j++) {
-            if (segmentsIntersect(pts[i], pts[i + 1], pts[j], pts[j + 1])) {
-              const reversed = pts.slice(i + 1, j + 1).reverse();
-              pts.splice(i + 1, j - i, ...reversed);
-              improved = true;
-            }
-          }
-        }
-        if (!improved) break;
-      }
-    }
-
-    return pts;
-  }
-
-  // 為「✨ 星座連線」產生 2～7 顆百變星路（多組真實星座輪播＋鏡像旋轉＋隨機不重疊星路）
-  function generateConstellationPositions() {
-    const baseR = getBaseStarRadiusPx();
-    const W = Math.max(200, stage.clientWidth || 360);
-    const H = Math.max(200, stage.clientHeight || 480);
-
-    // 記憶順序版最多限制 5 顆，避免記憶負荷過重
-    let desiredCount = config.connectStarCount;
-    if (config.connectSubMode === 'memory' && desiredCount > 5) {
-      desiredCount = 5;
-    }
-
-    // 5～7 顆時自動縮小星星半徑，確保星座圖案優雅清晰不擁擠
-    let radiusScale = desiredCount >= 6 ? 0.66 : desiredCount === 5 ? 0.74 : desiredCount === 4 ? 0.84 : 0.94;
-    const b = getEffectiveStarSpawnBounds(state.mode, Math.round(baseR * radiusScale));
-    const spanPxX = Math.max(40, (b.maxX - b.minX) * W);
-    const spanPxY = Math.max(40, (b.maxY - b.minY) * H);
-
-    if (Math.min(spanPxX, spanPxY) < 180) {
-      radiusScale = Math.min(radiusScale, 0.65);
-      if (desiredCount > 4) desiredCount = 4;
-    }
-    game.connectRadiusScale = radiusScale;
-
-    const effectiveStarR = Math.round(baseR * radiusScale);
-    const spanX = Math.max(0.08, b.maxX - b.minX);
-    const spanY = Math.max(0.08, b.maxY - b.minY);
-    const midX = (b.minX + b.maxX) * 0.5;
-    const midY = (b.minY + b.maxY) * 0.5;
-
-    const variantStep = game.connectVariantCounter++;
-    const useRandomRoute =
-      config.connectRouteMode === 'random' ||
-      (config.connectRouteMode === 'varied' && variantStep % 2 === 1);
-
-    if (useRandomRoute) {
-      const randomTitles = ['探索星路', '銀河漫遊', '未知星域', '躍遷星鏈', '極光星徑'];
-      game.connectConstellationName = randomTitles[variantStep % randomTitles.length];
-      const positions = generateRandomNonOverlappingRoute(desiredCount, b, W, H, effectiveStarR);
-      return { positions, bounds: b };
-    }
-
-    const patternList = CONSTELLATION_PATTERNS[desiredCount] || CONSTELLATION_PATTERNS[3];
-    // 確保不連續出現同一個星座名稱
-    let candidates = patternList.filter(p => p.name !== game.lastConstellationName);
-    if (!candidates.length) candidates = patternList;
-    const pattern = candidates[variantStep % candidates.length];
-    game.connectConstellationName = pattern.name;
-    game.lastConstellationName = pattern.name;
-
-    // 結合水平翻轉、垂直翻轉與微幅旋轉／擾動，讓同一個星座每次出現的角度與走向也有新鮮感
-    const flipX = variantStep % 2 === 1;
-    const flipY = Math.floor(variantStep / 2) % 2 === 1;
-    const rotAngle = ((variantStep % 5) - 2) * 0.14;
-    const cosA = Math.cos(rotAngle);
-    const sinA = Math.sin(rotAngle);
-
-    const positions = pattern.pts.map((pt, idx) => {
-      let ux = flipX ? 1 - pt.x : pt.x;
-      let uy = flipY ? 1 - pt.y : pt.y;
-      // 繞中心微幅旋轉 + 輕微隨機位移
-      const dx = ux - 0.5;
-      const dy = uy - 0.5;
-      ux = Math.max(0.05, Math.min(0.95, 0.5 + dx * cosA - dy * sinA + (Math.random() - 0.5) * 0.05));
-      uy = Math.max(0.05, Math.min(0.95, 0.5 + dx * sinA + dy * cosA + (Math.random() - 0.5) * 0.05));
-
-      let px = b.minX + spanX * ux;
-      let py = b.minY + spanY * uy;
-
-      if (config.rangeMode === 'lr') {
-        const t = desiredCount === 1 ? 0.5 : idx / (desiredCount - 1);
-        px = b.minX + spanX * (0.06 + (flipX ? 1 - t : t) * 0.88);
-        py = midY + (uy - 0.5) * Math.min(0.14, spanY * 0.40);
-      } else if (config.rangeMode === 'ud') {
-        const t = desiredCount === 1 ? 0.5 : idx / (desiredCount - 1);
-        py = b.minY + spanY * (0.06 + (flipY ? 1 - t : t) * 0.88);
-        px = midX + (ux - 0.5) * Math.min(0.16, spanX * 0.40);
-      }
-
-      return {
-        x: Math.max(b.minX, Math.min(b.maxX, px)),
-        y: Math.max(b.minY, Math.min(b.maxY, py))
-      };
-    });
-
-    return { positions, bounds: b };
-  }
-
-  // 為「🌈 星河軌道」建立平滑軌道曲線（取消編號圈，改為從起點牽引單顆星河光球滑向終點星門）
-  function generateTrackCurve() {
-    const baseR = getBaseStarRadiusPx();
-    const radiusScale = 0.88;
-    game.connectRadiusScale = radiusScale;
-    const b = getEffectiveStarSpawnBounds(state.mode, Math.round(baseR * radiusScale));
-    const spanX = Math.max(0.08, b.maxX - b.minX);
-    const spanY = Math.max(0.08, b.maxY - b.minY);
-    const midX = (b.minX + b.maxX) * 0.5;
-    const midY = (b.minY + b.maxY) * 0.5;
-
-    const reverse = game.trackReverseDir;
-    game.trackReverseDir = !reverse;
-    const ampScale = state.mode === 'head' ? 0.52 : 0.84;
-
-    const samplePointAt = tNorm => {
-      const u = reverse ? 1 - tNorm : tNorm;
-      let px = midX;
-      let py = midY;
-
-      if (config.rangeMode === 'ud') {
-        py = b.minY + spanY * (0.06 + u * 0.88);
-        if (config.trackShape === 'arc') {
-          px = midX + Math.sin(tNorm * Math.PI) * (spanX * 0.38 * ampScale);
-        } else if (config.trackShape === 'wave') {
-          px = midX + Math.sin(tNorm * Math.PI * 2) * (spanX * 0.34 * ampScale);
-        } else {
-          px = midX;
-        }
-      } else {
-        px = b.minX + spanX * (0.06 + u * 0.88);
-        const effSpanY =
-          config.rangeMode === 'lr'
-            ? Math.min(spanY * 0.48, state.mode === 'head' ? 0.14 : 0.25)
-            : spanY * 0.78 * ampScale;
-
-        if (config.trackShape === 'arc') {
-          py = midY - Math.sin(tNorm * Math.PI) * (effSpanY * 0.48);
-        } else if (config.trackShape === 'wave') {
-          py = midY - Math.sin(tNorm * Math.PI * 2) * (effSpanY * 0.45);
-        } else {
-          py =
-            config.rangeMode === 'free'
-              ? b.minY + spanY * (0.18 + u * 0.64)
-              : midY;
-        }
-      }
-
-      return {
-        x: Math.max(b.minX, Math.min(b.maxX, px)),
-        y: Math.max(b.minY, Math.min(b.maxY, py))
-      };
-    };
-
-    const curvePts = [];
-    const curveSteps = 40;
-    for (let s = 0; s <= curveSteps; s++) {
-      curvePts.push(samplePointAt(s / curveSteps));
-    }
-    game.trackCurvePoints = curvePts;
-    game.trackOrbProgressIdx = 0;
-    game.trackOrbEngaged = false;
-    game.trackDerailedWarn = false;
-
-    return { curvePts, bounds: b };
-  }
-
-  // 產生下一組目標（涵蓋 8 大星空復健模式）
-  function spawnNextTargets(now = performance.now(), announceSelectPrompt = false) {
-    if (state.gameState === 'game_complete') return;
-    const gm = config.gamePlayMode;
-
-    // 模式 2：✨ 星座連線（2～7 顆真實星座模板）
-    if (gm === 'connect') {
-      const { positions, bounds: b } = generateConstellationPositions();
-      const hitRadiusPx = getStarRadiusPx() * 1.08;
-
-      game.targets = positions.map((pos, idx) => {
-        const distToTracker = trackerOutput.found
-          ? Math.hypot((pos.x - trackerOutput.x) * b.W, (pos.y - trackerOutput.y) * b.H)
-          : Infinity;
-        return {
-          id: Date.now() + idx + Math.random(),
-          type: 'connect',
-          order: idx + 1,
-          completed: false,
-          x: pos.x,
-          y: pos.y,
-          vx: 0,
-          vy: 0,
-          trail: [],
-          dwellMs: 0,
-          wrongDwellMs: 0,
-          requiredMs: getDwellRequiredMs(),
-          spawnTime: now,
-          collectedLock: false,
-          mustLeaveFirst: idx === 0 && distToTracker <= hitRadiusPx
-        };
-      });
-
-      game.connectNextOrder = 1;
-      game.connectIdleMs = 0;
-      game.connectAutoHintRemainMs = 0;
-      game.blackHole = null;
-
-      if (config.connectSubMode === 'memory' && config.memoryViewSec > 0) {
-        game.connectMemoryPhase = true;
-        game.connectMemoryRemainMs = config.memoryViewSec * 1000;
-      } else {
-        game.connectMemoryPhase = false;
-        game.connectMemoryRemainMs = 0;
-      }
-
-      if (state.gameState === 'game_ready') setGameState('game_playing');
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 模式 3：🌈 星河軌道（牽引光球沿軌道滑向終點星門，跑出線外會脫鉤停住！）
-    if (gm === 'track') {
-      const { curvePts, bounds: b } = generateTrackCurve();
-      const startPt = curvePts[0];
-      game.targets = [
-        {
-          id: Date.now() + Math.random(),
-          type: 'track_orb',
-          x: startPt.x,
-          y: startPt.y,
-          vx: 0,
-          vy: 0,
-          trail: [],
-          dwellMs: 0,
-          requiredMs: 0,
-          spawnTime: now,
-          collectedLock: false
-        }
-      ];
-      spawnOrUpdateBlackHole(b, [startPt, curvePts[curvePts.length - 1]]);
-      if (state.gameState === 'game_ready') setGameState('game_playing');
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 模式 4：🎯 星象選擇（支援「固定對稱位置」與「進階隨機散落防重疊」）
-    if (gm === 'select') {
-      game.connectRadiusScale = config.selectOptionCount >= 3 ? 0.86 : 0.94;
-      const b = getEffectiveStarSpawnBounds(state.mode);
-      const spanX = Math.max(0.08, b.maxX - b.minX);
-      const spanY = Math.max(0.08, b.maxY - b.minY);
-      const midX = (b.minX + b.maxX) * 0.5;
-      const midY = (b.minY + b.maxY) * 0.5;
-      const optCount = config.selectOptionCount;
-      const positions = [];
-
-      if (config.selectLayoutMode === 'fixed') {
-        for (let i = 0; i < optCount; i++) {
-          const t = optCount === 1 ? 0.5 : i / (optCount - 1);
-          if (config.rangeMode === 'ud') {
-            positions.push({
-              x: midX + (i % 2 === 0 ? -1 : 1) * Math.min(0.04, spanX * 0.16),
-              y: b.minY + spanY * (0.12 + t * 0.76)
-            });
-          } else {
-            positions.push({
-              x: b.minX + spanX * (0.12 + t * 0.76),
-              y: midY + (optCount === 3 && i === 1 ? -Math.min(0.12, spanY * 0.32) : 0)
-            });
-          }
-        }
-      } else {
-        // 進階：泊松盤最小距離隨機散落演算法（確保任兩顆選項絕不黏在一起或重疊！）
-        const starR = getStarRadiusPx();
-        const minPairDistPx = Math.max(96, starR * 2.75);
-        const trackerAvoidPx = Math.max(64, starR * 1.45);
-
-        for (let i = 0; i < optCount; i++) {
-          let bestPt = null;
-          let bestMinDist = -1;
-
-          for (let attempt = 0; attempt < 65; attempt++) {
-            let rx = b.minX + spanX * (0.06 + Math.random() * 0.88);
-            let ry = b.minY + spanY * (0.08 + Math.random() * 0.84);
-
-            if (config.rangeMode === 'lr') {
-              const bandY = Math.min(0.18, spanY * 0.52);
-              ry = Math.max(b.minY, Math.min(b.maxY, midY + (Math.random() - 0.5) * 2 * bandY));
-            } else if (config.rangeMode === 'ud') {
-              const bandX = Math.min(0.20, spanX * 0.52);
-              rx = Math.max(b.minX, Math.min(b.maxX, midX + (Math.random() - 0.5) * 2 * bandX));
-            }
-
-            let minPairPx = Infinity;
-            for (const existing of positions) {
-              const d = Math.hypot((rx - existing.x) * b.W, (ry - existing.y) * b.H);
-              if (d < minPairPx) minPairPx = d;
-            }
-
-            const distTrackerPx = trackerOutput.found
-              ? Math.hypot((rx - trackerOutput.x) * b.W, (ry - trackerOutput.y) * b.H)
-              : Infinity;
-
-            if (minPairPx >= minPairDistPx && distTrackerPx >= trackerAvoidPx) {
-              bestPt = { x: rx, y: ry };
-              break;
-            }
-            const scoreDist = Math.min(minPairPx, distTrackerPx * 1.2);
-            if (scoreDist > bestMinDist) {
-              bestMinDist = scoreDist;
-              bestPt = { x: rx, y: ry };
-            }
-          }
-          positions.push(bestPt);
-        }
-      }
-
-      const pool = [...SELECT_SHAPES];
-      for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
-      }
-      if (pool[0].id === game.selectLastShapeId && pool.length > 1) {
-        [pool[0], pool[1]] = [pool[1], pool[0]];
-      }
-      const chosenShapes = pool.slice(0, positions.length);
-      const correctShape = chosenShapes[0];
-      game.selectTargetShape = correctShape;
-      game.selectLastShapeId = correctShape.id;
-      game.selectHadWrong = false;
-      game.blackHole = null;
-
-      for (let i = chosenShapes.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [chosenShapes[i], chosenShapes[j]] = [chosenShapes[j], chosenShapes[i]];
-      }
-
-      const hitRadiusPx = getStarRadiusPx() * 1.08;
-      game.targets = positions.map((pos, idx) => {
-        const shapeObj = chosenShapes[idx];
-        const isCorrect = shapeObj.id === correctShape.id;
-        const distToTracker = trackerOutput.found
-          ? Math.hypot((pos.x - trackerOutput.x) * b.W, (pos.y - trackerOutput.y) * b.H)
-          : Infinity;
-        return {
-          id: Date.now() + idx + Math.random(),
-          type: 'select',
-          shape: shapeObj,
-          isCorrect,
-          eliminated: false,
-          shakeUntil: 0,
-          x: pos.x,
-          y: pos.y,
-          vx: 0,
-          vy: 0,
-          trail: [],
-          dwellMs: 0,
-          wrongDwellMs: 0,
-          requiredMs: getDwellRequiredMs(),
-          spawnTime: now,
-          collectedLock: false,
-          mustLeaveFirst: distToTracker <= hitRadiusPx
-        };
-      });
-
-      if (state.gameState === 'game_ready') setGameState('game_playing');
-      if (announceSelectPrompt && state.modeReady) {
-        speakText(`請找，${correctShape.label}`);
-      }
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 模式 5：🚦 脈衝紅綠燈（支援：單星號誌、雙星交替找綠燈、巡航移動紅綠燈 + 紅燈乖乖等待升金色獎勵星）
-    if (gm === 'traffic') {
-      game.connectRadiusScale = config.trafficVariant === 'dual' ? 0.90 : 1.0;
-      const b = getEffectiveStarSpawnBounds(state.mode);
-      const avoidX = trackerOutput.found ? trackerOutput.x : (game.prevHitPoint ? game.prevHitPoint.x : null);
-      const avoidY = trackerOutput.found ? trackerOutput.y : (game.prevHitPoint ? game.prevHitPoint.y : null);
-      const hitRadiusPx = b.starR * 1.08;
-      const greenMs = config.trafficPace === 'relaxed' ? 3800 : 2800;
-      game.blackHole = null;
-
-      if (config.trafficVariant === 'dual') {
-        // 雙星交替：場上左右（或上下）各 1 顆，一顆綠燈、一顆紅燈，定時互換
-        const spanX = Math.max(0.10, b.maxX - b.minX);
-        const spanY = Math.max(0.10, b.maxY - b.minY);
-        const midX = (b.minX + b.maxX) * 0.5;
-        const midY = (b.minY + b.maxY) * 0.5;
-        const p1 =
-          config.rangeMode === 'ud'
-            ? { x: midX, y: b.minY + spanY * 0.16 }
-            : { x: b.minX + spanX * 0.16, y: midY };
-        const p2 =
-          config.rangeMode === 'ud'
-            ? { x: midX, y: b.maxY - spanY * 0.16 }
-            : { x: b.maxX - spanX * 0.16, y: midY };
-        const firstIsGreen = Math.random() < 0.5;
-
-        game.targets = [p1, p2].map((pos, idx) => {
-          const isGreen = idx === 0 ? firstIsGreen : !firstIsGreen;
-          const distToTracker = trackerOutput.found
-            ? Math.hypot((pos.x - trackerOutput.x) * b.W, (pos.y - trackerOutput.y) * b.H)
-            : Infinity;
-          return {
-            id: Date.now() + idx + Math.random(),
-            type: 'traffic',
-            trafficLight: isGreen ? 'green' : 'red',
-            phaseRemainMs: greenMs,
-            greenDurationMs: greenMs,
-            yellowDurationMs: 900,
-            redDurationMs: greenMs,
-            redTouchWarnMs: 0,
-            hadRedPenalty: false,
-            waitedRedCleanly: false,
-            goldenBonus: false,
-            x: pos.x,
-            y: pos.y,
-            vx: 0,
-            vy: 0,
-            trail: [],
-            dwellMs: 0,
-            requiredMs: getDwellRequiredMs(),
-            spawnTime: now,
-            collectedLock: false,
-            mustLeaveFirst: distToTracker <= hitRadiusPx * 1.15
-          };
-        });
-      } else {
-        const pos = pickSingleStarPosition(b, avoidX, avoidY);
-        const distToTracker = trackerOutput.found
-          ? Math.hypot((pos.x - trackerOutput.x) * b.W, (pos.y - trackerOutput.y) * b.H)
-          : Infinity;
-        const startAsRed = game.completedTargets % 2 === 1;
-        const vel = config.trafficVariant === 'cruise' ? createMovingVelocity('moving') : { vx: 0, vy: 0 };
-
-        game.targets = [
-          {
-            id: Date.now() + Math.random(),
-            type: 'traffic',
-            trafficLight: startAsRed ? 'red' : 'green',
-            phaseRemainMs: startAsRed ? 1700 : greenMs,
-            greenDurationMs: greenMs,
-            yellowDurationMs: 950,
-            redDurationMs: 2000,
-            redTouchWarnMs: 0,
-            hadRedPenalty: false,
-            waitedRedCleanly: startAsRed,
-            goldenBonus: false,
-            x: pos.x,
-            y: pos.y,
-            vx: vel.vx * 0.75,
-            vy: vel.vy * 0.75,
-            trail: [],
-            dwellMs: 0,
-            requiredMs: getDwellRequiredMs(),
-            spawnTime: now,
-            collectedLock: false,
-            mustLeaveFirst: distToTracker <= hitRadiusPx * 1.2
-          }
-        ];
-      }
-
-      if (state.gameState === 'game_ready') setGameState('game_playing');
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 模式 6：☁️ 撥開星雲（大片寬幅星雲帷幕覆蓋畫面，必須真正上下／左右揮動才撥得開！）
-    if (gm === 'nebula') {
-      game.connectRadiusScale = 1.0;
-      const b = getEffectiveStarSpawnBounds(state.mode);
-      const avoidX = trackerOutput.found ? trackerOutput.x : (game.prevHitPoint ? game.prevHitPoint.x : null);
-      const avoidY = trackerOutput.found ? trackerOutput.y : (game.prevHitPoint ? game.prevHitPoint.y : null);
-      const centerPos = pickSingleStarPosition(b, avoidX, avoidY);
-      const spanX = Math.max(0.14, b.maxX - b.minX);
-      const spanY = Math.max(0.14, b.maxY - b.minY);
-      const cloudCount = config.nebulaDensity === 'light' ? 7 : 10;
-      // 擴大星雲帷幕至活動框約 48%～56% 的寬廣範圍，讓患者必須大動作上下／左右揮抹
-      const curtainHalfW = Math.max((b.starR * 2.35) / b.W, spanX * 0.27);
-      const curtainHalfH = Math.max((b.starR * 2.35) / b.H, spanY * 0.27);
-      game.blackHole = null;
-
-      const clouds = [];
-      for (let i = 0; i < cloudCount; i++) {
-        let offsetX = 0;
-        let offsetY = 0;
-        if (i === 0) {
-          offsetX = 0;
-          offsetY = 0;
-        } else if (i <= 5) {
-          const ang = (Math.PI * 2 * (i - 1)) / 5 + 0.25;
-          offsetX = Math.cos(ang) * curtainHalfW * 0.58;
-          offsetY = Math.sin(ang) * curtainHalfH * 0.58;
-        } else {
-          const ang = (Math.PI * 2 * (i - 6)) / Math.max(1, cloudCount - 6) + 0.65;
-          offsetX = Math.cos(ang) * curtainHalfW * 0.95;
-          offsetY = Math.sin(ang) * curtainHalfH * 0.95;
-        }
-        clouds.push({
-          id: Date.now() + i + Math.random(),
-          type: 'nebula_cloud',
-          x: Math.max(b.minX, Math.min(b.maxX, centerPos.x + offsetX)),
-          y: Math.max(b.minY, Math.min(b.maxY, centerPos.y + offsetY)),
-          baseX: centerPos.x,
-          baseY: centerPos.y,
-          radiusScale: i === 0 ? 2.15 : i <= 5 ? 1.95 : 1.75,
-          scale: 1.0,
-          cleared: false,
-          opacity: 0.94,
-          hueShift: i % 3,
-          phase: i * 1.15,
-          collectedLock: false
-        });
-      }
-      game.targets = clouds;
-      if (state.gameState === 'game_ready') setGameState('game_playing');
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 模式 7：🧲 星際引力（靠近散落小星吸在身邊，一起帶進另一側的星門，完美訓練跨中線牽引！）
-    if (gm === 'magnet') {
-      game.connectRadiusScale = 0.85;
-      const b = getEffectiveStarSpawnBounds(state.mode);
-      const spanX = Math.max(0.10, b.maxX - b.minX);
-      const spanY = Math.max(0.10, b.maxY - b.minY);
-      const midX = (b.minX + b.maxX) * 0.5;
-      const midY = (b.minY + b.maxY) * 0.5;
-
-      // 星門與小星星分置於畫面兩端（左右或上下），強制跨中線護送！
-      const portalOnRight = game.lrNextSide === 'right';
-      game.lrNextSide = portalOnRight ? 'left' : 'right';
-
-      if (config.rangeMode === 'ud') {
-        const portalOnBottom = game.udNextSide === 'bottom';
-        game.udNextSide = portalOnBottom ? 'top' : 'bottom';
-        game.magnetPortal = {
-          x: midX,
-          y: portalOnBottom ? b.maxY - spanY * 0.12 : b.minY + spanY * 0.12
-        };
-      } else {
-        game.magnetPortal = {
-          x: portalOnRight ? b.maxX - spanX * 0.12 : b.minX + spanX * 0.12,
-          y: midY
-        };
-      }
-
-      const count = config.magnetStarCount;
-      const stars = [];
-      for (let i = 0; i < count; i++) {
-        const ratio = count === 1 ? 0.5 : i / (count - 1);
-        let sx = midX;
-        let sy = midY;
-        if (config.rangeMode === 'ud') {
-          const portalBottom = game.magnetPortal.y > midY;
-          sy = portalBottom ? b.minY + spanY * (0.12 + ratio * 0.22) : b.maxY - spanY * (0.12 + ratio * 0.22);
-          sx = midX + (ratio - 0.5) * Math.min(0.22, spanX * 0.45);
-        } else {
-          sx = portalOnRight ? b.minX + spanX * (0.10 + ratio * 0.22) : b.maxX - spanX * (0.10 + ratio * 0.22);
-          sy =
-            config.rangeMode === 'lr'
-              ? midY + (ratio - 0.5) * Math.min(0.10, spanY * 0.30)
-              : b.minY + spanY * (0.22 + ratio * 0.56);
-        }
-        stars.push({
-          id: Date.now() + i + Math.random(),
-          type: 'magnet_star',
-          x: Math.max(b.minX, Math.min(b.maxX, sx)),
-          y: Math.max(b.minY, Math.min(b.maxY, sy)),
-          attached: false,
-          delivered: false,
-          offsetAngle: (Math.PI * 2 * i) / count,
-          collectedLock: false
-        });
-      }
-      game.targets = stars;
-      spawnOrUpdateBlackHole(b, [game.magnetPortal, ...stars]);
-      if (state.gameState === 'game_ready') setGameState('game_playing');
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 模式 8：🌠 托起墜落星（流星從上方有感飄落，患者須從流星下方由下往上托舉，觸發升空煙火）
-    if (gm === 'falling') {
-      game.connectRadiusScale = 1.0;
-      const b = getEffectiveStarSpawnBounds(state.mode);
-      const spanX = Math.max(0.08, b.maxX - b.minX);
-      const spanY = Math.max(0.10, b.maxY - b.minY);
-      const side = game.lrNextSide;
-      game.lrNextSide = side === 'left' ? 'right' : 'left';
-
-      const startX =
-        config.rangeMode === 'ud'
-          ? (b.minX + b.maxX) * 0.5 + (Math.random() - 0.5) * Math.min(0.08, spanX * 0.25)
-          : side === 'left'
-          ? b.minX + spanX * (0.12 + Math.random() * 0.26)
-          : b.maxX - spanX * (0.12 + Math.random() * 0.26);
-      const startY = b.minY + spanY * 0.04;
-      // 全面提升慢／中／快三段掉落速度，讓接星與上托更有節奏感
-      const speedMult =
-        config.fallingSpeed === 'fast'
-          ? 0.42
-          : config.fallingSpeed === 'medium'
-          ? 0.29
-          : 0.19;
-      const vy = spanY * speedMult;
-      const vx =
-        config.fallingSpeed !== 'slow' && config.rangeMode !== 'ud'
-          ? spanX * (config.fallingSpeed === 'fast' ? 0.085 : 0.055) * (side === 'left' ? 1 : -1)
-          : 0;
-
-      game.targets = [
-        {
-          id: Date.now() + Math.random(),
-          type: 'falling_star',
-          x: startX,
-          y: startY,
-          vx,
-          vy,
-          trail: [],
-          dwellMs: 0,
-          requiredMs: 0,
-          spawnTime: now,
-          collectedLock: false
-        }
-      ];
-      game.blackHole = null;
-      if (state.gameState === 'game_ready') setGameState('game_playing');
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 模式 1：⭐ 星星收集（整合碰觸收集與藍／紫能量充能）
-    game.connectRadiusScale = 1.0;
-    const b = getEffectiveStarSpawnBounds(state.mode);
-    const avoidX = trackerOutput.found ? trackerOutput.x : (game.prevHitPoint ? game.prevHitPoint.x : null);
-    const avoidY = trackerOutput.found ? trackerOutput.y : (game.prevHitPoint ? game.prevHitPoint.y : null);
-    const hitRadiusPx = b.starR * 1.08;
-
-    const starType = drawNextCollectStarType();
-    const pos = pickSingleStarPosition(b, avoidX, avoidY);
-    const isMoving = starType === 'moving' || starType === 'charge_moving';
-    const isCharge = starType === 'charge_static' || starType === 'charge_moving';
-    const vel = isMoving ? createMovingVelocity(starType) : { vx: 0, vy: 0 };
-
-    const distToTracker = trackerOutput.found
-      ? Math.hypot((pos.x - trackerOutput.x) * b.W, (pos.y - trackerOutput.y) * b.H)
-      : Infinity;
-
-    game.targets = [
-      {
-        id: Date.now() + Math.random(),
-        type: starType,
-        degradedFromTimed: false,
-        x: pos.x,
-        y: pos.y,
-        vx: vel.vx,
-        vy: vel.vy,
-        trail: [],
-        dwellMs: 0,
-        outsideMs: 0,
-        requiredMs: isCharge
-          ? getChargeRequiredMs(starType === 'charge_moving')
-          : getDwellRequiredMs(),
-        ttlMs: starType === 'timed' ? TIMED_STAR_DURATION_MS : 0,
-        maxTtlMs: starType === 'timed' ? TIMED_STAR_DURATION_MS : 0,
-        spawnTime: now,
-        collectedLock: false,
-        mustLeaveFirst: distToTracker <= hitRadiusPx
-      }
-    ];
-
-    spawnOrUpdateBlackHole(b, [pos]);
-    if (state.gameState === 'game_ready') setGameState('game_playing');
-    refreshTrackingBanner(state.mode);
-  }
-
-  // 重置整回合遊戲
-  function resetGame() {
-    game.completedTargets = 0;
-    game.completedSets = 0;
-    game.score = 0;
-    game.elapsedActiveMs = 0;
-    game.remainingMs = config.challengeDurationSec * 1000;
-    game.countsByType = {
-      normal: 0,
-      timed: 0,
-      moving: 0,
-      charge_static: 0,
-      charge_moving: 0,
-      connect: 0,
-      track_orb: 0,
-      select: 0,
-      traffic: 0,
-      nebula: 0,
-      magnet: 0,
-      falling: 0
-    };
-    game.shuffleBag = [];
-    game.targets = [];
-    game.trackCurvePoints = [];
-    game.trackOrbProgressIdx = 0;
-    game.trackOrbEngaged = false;
-    game.trackDerailedWarn = false;
-    game.trackReverseDir = false;
-    game.selectTargetShape = null;
-    game.selectHadWrong = false;
-    game.magnetPortal = null;
-    game.blackHole = null;
-    game.blackHoleTrappedMs = 0;
-    game.connectNextOrder = 1;
-    game.connectMemoryPhase = false;
-    game.connectMemoryRemainMs = 0;
-    game.connectAutoHintRemainMs = 0;
-    game.connectIdleMs = 0;
-    game.connectRadiusScale = 1.0;
-    game.prevHitPoint = null;
-    game.nextSpawnAt = performance.now() + 100;
-    game.lrNextSide = 'left';
-    game.udNextSide = 'top';
-    game.allStepIndex = 0;
-    game.risingStars = [];
-    game.particles = [];
-    game.collectBursts = [];
-    game.milestoneRipples = [];
-    game.floatingTexts = [];
-    game.constellationBurst = null;
-
-    $('completeOverlay').hidden = true;
-    setGameState(state.active ? 'game_playing' : 'game_ready');
-    updateScoreAndTimerUI();
-    if (state.active) {
-      spawnNextTargets(performance.now(), true);
-      refreshTrackingBanner(state.mode);
-    }
-  }
-
-  function getPointsForTarget(target) {
-    switch (target.type) {
-      case 'timed':
-        return 3;
-      case 'moving':
-        return 2;
-      case 'charge_static':
-        return 2;
-      case 'charge_moving':
-        return 3;
-      case 'connect':
-        return 1;
-      case 'track_orb':
-        return 3;
-      case 'select':
-        if (game.selectHadWrong) return 1;
-        return config.selectOptionCount >= 3 ? 3 : 2;
-      case 'traffic':
-        if (target.goldenBonus) return 3;
-        return target.hadRedPenalty ? 1 : 2;
-      case 'nebula':
-      case 'nebula_cloud':
-        return 2;
-      case 'magnet':
-      case 'magnet_star':
-        return 3;
-      case 'falling':
-      case 'falling_star':
-        return 2;
-      case 'normal':
-      default:
-        return 1;
-    }
-  }
-
-  function addFloatingText(x, y, text, color = '#ffe066') {
-    if (reducedMotionQuery.matches) return;
-    game.floatingTexts.push({
-      x,
-      y,
-      text,
-      color,
-      born: performance.now(),
-      duration: 780
-    });
-  }
-
-  function spawnCelebrationParticles(sx, sy, starR, isBigBonus = false, isMilestone = false) {
-    const now = performance.now();
-    const reduced = reducedMotionQuery.matches;
-
-    game.collectBursts.push({
-      x: sx,
-      y: sy,
-      r: starR,
-      born: now,
-      duration: reduced ? 180 : isBigBonus ? 420 : 320,
-      color: isBigBonus ? '#f472b6' : '#70e5ab'
-    });
-
-    if (isMilestone) {
-      game.milestoneRipples.push({
-        x: sx,
-        y: sy,
-        r: starR,
-        born: now,
-        duration: reduced ? 260 : 620
-      });
-    }
-
-    if (!reduced) {
-      const count = isBigBonus ? 20 : isMilestone ? 16 : 11;
-      const palette = isBigBonus
-        ? ['#ff6b6b', '#ffd452', '#4cffb3', '#38bdf8', '#e879f9']
-        : ['#ffe066', '#70e5ab', '#38bdf8'];
-      for (let i = 0; i < count; i++) {
-        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
-        const speed = (isBigBonus ? 2.2 : 1.6) + Math.random() * 2.5;
-        game.particles.push({
-          x: sx,
-          y: sy,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          size: (isBigBonus ? 5 : 4) + Math.random() * 4,
-          color: palette[i % palette.length],
-          born: now,
-          life: (isBigBonus ? 460 : 350) + Math.random() * 140
-        });
-      }
-    }
-  }
-
-  // 記錄本回合至「今日累積總結」並點亮下一座「今日守護星座」
-  function recordCompletedRoundToSession() {
-    const gm = config.gamePlayMode;
-    const unit = getPrimaryUnitLabel();
-    const countVal = getPrimaryCount();
-    dailySession.roundsCompleted += 1;
-    dailySession.totalDurationMs += game.elapsedActiveMs;
-    dailySession.unlockedConstellations = Math.min(
-      GUARDIAN_CONSTELLATIONS.length,
-      dailySession.unlockedConstellations + 1
-    );
-
-    const detailStr = `${gamePlayModeName(gm)} ${countVal}${unit}`;
-    dailySession.historyRecords.push({
-      modeTitle: gamePlayModeName(gm),
-      trackMode: modeName(state.mode),
-      detailText: detailStr,
-      durationSec: Math.max(1, Math.round(game.elapsedActiveMs / 1000))
-    });
-    saveDailySessionToStorage();
-
-    // 更新結算畫面上的星座收集冊 UI
-    const unlocked = dailySession.unlockedConstellations;
-    $('albumHeaderText').textContent = `🌌 今日守護星座收集冊（已點亮 ${unlocked} / ${GUARDIAN_CONSTELLATIONS.length}）`;
-    const latestConst = GUARDIAN_CONSTELLATIONS[Math.max(0, unlocked - 1)];
-    $('albumStoryText').textContent = `✨ 本回合計入點亮：【${latestConst.icon} ${latestConst.name}】— ${latestConst.story}`;
-
-    const badgesRow = $('albumBadgesRow');
-    badgesRow.innerHTML = '';
-    GUARDIAN_CONSTELLATIONS.forEach((c, idx) => {
-      const span = document.createElement('span');
-      const isLit = idx < unlocked;
-      span.className = 'constellation-chip' + (isLit ? ' lit' : '');
-      span.textContent = isLit ? `${c.icon} ${c.name}` : `🔒 ${c.name}`;
-      badgesRow.append(span);
-    });
-
-    $('sessionLogSummaryText').textContent =
-      `今日已累計完成 ${dailySession.roundsCompleted} 回合（共 ${formatDurationText(dailySession.totalDurationMs)}）`;
-    $('copySessionLogBtn').textContent = '📋 複製今日總結';
-  }
-
-  // 一鍵複製今日累積復健回報文字（供貼給治療師或家屬）
-  function copyDailySessionSummary() {
-    const today = dailySession.dateKey;
-    const itemMap = {};
-    dailySession.historyRecords.forEach(r => {
-      const key = `[${r.trackMode}] ${r.detailText}`;
-      itemMap[key] = (itemMap[key] || 0) + 1;
-    });
-    const listStr = Object.entries(itemMap)
-      .map(([k, v]) => (v > 1 ? `${k} x${v}輪` : k))
-      .join('、');
-    const unlockedNames = GUARDIAN_CONSTELLATIONS.slice(0, dailySession.unlockedConstellations)
-      .map(c => c.name)
-      .join('、');
-
-    const reportText =
-      `【星動體感訓練・今日復健練習總結】\n` +
-      `📅 日期：${today}\n` +
-      `✅ 完成回合：共 ${dailySession.roundsCompleted} 回合（總練習時間 ${formatDurationText(dailySession.totalDurationMs)}）\n` +
-      `🎯 練習內容：${listStr || '已完成練習'}\n` +
-      `🌌 點亮星座：${unlockedNames || '天琴座'}（${dailySession.unlockedConstellations}/${GUARDIAN_CONSTELLATIONS.length}）`;
-
-    const btn = $('copySessionLogBtn');
-    const onCopied = () => {
-      btn.textContent = '✓ 已複製總結！';
-      setTimeout(() => {
-        btn.textContent = '📋 複製今日總結';
-      }, 2200);
-    };
-
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(reportText).then(onCopied).catch(() => {
-          fallbackCopyText(reportText);
-          onCopied();
-        });
-      } else {
-        fallbackCopyText(reportText);
-        onCopied();
-      }
-    } catch {
-      fallbackCopyText(reportText);
-      onCopied();
-    }
-  }
-
-  function fallbackCopyText(text) {
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.append(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-    } catch {}
-  }
-
-  // 建立並顯示回合結算統計畫面
-  function finishRoundAndShowSummary() {
-    setGameState('game_complete');
-    recordCompletedRoundToSession();
-
-    const durationStr = formatDurationText(game.elapsedActiveMs);
-    const grid = $('completeStatsGrid');
-    grid.innerHTML = '';
-
-    const addStat = (label, value, highlight = false, wide = false) => {
-      const div = document.createElement('div');
-      div.className = 'stat-item' + (wide ? ' wide' : '');
-      const l = document.createElement('span');
-      l.className = 'stat-label';
-      l.textContent = label;
-      const v = document.createElement('span');
-      v.className = 'stat-value' + (highlight ? ' highlight' : '');
-      v.textContent = value;
-      div.append(l, v);
-      grid.append(div);
-    };
-
-    const gm = config.gamePlayMode;
-
-    if (config.challengeType === 'count') {
-      $('completeTitle').textContent = '🎉 太棒了！完成指定目標練習';
-      $('completeSummary').textContent = `您已順利完成本回合「${gamePlayModeName()}」復健練習！`;
-      if (gm === 'connect') {
-        addStat('完成星座組數', `${game.completedSets} / ${config.targetCount} 組`, true);
-        addStat('實際碰觸星星總數', `共 ${game.completedTargets} 顆`, true);
-        addStat('總練習時間', durationStr);
-        addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`);
-      } else if (gm === 'track') {
-        addStat('完成星河軌道數', `${game.completedSets} / ${config.targetCount} 條`, true);
-        addStat('總練習時間', durationStr, true);
-        addStat('使用的遊戲模式', gamePlayModeName());
-        addStat('使用的追蹤方式', `${modeName(state.mode)}追蹤`);
-      } else {
-        addStat('完成次數', `${game.completedTargets} / ${config.targetCount} 次`, true);
-        addStat('總練習時間', durationStr, true);
-        addStat('使用的遊戲模式', gamePlayModeName());
-        addStat('使用的追蹤方式', `${modeName(state.mode)}追蹤`);
-      }
-    } else {
-      $('completeTitle').textContent = '🏆 時間到！完成限時挑戰';
-      $('completeSummary').textContent = `在 ${config.challengeDurationSec} 秒內您完成了精彩的表現！`;
-      addStat('累積總分', `${game.score} 分`, true);
-      if (gm === 'connect') {
-        addStat('完成星座組數', `${game.completedSets} 組`, true);
-        addStat('實際碰觸星星總數', `共 ${game.completedTargets} 顆`);
-        addStat('挑戰時間', `${config.challengeDurationSec} 秒`);
-        addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`, false, true);
-      } else if (gm === 'track') {
-        addStat('完成星河軌道數', `${game.completedSets} 條`, true);
-        addStat('挑戰時間', `${config.challengeDurationSec} 秒`);
-        addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`, false, true);
-      } else {
-        addStat('成功完成次數', `${game.completedTargets} 次`, true);
-        addStat('挑戰時間', `${config.challengeDurationSec} 秒`);
-        addStat('追蹤與模式', `${modeName(state.mode)}｜${gamePlayModeName()}`);
-      }
-    }
-
-    const summaryCountText =
-      gm === 'connect'
-        ? `完成 ${game.completedSets} 組星座（共碰觸 ${game.completedTargets} 顆星）`
-        : gm === 'track'
-        ? `完成 ${game.completedSets} 條星河軌道`
-        : `共完成 ${game.completedTargets} 次`;
-    updateStatusUI('練習完成！', 'good', `🎉 已完成本回合練習｜${summaryCountText}`);
-
-    const reduced = reducedMotionQuery.matches;
-    setTimeout(() => {
-      if (state.gameState === 'game_complete') {
-        $('completeOverlay').hidden = false;
-      }
-    }, reduced ? 120 : 360);
-  }
-
-  // 觸發目標完成（支援 8 大星空模式）
-  function handleTargetCompleted(target, now) {
-    if (!target || target.collectedLock || state.gameState === 'game_complete') return;
-    target.collectedLock = true;
-
-    const W = stage.clientWidth;
-    const H = stage.clientHeight;
-    const sx = target.x * W;
-    const sy = target.y * H;
-    const starR = getStarRadiusPx();
-    const gm = config.gamePlayMode;
-
-    game.completedTargets += 1;
-    game.countsByType[target.type] = (game.countsByType[target.type] || 0) + 1;
-    game.prevHitPoint = { x: target.x, y: target.y, rPx: starR * 1.1 };
-
-    const pts = getPointsForTarget(target);
-    game.score += pts;
-
-    // 分支 1：✨ 星座連線（完成整組才 completedSets + 1 並語音報數）
-    if (gm === 'connect') {
-      target.completed = true;
-      game.connectIdleMs = 0;
-      game.connectAutoHintRemainMs = 0;
-
-      if (game.connectNextOrder < game.targets.length) {
-        const stepIdx = game.connectNextOrder - 1;
-        game.connectNextOrder += 1;
-        if (config.challengeType === 'timed') {
-          addFloatingText(sx, sy - starR * 0.8, `+${pts} 分`, '#ffe066');
-        }
-        playGameSound('connect_node', stepIdx);
-        spawnCelebrationParticles(sx, sy, starR * 0.82, false, false);
-        updateScoreAndTimerUI();
-        refreshTrackingBanner(state.mode);
-        return;
-      }
-
-      game.completedSets += 1;
-      const setBonus = config.connectSubMode === 'memory' ? 3 : 2;
-      game.score += setBonus;
-      const isSetMilestone = game.completedSets % 5 === 0;
-
-      game.constellationBurst = {
-        points: game.targets.map(t => ({ x: t.x * W, y: t.y * H })),
-        born: now,
-        duration: reducedMotionQuery.matches ? 220 : 580
-      };
-
-      const cName = game.connectConstellationName || '星座';
-      if (config.challengeType === 'timed') {
-        addFloatingText(sx, sy - starR * 0.8, `+${pts} 分`, '#ffe066');
-        addFloatingText(W * 0.5, H * 0.35, `✨ ${cName}完成 +${setBonus} 分！`, '#70e5ab');
-      } else {
-        addFloatingText(
-          W * 0.5,
-          H * 0.35,
-          `✨ 點亮${cName}（${game.completedSets} / ${config.targetCount} 組）！`,
-          '#70e5ab'
-        );
-      }
-
-      updateScoreAndTimerUI();
-
-      if (config.challengeType === 'count' && game.completedSets >= config.targetCount) {
-        playGameSound('final');
-        speakCompletionCount(game.completedSets, true);
-        spawnCelebrationParticles(sx, sy, starR, true, true);
-        finishRoundAndShowSummary();
-        return;
-      }
-
-      playGameSound('set_complete');
-      speakCompletionCount(game.completedSets, false);
-      spawnCelebrationParticles(sx, sy, starR, true, isSetMilestone);
-
-      game.targets = [];
-      game.nextSpawnAt = now + (reducedMotionQuery.matches ? 180 : 400);
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 分支 2：🌈 星河軌道（把光球推到終點星門完成 1 條軌道）
-    if (gm === 'track') {
-      game.completedSets += 1;
-      const isTrackMilestone = game.completedSets % 5 === 0;
-      game.constellationBurst = {
-        points: game.trackCurvePoints.map(pt => ({ x: pt.x * W, y: pt.y * H })),
-        born: now,
-        duration: reducedMotionQuery.matches ? 220 : 540
-      };
-
-      addFloatingText(
-        W * 0.5,
-        H * 0.35,
-        config.challengeType === 'timed'
-          ? `🌈 軌道護送完成 +3 分！`
-          : `🌈 完成第 ${game.completedSets} / ${config.targetCount} 條星河軌道！`,
-        '#70e5ab'
-      );
-
-      updateScoreAndTimerUI();
-
-      if (config.challengeType === 'count' && game.completedSets >= config.targetCount) {
-        playGameSound('final');
-        speakCompletionCount(game.completedSets, true);
-        spawnCelebrationParticles(sx, sy, starR, true, true);
-        finishRoundAndShowSummary();
-        return;
-      }
-
-      playGameSound('set_complete');
-      speakCompletionCount(game.completedSets, false);
-      spawnCelebrationParticles(sx, sy, starR, true, isTrackMilestone);
-
-      game.targets = [];
-      game.nextSpawnAt = now + (reducedMotionQuery.matches ? 180 : 380);
-      refreshTrackingBanner(state.mode);
-      return;
-    }
-
-    // 分支 3：其餘單次任務完成即計 1 次的模式（星星收集、星象選擇、脈衝紅綠燈、撥開星雲、星際引力、托起墜落星）
-    const isMilestone = game.completedTargets % 5 === 0;
-    const isBigBonus = pts >= 3 || target.goldenBonus;
-
-    if (config.challengeType === 'timed') {
-      addFloatingText(sx, sy - starR * 0.8, `+${pts} 分`, isBigBonus ? '#f472b6' : '#ffe066');
-    } else if (isMilestone) {
-      addFloatingText(sx, sy - starR * 0.8, `🎯 已完成 ${game.completedTargets} 次！`, '#70e5ab');
-    }
-
-    game.targets = [];
-    updateScoreAndTimerUI();
-
-    if (config.challengeType === 'count' && game.completedTargets >= config.targetCount) {
-      playGameSound('final');
-      speakCompletionCount(game.completedTargets, true);
-      spawnCelebrationParticles(sx, sy, starR, true, true);
-      finishRoundAndShowSummary();
-      return;
-    }
-
-    if (isBigBonus) {
-      playGameSound('bonus');
-    } else if (target.type === 'charge_static') {
-      playGameSound('charge_done');
-    } else {
-      playGameSound('normal');
-    }
-
-    if (gm === 'select') {
-      spawnCelebrationParticles(sx, sy, starR, isBigBonus, isMilestone);
-      spawnNextTargets(now, false);
-      const nextPrompt = game.selectTargetShape ? `請找，${game.selectTargetShape.label}` : '';
-      speakCompletionCount(game.completedTargets, false, nextPrompt);
-      return;
-    }
-
-    speakCompletionCount(game.completedTargets, false);
-    spawnCelebrationParticles(sx, sy, starR, isBigBonus, isMilestone);
-
-    game.nextSpawnAt = now + (reducedMotionQuery.matches ? 180 : 340);
-    refreshTrackingBanner(state.mode);
-  }
-
-  // ==================== V3 遊戲主邏輯更新 ====================
-
-  function updateGameLogic(now) {
-    const dt = game.lastTickTs ? Math.min(80, Math.max(0, now - game.lastTickTs)) : 16;
-    game.lastTickTs = now;
-
-    const settingsOpen = !$('settingsSheet').hidden;
-    if (!state.active || state.gameState === 'game_complete' || state.calibratingRange || settingsOpen) {
-      return;
-    }
-
-    if (!state.modeReady) {
-      return;
-    }
-
-    game.elapsedActiveMs += dt;
-
-    if (config.challengeType === 'timed' && !game.connectMemoryPhase) {
-      game.remainingMs = Math.max(0, game.remainingMs - dt);
-      updateScoreAndTimerUI();
-      if (game.remainingMs <= 0) {
-        playGameSound('final');
-        speakCompletionCount(getPrimaryCount(), true);
-        finishRoundAndShowSummary();
-        return;
-      }
-    }
-
-    if (!game.targets.length && now >= game.nextSpawnAt) {
-      spawnNextTargets(now, true);
-    }
-    if (!game.targets.length) return;
-
-    const W = stage.clientWidth;
-    const H = stage.clientHeight;
-    const starR = getStarRadiusPx();
-    const dtSec = dt / 1000;
-    const moveBounds = getDirectionalSubBounds(state.mode);
-    const gm = config.gamePlayMode;
-
-    // 處理「🌀 太空黑洞」移動與 2 秒重力束吸住判定（不暫停相機，用紫色重力漩渦困住 2 秒）
-    if (game.blackHole) {
-      const bh = game.blackHole;
-      if (bh.cooldownMs > 0) {
-        bh.cooldownMs = Math.max(0, bh.cooldownMs - dt);
-      }
-      if (bh.vx || bh.vy) {
-        bh.x += bh.vx * dtSec;
-        bh.y += bh.vy * dtSec;
-        if (bh.x <= moveBounds.minX + 0.05 || bh.x >= moveBounds.maxX - 0.05) bh.vx *= -1;
-        if (bh.y <= moveBounds.minY + 0.05 || bh.y >= moveBounds.maxY - 0.05) bh.vy *= -1;
-      }
-
-      if (game.blackHoleTrappedMs > 0) {
-        game.blackHoleTrappedMs = Math.max(0, game.blackHoleTrappedMs - dt);
-        if (game.blackHoleTrappedMs <= 0) {
-          bh.cooldownMs = 3000; // 掙脫後給予 3 秒無敵冷卻，不會原地被無限連吸
-          playGameSound('free_trap');
-          addFloatingText(bh.x * W, bh.y * H - 30, '✨ 掙脫黑洞引力！', '#70e5ab');
-        }
-        refreshTrackingBanner(state.mode);
-      } else if (trackerOutput.found && bh.cooldownMs <= 0) {
-        const distBh = Math.hypot((trackerOutput.x - bh.x) * W, (trackerOutput.y - bh.y) * H);
-        const bhTrapRadius = Math.max(26, starR * 0.72);
-        if (distBh <= bhTrapRadius) {
-          game.blackHoleTrappedMs = BLACK_HOLE_TRAP_MS;
-          game.blackHoleTrapOrigin = { x: bh.x, y: bh.y };
-          game.trackOrbEngaged = false;
-          playGameSound('blackhole');
-          addFloatingText(bh.x * W, bh.y * H - 32, '🌀 被黑洞吸住 2 秒！', '#e879f9');
-          refreshTrackingBanner(state.mode);
-        }
-      }
-    }
-
-    // 若正被黑洞吸住鎖定（blackHoleTrappedMs > 0），暫停玩家對星星的吃取與推軌判定（但鏡頭與游標仍即時顯示）
-    const isTrappedByBlackHole = game.blackHoleTrappedMs > 0;
-
-    // 專屬邏輯 1：✨ 星座連線（記憶倒數與自動提示）
-    if (gm === 'connect') {
-      if (game.connectMemoryPhase) {
-        game.connectMemoryRemainMs = Math.max(0, game.connectMemoryRemainMs - dt);
-        if (game.connectMemoryRemainMs <= 0) {
-          game.connectMemoryPhase = false;
-          game.connectIdleMs = 0;
-        }
-        refreshTrackingBanner(state.mode);
-        return;
-      }
-      if (game.connectAutoHintRemainMs > 0) {
-        game.connectAutoHintRemainMs = Math.max(0, game.connectAutoHintRemainMs - dt);
-      } else if (config.connectSubMode === 'memory' && trackerOutput.found) {
-        game.connectIdleMs += dt;
-        if (game.connectIdleMs >= 5000) {
-          game.connectIdleMs = 0;
-          game.connectAutoHintRemainMs = 1500;
-        }
-      }
-    }
-
-    // 專屬邏輯 2：🌈 星河軌道（牽引光球沿軌道滑向終點星門；跑出軌道外會脫鉤停在原地！）
-    if (gm === 'track' && game.targets[0] && game.trackCurvePoints.length >= 2) {
-      const orb = game.targets[0];
-      const curve = game.trackCurvePoints;
-      if (!trackerOutput.found || isTrappedByBlackHole) {
-        game.trackOrbEngaged = false;
-        return;
-      }
-
-      const tx = trackerOutput.x * W;
-      const ty = trackerOutput.y * H;
-      const ox = orb.x * W;
-      const oy = orb.y * H;
-      const distToOrb = Math.hypot(tx - ox, ty - oy);
-      const corridorTolerancePx = Math.max(38, starR * 1.38);
-
-      if (!game.trackOrbEngaged) {
-        // 尚未接住光球：只要綠色追蹤環進入光球範圍即套住光球！
-        if (distToOrb <= starR * 1.22) {
-          game.trackOrbEngaged = true;
-          game.trackDerailedWarn = false;
-          playGameSound('connect_node', 0);
-          refreshTrackingBanner(state.mode);
-        }
-      } else {
-        // 已套住光球：尋找軌道曲線上在目前進度附近（允許往前推進 hasta +6 步）最接近追蹤環的點
-        let bestIdx = game.trackOrbProgressIdx;
-        let minCurveDist = Infinity;
-        const maxLookAhead = Math.min(curve.length - 1, game.trackOrbProgressIdx + 7);
-        const minLookBack = Math.max(0, game.trackOrbProgressIdx - 2);
-
-        for (let k = minLookBack; k <= maxLookAhead; k++) {
-          const d = Math.hypot(tx - curve[k].x * W, ty - curve[k].y * H);
-          if (d < minCurveDist) {
-            minCurveDist = d;
-            bestIdx = k;
-          }
-        }
-
-        // 若追蹤環偏離軌道走廊太遠（跑出線外），光球立即「脫鉤停在原地」，防止切西瓜！
-        if (minCurveDist > corridorTolerancePx) {
-          game.trackOrbEngaged = false;
-          game.trackDerailedWarn = true;
-          playGameSound('hint');
-          addFloatingText(ox, oy - starR, '⚠️ 跑出軌道脫鉤囉！請回來接光球', '#ffd452');
-          refreshTrackingBanner(state.mode);
-          return;
-        }
-
-        if (bestIdx > game.trackOrbProgressIdx) {
-          const prevMilestone = Math.floor((game.trackOrbProgressIdx / (curve.length - 1)) * 4);
-          game.trackOrbProgressIdx = bestIdx;
-          const newMilestone = Math.floor((game.trackOrbProgressIdx / (curve.length - 1)) * 4);
-          if (newMilestone > prevMilestone && newMilestone < 4) {
-            playGameSound('connect_node', newMilestone);
-          }
-        }
-
-        const curPt = curve[game.trackOrbProgressIdx];
-        orb.x = curPt.x;
-        orb.y = curPt.y;
-        orb.trail.unshift({ x: orb.x, y: orb.y });
-        if (orb.trail.length > 10) orb.trail.pop();
-
-        // 到達終點星門！
-        if (game.trackOrbProgressIdx >= curve.length - 1) {
-          handleTargetCompleted(orb, now);
-        }
-      }
-      return;
-    }
-
-    // 專屬邏輯 3：☁️ 撥開星雲（必須真正上下／左右揮動才撥得動，停在原地不會消散！）
-    if (gm === 'nebula') {
-      let remainingClouds = 0;
-      const centerX = game.targets[0]?.baseX ?? 0.5;
-      const centerY = game.targets[0]?.baseY ?? 0.5;
-
-      // 計算游標移動速度（px/s），針對設定方向加權：停在原地時 speed < 門檻，完全不消散！
-      const absVx = Math.abs(game.trackerVxPxPerSec);
-      const absVy = Math.abs(game.trackerVyPxPerSec);
-      let effectiveSweepSpeed = Math.hypot(absVx, absVy);
-      if (config.rangeMode === 'ud') {
-        effectiveSweepSpeed = absVy * 1.35 + absVx * 0.45;
-      } else if (config.rangeMode === 'lr') {
-        effectiveSweepSpeed = absVx * 1.35 + absVy * 0.45;
-      }
-      if (state.mode === 'head') {
-        effectiveSweepSpeed *= 1.75;
-      }
-
-      const minSweepSpeed = 48; // 必須有明顯揮動速度才算撥雲
-      const isActivelySweeping = effectiveSweepSpeed >= minSweepSpeed;
-      let touchingAnyCloud = false;
-
-      for (let i = 0; i < game.targets.length; i++) {
-        const c = game.targets[i];
-        if (!c || c.type !== 'nebula_cloud') continue;
-        if (c.cleared) continue;
-
-        if (trackerOutput.found && !isTrappedByBlackHole) {
-          const dist = Math.hypot((trackerOutput.x - c.x) * W, (trackerOutput.y - c.y) * H);
-          const curScale = Math.max(0.28, c.scale ?? 1.0);
-          const wipeRadius = starR * (c.radiusScale || 1.95) * curScale * 1.05;
-          if (dist <= wipeRadius) {
-            touchingAnyCloud = true;
-            if (isActivelySweeping) {
-              const wipePower = Math.min(3.2, effectiveSweepSpeed / 165);
-              c.scale = Math.max(0, curScale - dtSec * 0.92 * wipePower);
-              // 輕微順著揮動方向位移，但限制在中央可視範圍內不跑出角落
-              c.x = Math.max(0.14, Math.min(0.86, c.x + (game.trackerVxPxPerSec * dtSec * 0.14) / W));
-              c.y = Math.max(0.16, Math.min(0.84, c.y + (game.trackerVyPxPerSec * dtSec * 0.14) / H));
-
-              if (Math.random() < 0.55 && !reducedMotionQuery.matches) {
-                const shardColors = ['#e9d5ff', '#facc15', '#7dd3fc', '#f472b6'];
-                game.particles.push({
-                  x: c.x * W + (Math.random() - 0.5) * 34 * curScale,
-                  y: c.y * H + (Math.random() - 0.5) * 34 * curScale,
-                  vx: (game.trackerVxPxPerSec * 0.011) + (Math.random() - 0.5) * 2.8,
-                  vy: (game.trackerVyPxPerSec * 0.011) + (Math.random() - 0.5) * 2.8,
-                  size: 3.5 + Math.random() * 3.5,
-                  color: shardColors[Math.floor(Math.random() * shardColors.length)],
-                  born: now,
-                  life: 420
-                });
-              }
-
-              if (c.scale <= 0.30) {
-                c.cleared = true;
-                c.scale = 0;
-                playGameSound('connect_node', i);
-                spawnCelebrationParticles(c.x * W, c.y * H, starR * 0.72, false, false);
-              }
-            }
-          } else if (config.nebulaDensity === 'regen' && c.scale > 0.30 && c.scale < 1.0) {
-            c.scale = Math.min(1.0, c.scale + dtSec * 0.09);
-          }
-        }
-
-        if (!c.cleared) remainingClouds++;
-      }
-
-      if (touchingAnyCloud && !isActivelySweeping && now - game.nebulaIdleWarnAt > 1200) {
-        game.nebulaIdleWarnAt = now;
-        const dirHint = config.rangeMode === 'ud' ? '上下大幅揮動' : config.rangeMode === 'lr' ? '左右大幅揮動' : '上下左右揮動';
-        addFloatingText(trackerOutput.x * W, trackerOutput.y * H - starR, `👋 請${dirHint}才能撥開星雲喔！`, '#e9d5ff');
-      }
-
-      if (remainingClouds === 0 && game.targets.length > 0) {
-        const fakeStar = {
-          id: Date.now(),
-          type: 'nebula',
-          x: centerX,
-          y: centerY,
-          collectedLock: false
-        };
-        handleTargetCompleted(fakeStar, now);
-      } else {
-        refreshTrackingBanner(state.mode);
-      }
-      return;
-    }
-
-    // 專屬邏輯 4：🧲 星際引力（靠近吸住散落小星，一起護送進星門聖殿）
-    if (gm === 'magnet' && game.magnetPortal) {
-      const portal = game.magnetPortal;
-      const px = portal.x * W;
-      const py = portal.y * H;
-      const portalR = starR * 1.28;
-      let allDelivered = true;
-
-      for (let i = 0; i < game.targets.length; i++) {
-        const ms = game.targets[i];
-        if (!ms || ms.delivered) continue;
-        allDelivered = false;
-
-        if (trackerOutput.found && !isTrappedByBlackHole) {
-          const tx = trackerOutput.x * W;
-          const ty = trackerOutput.y * H;
-          const sx = ms.x * W;
-          const sy = ms.y * H;
-
-          if (!ms.attached && Math.hypot(tx - sx, ty - sy) <= starR * 1.28) {
-            ms.attached = true;
-            playGameSound('connect_node', i);
-            refreshTrackingBanner(state.mode);
-          }
-
-          if (ms.attached) {
-            const orbitR = 18;
-            const targetX = trackerOutput.x + (Math.cos(now * 0.004 + ms.offsetAngle) * orbitR) / W;
-            const targetY = trackerOutput.y + (Math.sin(now * 0.004 + ms.offsetAngle) * orbitR) / H;
-            ms.x += (targetX - ms.x) * 0.32;
-            ms.y += (targetY - ms.y) * 0.32;
-
-            // 檢查是否已帶入星門聖殿
-            if (Math.hypot(ms.x * W - px, ms.y * H - py) <= portalR) {
-              ms.delivered = true;
-              ms.attached = false;
-              playGameSound('connect_node', i + 2);
-              spawnCelebrationParticles(px, py, starR * 0.9, true, false);
-              refreshTrackingBanner(state.mode);
-            }
-          }
-        } else {
-          ms.attached = false;
-        }
-      }
-
-      if (allDelivered && game.targets.length > 0) {
-        const fakeDone = {
-          id: Date.now(),
-          type: 'magnet',
-          x: portal.x,
-          y: portal.y,
-          collectedLock: false
-        };
-        handleTargetCompleted(fakeDone, now);
-      }
-      return;
-    }
-
-    // 專屬邏輯 5：🌠 托起墜落星（必須從星星下半部「由下往上」托舉，觸發流光升空與頂部煙火動畫！）
-    if (gm === 'falling' && game.targets[0]) {
-      const fs = game.targets[0];
-      if (fs.collectedLock) return;
-
-      fs.x += fs.vx * dtSec;
-      fs.y += fs.vy * dtSec;
-
-      if (fs.x <= moveBounds.minX) {
-        fs.x = moveBounds.minX;
-        fs.vx = Math.abs(fs.vx);
-      } else if (fs.x >= moveBounds.maxX) {
-        fs.x = moveBounds.maxX;
-        fs.vx = -Math.abs(fs.vx);
-      }
-
-      fs.trail.unshift({ x: fs.x, y: fs.y });
-      if (fs.trail.length > 10) fs.trail.pop();
-
-      // 若飄落到底部邊界還沒接住，不扣分，溫和從上方重新飄下
-      if (fs.y >= moveBounds.maxY) {
-        fs.y = moveBounds.minY + 0.04;
-        fs.trail = [];
-      }
-
-      if (trackerOutput.found && !isTrappedByBlackHole) {
-        const tx = trackerOutput.x * W;
-        const ty = trackerOutput.y * H;
-        const sx = fs.x * W;
-        const sy = fs.y * H;
-        const dist = Math.hypot(tx - sx, ty - sy);
-
-        if (dist <= starR * 1.32 + 14) {
-          // 檢查最近 200ms 的垂直向上位移與瞬時向上速度（螢幕座標往上為負值）
-          let recentDyPx = 0;
-          if (game.trackerHistory.length >= 2) {
-            const oldest = game.trackerHistory[0];
-            recentDyPx = (trackerOutput.y - oldest.y) * H;
-          }
-          const vyThreshold = state.mode === 'head' ? -24 : -52;
-          const dyThreshold = state.mode === 'head' ? -3.2 : -5.8;
-          const isMovingUpward = game.trackerVyPxPerSec <= vyThreshold || recentDyPx <= dyThreshold;
-          const isNotFromTopDown = ty >= sy - starR * 0.42;
-
-          if (isMovingUpward && isNotFromTopDown) {
-            // 觸發「由下往上衝向夜空」的升空流星動畫！
-            game.risingStars.push({
-              x: sx,
-              y: sy,
-              vx: (sx < W * 0.5 ? 1 : -1) * 35 + game.trackerVxPxPerSec * 0.12,
-              vy: -Math.max(480, H * 1.08),
-              ay: -920,
-              r: starR,
-              rot: 0,
-              trail: [],
-              born: now
-            });
-            addFloatingText(sx, sy - starR, '🌠 往上托起！升空綻放！', '#70e5ab');
-            handleTargetCompleted(fs, now);
-          } else if (now - game.fallingLiftWarnAt > 850) {
-            game.fallingLiftWarnAt = now;
-            // 輕微減緩下落並給予「請由下往上托起」提示
-            fs.y = Math.max(moveBounds.minY + 0.04, fs.y - 0.015);
-            playGameSound('hint');
-            addFloatingText(sx, sy - starR * 1.05, '⬆️ 請從下方「由下往上」托起喔！', '#ffd452');
-          }
-        }
-      }
-      return;
-    }
-
-    // 逐一更新一般目標星（收集、充能、星座連線、星象選擇、脈衝紅綠燈）
-    for (let i = 0; i < game.targets.length; i++) {
-      const t = game.targets[i];
-      if (!t || t.completed || t.collectedLock) continue;
-
-      if (t.type === 'timed') {
-        t.ttlMs = Math.max(0, t.ttlMs - dt);
-        if (t.ttlMs <= 0) {
-          t.type = 'normal';
-          t.degradedFromTimed = true;
-          addFloatingText(t.x * W, t.y * H - starR, '轉為普通星星', '#ffd452');
-        }
-      }
-
-      if (t.type === 'traffic') {
-        t.phaseRemainMs -= dt;
-        if (t.phaseRemainMs <= 0) {
-          if (t.trafficLight === 'green') {
-            t.trafficLight = 'yellow';
-            t.phaseRemainMs = t.yellowDurationMs;
-          } else if (t.trafficLight === 'yellow') {
-            t.trafficLight = 'red';
-            t.phaseRemainMs = t.redDurationMs;
-            t.waitedRedCleanly = true;
-            t.dwellMs = 0;
-          } else {
-            t.trafficLight = 'green';
-            t.phaseRemainMs = t.greenDurationMs;
-            // 若紅燈期間患者乖乖停在圈外沒誤觸，轉綠燈瞬間升級為「✨ 金色通行星」！
-            if (t.waitedRedCleanly && !t.hadRedPenalty) {
-              t.goldenBonus = true;
-              addFloatingText(t.x * W, t.y * H - starR, '✨ 守規矩升級金色星！', '#ffd452');
-            }
-          }
-          refreshTrackingBanner(state.mode);
-        }
-      }
-
-      if (t.type === 'moving' || t.type === 'charge_moving' || (t.type === 'traffic' && config.trafficVariant === 'cruise')) {
-        let speedFactor = 1.0;
-        if (trackerOutput.found) {
-          const distPx = Math.hypot((trackerOutput.x - t.x) * W, (trackerOutput.y - t.y) * H);
-          if (distPx <= starR * 1.45) {
-            speedFactor = 0.58;
-          }
-        }
-
-        t.x += t.vx * speedFactor * dtSec;
-        t.y += t.vy * speedFactor * dtSec;
-
-        if (t.x <= moveBounds.minX) {
-          t.x = moveBounds.minX;
-          t.vx = Math.abs(t.vx);
-        } else if (t.x >= moveBounds.maxX) {
-          t.x = moveBounds.maxX;
-          t.vx = -Math.abs(t.vx);
-        }
-
-        if (t.y <= moveBounds.minY) {
-          t.y = moveBounds.minY;
-          t.vy = Math.abs(t.vy);
-        } else if (t.y >= moveBounds.maxY) {
-          t.y = moveBounds.maxY;
-          t.vy = -Math.abs(t.vy);
-        }
-
-        t.trail.unshift({ x: t.x, y: t.y });
-        if (t.trail.length > 8) t.trail.pop();
-      }
-
-      if (!trackerOutput.found || isTrappedByBlackHole || !Number.isFinite(trackerOutput.x) || !Number.isFinite(trackerOutput.y)) {
-        if (t.type !== 'charge_static' && t.type !== 'charge_moving') {
-          t.dwellMs = 0;
-        }
-        continue;
-      }
-
-      const tx = trackerOutput.x * W;
-      const ty = trackerOutput.y * H;
-      const sx = t.x * W;
-      const sy = t.y * H;
-      const radiusMult = t.type === 'charge_moving' ? 1.28 : 1.08;
-      const hitRadius = starR * radiusMult + 10;
-      const dist = Math.hypot(tx - sx, ty - sy);
-
-      if (t.mustLeaveFirst) {
-        if (dist > hitRadius * 1.15) {
-          t.mustLeaveFirst = false;
-        } else {
-          t.dwellMs = 0;
-          continue;
-        }
-      }
-
-      if (gm === 'connect') {
-        if (t.order !== game.connectNextOrder) {
-          if (dist <= hitRadius * 0.9) {
-            t.wrongDwellMs = (t.wrongDwellMs || 0) + dt;
-            if (t.wrongDwellMs >= 260) {
-              t.wrongDwellMs = 0;
-              if (config.connectSubMode === 'memory') {
-                game.connectAutoHintRemainMs = 1600;
-              }
-              playGameSound('hint');
-              addFloatingText(sx, sy - starR * 0.85, `請先找 ${game.connectNextOrder} 號星`, '#ffd452');
-            }
-          } else {
-            t.wrongDwellMs = 0;
-          }
-          continue;
-        }
-
-        t.requiredMs = getDwellRequiredMs();
-        if (dist <= hitRadius) {
-          if (t.requiredMs <= 0) {
-            handleTargetCompleted(t, now);
-            break;
-          } else {
-            t.dwellMs += dt;
-            if (t.dwellMs >= t.requiredMs) {
-              handleTargetCompleted(t, now);
-              break;
-            }
-          }
-        } else {
-          t.dwellMs = 0;
-        }
-        continue;
-      }
-
-      if (gm === 'select') {
-        if (t.eliminated) continue;
-        if (!t.isCorrect) {
-          if (dist <= hitRadius * 0.92) {
-            t.wrongDwellMs = (t.wrongDwellMs || 0) + dt;
-            if (t.wrongDwellMs >= 600) {
-              t.wrongDwellMs = 0;
-              t.eliminated = true;
-              t.shakeUntil = now + 360;
-              game.selectHadWrong = true;
-              playGameSound('hint');
-              const wantName = game.selectTargetShape?.label || '正確圖案';
-              addFloatingText(sx, sy - starR * 0.85, `這是${t.shape.label}，請找${wantName}喔`, '#ffd452');
-            }
-          } else {
-            t.wrongDwellMs = 0;
-          }
-          continue;
-        }
-
-        t.requiredMs = getDwellRequiredMs();
-        if (dist <= hitRadius) {
-          if (t.requiredMs <= 0) {
-            handleTargetCompleted(t, now);
-            break;
-          } else {
-            t.dwellMs += dt;
-            if (t.dwellMs >= t.requiredMs) {
-              handleTargetCompleted(t, now);
-              break;
-            }
-          }
-        } else {
-          t.dwellMs = 0;
-        }
-        continue;
-      }
-
-      if (gm === 'traffic') {
-        if (t.trafficLight === 'red') {
-          t.dwellMs = 0;
-          if (dist <= hitRadius * 1.12) {
-            t.redTouchWarnMs = (t.redTouchWarnMs || 0) + dt;
-            if (t.redTouchWarnMs >= 220) {
-              t.redTouchWarnMs = 0;
-              t.hadRedPenalty = true;
-              t.waitedRedCleanly = false;
-              t.phaseRemainMs = Math.max(t.phaseRemainMs, 950);
-              playGameSound('hint');
-              addFloatingText(sx, sy - starR * 0.95, '🔴 紅燈請停在圈外等一下！', '#fb7185');
-            }
-          } else {
-            t.redTouchWarnMs = 0;
-          }
-          continue;
-        }
-
-        t.requiredMs = getDwellRequiredMs();
-        if (dist <= hitRadius) {
-          if (t.requiredMs <= 0) {
-            handleTargetCompleted(t, now);
-            break;
-          } else {
-            t.dwellMs += dt;
-            if (t.dwellMs >= t.requiredMs) {
-              handleTargetCompleted(t, now);
-              break;
-            }
-          }
-        } else {
-          t.dwellMs = 0;
-        }
-        continue;
-      }
-
-      if (t.type === 'charge_static' || t.type === 'charge_moving') {
-        t.requiredMs = getChargeRequiredMs(t.type === 'charge_moving');
-        if (dist <= hitRadius) {
-          t.outsideMs = 0;
-          t.dwellMs += dt;
-          if (t.dwellMs >= t.requiredMs) {
-            handleTargetCompleted(t, now);
-            break;
-          }
-        } else {
-          t.outsideMs = (t.outsideMs || 0) + dt;
-          if (t.outsideMs > CHARGE_GRACE_MS && t.dwellMs > 0) {
-            t.dwellMs = Math.max(0, t.dwellMs - dt * CHARGE_DECAY_RATE);
-          }
-        }
-        continue;
-      }
-
-      t.requiredMs = getDwellRequiredMs();
-      if (dist <= hitRadius) {
-        if (t.requiredMs <= 0) {
-          handleTargetCompleted(t, now);
-          break;
-        } else {
-          t.dwellMs += dt;
-          if (t.dwellMs >= t.requiredMs) {
-            handleTargetCompleted(t, now);
-            break;
-          }
-        }
-      } else {
-        t.dwellMs = 0;
-      }
-    }
-  }
-
-  // ==================== 活動範圍編輯模式 ====================
-
-  function openRangeCalibration() {
-    $('settingsSheet').hidden = true;
-    $('completeOverlay').hidden = true;
-    state.calibratingRange = true;
-
-    const uBox = getUserActiveRangeBox(state.mode);
-    calibState.workingBox = {
-      minX: uBox.minX,
-      maxX: uBox.maxX,
-      minY: uBox.minY,
-      maxY: uBox.maxY
-    };
-
-    $('statusBar').hidden = true;
-    $('messageBanner').hidden = true;
-    $('mainFooter').hidden = true;
-    $('calibPanel').hidden = false;
-
-    $('calibGuideText').textContent =
-      `【${modeName(state.mode)}】直接拉動綠框四邊／四角可放大至全畫面，或按住框內平移`;
-
-    if (!state.active) {
-      startCamera();
-    } else {
-      renderScene();
-    }
-  }
-
-  function applyRangeAndReturn() {
-    if (calibState.workingBox) {
-      const clamped = clampUserBoxToCameraStage(calibState.workingBox);
-      modeRanges[state.mode] = {
-        isCustom: true,
-        box: clamped
-      };
-      saveRangesToStorage();
-    }
-    closeRangeCalibration(true);
-  }
-
-  function resetCurrentModeRangeToDefault() {
-    modeRanges[state.mode] = {
-      isCustom: false,
-      box: null
-    };
-    saveRangesToStorage();
-
-    const def = getDefaultUserRangeBox(state.mode);
-    calibState.workingBox = {
-      minX: def.minX,
-      maxX: def.maxX,
-      minY: def.minY,
-      maxY: def.maxY
-    };
-
-    updateScoreAndTimerUI();
-    spawnNextTargets(performance.now(), false);
-    if (state.calibratingRange) {
-      $('calibGuideText').textContent =
-        `已恢復【${modeName(state.mode)}】預設範圍，可繼續拉框或按「完成套用」`;
-    }
-    renderScene();
-  }
-
-  function closeRangeCalibration(applied = false) {
-    state.calibratingRange = false;
-    calibState.dragHandle = null;
-    $('calibPanel').hidden = true;
-    $('mainFooter').hidden = false;
-    $('statusBar').hidden = false;
-    $('messageBanner').hidden = false;
-
-    if (applied) {
-      spawnNextTargets(performance.now(), false);
-      $('footerHint').textContent =
-        `已套用${modeName()}活動範圍（更換手機位置或坐姿後可重新拉框）。`;
-    } else {
-      ensureCurrentTargetsInsideBounds();
-    }
-    updateScoreAndTimerUI();
-    refreshTrackingBanner(state.mode);
-    renderScene();
-  }
-
-  function hitTestCalibHandle(px, py) {
-    if (!state.calibratingRange || !calibState.workingBox) return null;
-    const W = stage.clientWidth;
-    const H = stage.clientHeight;
-    const b = calibState.workingBox;
-    const x1 = b.minX * W;
-    const x2 = b.maxX * W;
-    const y1 = b.minY * H;
-    const y2 = b.maxY * H;
-    const mx = (x1 + x2) * 0.5;
-    const my = (y1 + y2) * 0.5;
-    const hitR = 32;
-
-    const hx1 = Math.max(11, Math.min(W - 11, x1));
-    const hx2 = Math.max(11, Math.min(W - 11, x2));
-    const hy1 = Math.max(11, Math.min(H - 11, y1));
-    const hy2 = Math.max(11, Math.min(H - 11, y2));
-
-    const handles = [
-      { id: 'tl', x: hx1, y: hy1 },
-      { id: 'tr', x: hx2, y: hy1 },
-      { id: 'bl', x: hx1, y: hy2 },
-      { id: 'br', x: hx2, y: hy2 },
-      { id: 'top', x: mx, y: hy1 },
-      { id: 'bottom', x: mx, y: hy2 },
-      { id: 'left', x: hx1, y: my },
-      { id: 'right', x: hx2, y: my }
-    ];
-
-    for (const h of handles) {
-      if (Math.hypot(px - h.x, py - h.y) <= hitR) return h.id;
-    }
-
-    if (py >= y1 - hitR && py <= y2 + hitR) {
-      if (Math.abs(px - x1) <= hitR) return 'left';
-      if (Math.abs(px - x2) <= hitR) return 'right';
-    }
-    if (px >= x1 - hitR && px <= x2 + hitR) {
-      if (Math.abs(py - y1) <= hitR) return 'top';
-      if (Math.abs(py - y2) <= hitR) return 'bottom';
-    }
-
-    if (px > x1 && px < x2 && py > y1 && py < y2) {
-      return 'move';
-    }
-    return null;
-  }
-
-  function updateCalibDrag(nx, ny) {
-    if (!calibState.dragHandle || !calibState.dragStartBox || !calibState.dragStartNorm) return;
-    const minSpanX = 0.16;
-    const minSpanY = 0.14;
-    const dx = nx - calibState.dragStartNorm.x;
-    const dy = ny - calibState.dragStartNorm.y;
-    const s = calibState.dragStartBox;
-    let { minX, maxX, minY, maxY } = s;
-    const h = calibState.dragHandle;
-
-    if (h === 'move') {
-      const w = maxX - minX;
-      const ht = maxY - minY;
-      minX = Math.max(0, Math.min(1 - w, minX + dx));
-      maxX = minX + w;
-      minY = Math.max(0, Math.min(1 - ht, minY + dy));
-      maxY = minY + ht;
-    } else {
-      if (h.includes('l') || h === 'left') {
-        minX = Math.max(0, Math.min(maxX - minSpanX, s.minX + dx));
-      }
-      if (h.includes('r') || h === 'right') {
-        maxX = Math.min(1, Math.max(minX + minSpanX, s.maxX + dx));
-      }
-      if (h.includes('t') || h === 'top') {
-        minY = Math.max(0, Math.min(maxY - minSpanY, s.minY + dy));
-      }
-      if (h.includes('b') || h === 'bottom') {
-        maxY = Math.min(1, Math.max(minY + minSpanY, s.maxY + dy));
-      }
-    }
-
-    calibState.workingBox = { minX, maxX, minY, maxY };
-    renderScene();
-  }
-
-  // ==================== V3 八大星空模式專屬美術與視覺渲染 ====================
-
-  function traceStarPath(context, cx, cy, outerR, innerR, points = 5, rotationOffset = 0) {
-    context.beginPath();
-    const step = Math.PI / points;
-    for (let i = 0; i < points * 2; i++) {
-      const r = i % 2 === 0 ? outerR : innerR;
-      const angle = i * step - Math.PI / 2 + rotationOffset;
-      const x = cx + Math.cos(angle) * r;
-      const y = cy + Math.sin(angle) * r;
-      if (i === 0) context.moveTo(x, y);
-      else context.lineTo(x, y);
-    }
-    context.closePath();
-  }
-
-  function tracePolygonPath(context, cx, cy, radius, sides = 6, rotationOffset = 0) {
-    context.beginPath();
-    for (let i = 0; i < sides; i++) {
-      const angle = (Math.PI * 2 * i) / sides - Math.PI / 2 + rotationOffset;
-      const x = cx + Math.cos(angle) * radius;
-      const y = cy + Math.sin(angle) * radius;
-      if (i === 0) context.moveTo(x, y);
-      else context.lineTo(x, y);
-    }
-    context.closePath();
-  }
-
-  // 繪製多層次星空宇宙氛圍（遠景星雲光暈、閃爍星海、四角四芒星、偶發遠景流星）與跨中線引導
-  function drawCosmicAtmosphereAndMidline(W, H, now) {
-    ctx.save();
-    const reduced = reducedMotionQuery.matches;
-    const isDreamy = config.cosmicBgMode !== 'clear';
-    const alphaScale = isDreamy ? 1.0 : 0.48;
-    const minDim = Math.min(W, H);
-
-    // 1. 舞台四周緩慢呼吸的深空星雲團（不遮擋中央活動區）
-    if (isDreamy) {
-      for (let i = 0; i < ambientNebulae.length; i++) {
-        const nb = ambientNebulae[i];
-        const driftX = reduced ? 0 : Math.sin(now * 0.0005 + nb.phase) * 14;
-        const driftY = reduced ? 0 : Math.cos(now * 0.0004 + nb.phase) * 12;
-        const nx = nb.x * W + driftX;
-        const ny = nb.y * H + driftY;
-        const nr = minDim * nb.rScale;
-        const grad = ctx.createRadialGradient(nx, ny, nr * 0.1, nx, ny, nr);
-        grad.addColorStop(0, nb.colorInner);
-        grad.addColorStop(0.55, nb.colorMid);
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(nx, ny, nr, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // 2. 雙層閃爍星海（圓點微星 + 精緻呼吸四芒星）
-    for (let i = 0; i < ambientStars.length; i++) {
-      const st = ambientStars[i];
-      const twinkle = reduced
-        ? 0.28 * alphaScale
-        : (0.18 + Math.sin(now * 0.0024 + st.phase) * 0.16) * alphaScale;
-      const sx = st.x * W;
-      const sy = st.y * H;
-
-      ctx.globalAlpha = Math.max(0.05, Math.min(0.65, twinkle));
-      ctx.fillStyle = st.color;
-
-      if (st.isDiamond && isDreamy) {
-        traceStarPath(ctx, sx, sy, st.r * 2.4, st.r * 0.65, 4, 0);
-        ctx.fill();
-      } else {
-        ctx.beginPath();
-        ctx.arc(sx, sy, st.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    ctx.globalAlpha = 1.0;
-
-    // 3. 偶爾劃過舞台上緣的遠景流星（每 9～14 秒出現一次，營造活生生的宇宙夜空）
-    if (!reduced && isDreamy) {
-      if (!ambientMeteor.active && now >= ambientMeteor.nextAt) {
-        ambientMeteor.active = true;
-        ambientMeteor.born = now;
-        ambientMeteor.duration = 950;
-        const fromLeft = Math.random() < 0.5;
-        ambientMeteor.x = fromLeft ? 0.12 + Math.random() * 0.25 : 0.88 - Math.random() * 0.25;
-        ambientMeteor.y = 0.08 + Math.random() * 0.18;
-        ambientMeteor.vx = (fromLeft ? 1 : -1) * (0.28 + Math.random() * 0.12);
-        ambientMeteor.vy = 0.12 + Math.random() * 0.08;
-      }
-      if (ambientMeteor.active) {
-        const prog = (now - ambientMeteor.born) / ambientMeteor.duration;
-        if (prog >= 1) {
-          ambientMeteor.active = false;
-          ambientMeteor.nextAt = now + 8500 + Math.random() * 5500;
-        } else {
-          const curX = (ambientMeteor.x + ambientMeteor.vx * prog) * W;
-          const curY = (ambientMeteor.y + ambientMeteor.vy * prog) * H;
-          const tailX = curX - ambientMeteor.vx * W * 0.12;
-          const tailY = curY - ambientMeteor.vy * H * 0.12;
-          const fade = Math.sin(prog * Math.PI) * 0.55;
-
-          const mGrad = ctx.createLinearGradient(curX, curY, tailX, tailY);
-          mGrad.addColorStop(0, `rgba(255, 248, 200, ${fade})`);
-          mGrad.addColorStop(0.5, `rgba(56, 189, 248, ${fade * 0.6})`);
-          mGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
-          ctx.strokeStyle = mGrad;
-          ctx.lineWidth = 2.2;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(curX, curY);
-          ctx.lineTo(tailX, tailY);
-          ctx.stroke();
-        }
-      }
-    }
-
-    // 4. 🔀 跨中線視覺引導：「漸層星軸子午線」（兩端北極星芒錨點＋中央極淡漸層星光束與微星粒，取代傳統虛線不切臉）
-    if (config.midlineGuideOn && config.rangeMode !== 'ud') {
-      const b = getUserActiveRangeBox(state.mode);
-      const midX = ((b.minX + b.maxX) * 0.5) * W;
-      const yTop = b.minY * H + 8;
-      const yBottom = b.maxY * H - 8;
-      const spanH = Math.max(40, yBottom - yTop);
-
-      // 垂直漸層星光軸：上下兩端微亮引導，畫面正中央淡出至 0.04 透明度，完全不干擾臉部與手部
-      const midGrad = ctx.createLinearGradient(midX, yTop, midX, yBottom);
-      midGrad.addColorStop(0, 'rgba(112, 229, 171, 0.42)');
-      midGrad.addColorStop(0.22, 'rgba(56, 189, 248, 0.12)');
-      midGrad.addColorStop(0.50, 'rgba(56, 189, 248, 0.03)');
-      midGrad.addColorStop(0.78, 'rgba(56, 189, 248, 0.12)');
-      midGrad.addColorStop(1, 'rgba(112, 229, 171, 0.42)');
-
-      ctx.strokeStyle = midGrad;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(midX, yTop);
-      ctx.lineTo(midX, yBottom);
-      ctx.stroke();
-
-      // 上下端點「北極星芒定位錨點」
-      ctx.fillStyle = 'rgba(112, 229, 171, 0.72)';
-      traceStarPath(ctx, midX, yTop, 6.5, 2.0, 4, 0);
-      ctx.fill();
-      traceStarPath(ctx, midX, yBottom, 6.5, 2.0, 4, 0);
-      ctx.fill();
-
-      // 中軸線上稀疏呼吸的 5 顆微光星塵點
-      for (let k = 1; k <= 5; k++) {
-        const frac = k / 6;
-        const py = yTop + spanH * frac;
-        const distFromCenter = Math.abs(frac - 0.5) * 2;
-        const dotAlpha = (0.10 + distFromCenter * 0.22) * (reduced ? 1 : 0.8 + Math.sin(now * 0.003 + k) * 0.2);
-        ctx.fillStyle = `rgba(186, 230, 253, ${dotAlpha})`;
-        ctx.beginPath();
-        ctx.arc(midX, py, 1.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    ctx.restore();
-  }
-
-  // 全新美術設計：「🌟 星門聖殿（Cosmic Stargate）」多層逆向旋轉星盤、極光能量漩渦與八芒星核
-  function drawCosmicStargate(cx, cy, r, now, labelText = '🌟 星門聖殿', theme = 'aurora') {
-    const reduced = reducedMotionQuery.matches;
-    const pulse = reduced ? 1 : 1 + Math.sin(now * 0.004) * 0.05;
-    const outerR = r * 1.25 * pulse;
-    const isGold = theme === 'gold';
-
-    ctx.save();
-
-    // 1. 外層深空極光星雲暈染
-    const haloGrad = ctx.createRadialGradient(cx, cy, r * 0.12, cx, cy, outerR * 1.55);
-    if (isGold) {
-      haloGrad.addColorStop(0, 'rgba(255, 243, 176, 0.85)');
-      haloGrad.addColorStop(0.35, 'rgba(255, 212, 82, 0.45)');
-      haloGrad.addColorStop(0.7, 'rgba(56, 189, 248, 0.22)');
-      haloGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
-    } else {
-      haloGrad.addColorStop(0, 'rgba(216, 255, 240, 0.85)');
-      haloGrad.addColorStop(0.35, 'rgba(76, 255, 179, 0.45)');
-      haloGrad.addColorStop(0.68, 'rgba(56, 189, 248, 0.28)');
-      haloGrad.addColorStop(1, 'rgba(139, 92, 246, 0)');
-    }
-    ctx.fillStyle = haloGrad;
+  const stripeW = 36;
+  const cols = Math.ceil(w / stripeW) + 1;
+  for (let i = 0; i < cols; i++) {
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(173, 77, 55, 0.22)' : 'rgba(255, 250, 240, 0.45)';
     ctx.beginPath();
-    ctx.arc(cx, cy, outerR * 1.55, 0, Math.PI * 2);
+    ctx.arc(i * stripeW + stripeW * 0.5, 0, stripeW * 0.52, 0, Math.PI, false);
     ctx.fill();
+  }
 
-    // 2. 外圈逆時針旋轉星盤刻度環（Astrolabe Outer Ring）
-    const rotOuter = reduced ? 0 : -now * 0.0011;
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(rotOuter);
+  const deskY = h * 0.72;
+  const woodGrad = ctx.createLinearGradient(0, deskY, 0, h);
+  woodGrad.addColorStop(0, '#A87C58');
+  woodGrad.addColorStop(0.06, '#8B6242');
+  woodGrad.addColorStop(0.5, '#734E34');
+  woodGrad.addColorStop(1, '#583A25');
+  ctx.fillStyle = woodGrad;
+  ctx.fillRect(0, deskY, w, h - deskY);
 
-    ctx.strokeStyle = isGold ? 'rgba(255, 212, 82, 0.78)' : 'rgba(112, 229, 171, 0.82)';
-    ctx.lineWidth = 2.5;
+  ctx.fillStyle = 'rgba(255, 244, 224, 0.28)';
+  ctx.fillRect(0, deskY, w, 4);
+  ctx.strokeStyle = 'rgba(58, 36, 20, 0.22)';
+  ctx.lineWidth = 1.5;
+  for (let wy = deskY + 26; wy < h; wy += 32) {
     ctx.beginPath();
-    ctx.arc(0, 0, outerR, 0, Math.PI * 2);
+    ctx.moveTo(0, wy);
+    ctx.bezierCurveTo(w * 0.33, wy - 4, w * 0.66, wy + 4, w, wy);
     ctx.stroke();
+  }
+}
 
-    // 12 道星盤幾何刻度與四方星芒錨點
-    for (let i = 0; i < 12; i++) {
-      const ang = (Math.PI * 2 * i) / 12;
-      const isCardinal = i % 3 === 0;
-      const rIn = outerR * (isCardinal ? 0.82 : 0.90);
-      const rOut = outerR * (isCardinal ? 1.10 : 1.02);
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(ang) * rIn, Math.sin(ang) * rIn);
-      ctx.lineTo(Math.cos(ang) * rOut, Math.sin(ang) * rOut);
-      ctx.lineWidth = isCardinal ? 3 : 1.8;
-      ctx.strokeStyle = isCardinal ? '#ffd452' : 'rgba(186, 230, 253, 0.75)';
-      ctx.stroke();
-    }
-    ctx.restore();
+function drawCleanColorPickOverlay(w, h) {
+  const cx = w * 0.5;
+  const boxY = Math.max(138, h * 0.22);
+  const boxW = Math.min(w - 28, 430);
+  const boxH = 74;
 
-    // 3. 內圈順時針旋轉能量光弧（Counter-Rotating Vortex Arcs）
-    const rotInner = reduced ? 0 : now * 0.0022;
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(rotInner);
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 4;
-    for (let arm = 0; arm < 3; arm++) {
-      const a0 = (Math.PI * 2 * arm) / 3;
-      ctx.strokeStyle = arm % 2 === 0 ? '#38bdf8' : '#ffd452';
-      ctx.beginPath();
-      ctx.arc(0, 0, r * 0.82, a0, a0 + 1.25);
-      ctx.stroke();
-    }
-    ctx.restore();
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 249, 237, 0.94)';
+  roundRect(ctx, cx - boxW * 0.5, boxY, boxW, boxH, 18);
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#A95E35';
+  ctx.stroke();
 
-    // 4. 中央八芒星羅盤核心（Pulsing Celestial Star Core）
-    ctx.shadowColor = isGold ? '#ffd452' : '#4cffb3';
-    ctx.shadowBlur = 14;
-    traceStarPath(ctx, cx, cy, r * 0.56 * pulse, r * 0.22 * pulse, 8, reduced ? 0 : now * 0.0008);
-    ctx.fillStyle = isGold ? '#fff3b0' : '#d8fff0';
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#ffffff';
-    ctx.stroke();
+  ctx.font = '900 18px "Noto Sans TC", sans-serif';
+  ctx.fillStyle = '#4A3222';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🎨 請直接點擊畫面上的彩色物品／握把', cx, boxY + 26, boxW - 24);
 
-    // 5. 星門下方高對比精緻膠囊標籤（不遮擋星門中央視覺）
-    if (labelText) {
-      ctx.shadowBlur = 0;
-      const tagY = cy + outerR + 16;
-      const tagW = 92;
-      const tagH = 22;
-      ctx.fillStyle = 'rgba(8, 14, 36, 0.88)';
-      ctx.strokeStyle = isGold ? '#ffd452' : '#70e5ab';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(cx - tagW / 2, tagY - tagH / 2, tagW, tagH, 11);
-      } else {
-        ctx.rect(cx - tagW / 2, tagY - tagH / 2, tagW, tagH);
-      }
-      ctx.fill();
-      ctx.stroke();
+  ctx.font = '700 13.5px "Noto Sans TC", sans-serif';
+  ctx.fillStyle = '#7F7163';
+  ctx.fillText('取色完成後，配料盆與冰碗就會自動出現', cx, boxY + 52, boxW - 24);
+  ctx.restore();
+}
 
-      ctx.font = '900 12px system-ui, -apple-system, "Noto Sans TC", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(labelText, cx, tagY + 0.5);
-    }
+function drawScene(w, h) {
+  ctx.clearRect(0, 0, w, h);
 
-    ctx.restore();
+  if (isColorPickingCleanScreen()) {
+    drawCleanColorPickOverlay(w, h);
+    return;
   }
 
-  // 繪製「🌀 太空黑洞」與 2 秒重力束吸住視覺特效
-  function drawBlackHoleAndTrap(W, H, starR, now) {
-    if (!game.blackHole) return;
-    const bh = game.blackHole;
-    const bx = bh.x * W;
-    const by = bh.y * H;
-    const r = Math.max(26, starR * 0.78);
-    const reduced = reducedMotionQuery.matches;
-    const isCooling = bh.cooldownMs > 0;
-
-    ctx.save();
-    if (isCooling) ctx.globalAlpha = 0.32;
-
-    // 外圍旋轉紫色吸積盤光暈
-    const grad = ctx.createRadialGradient(bx, by, r * 0.18, bx, by, r * 1.65);
-    grad.addColorStop(0, '#05050a');
-    grad.addColorStop(0.38, '#3b0764');
-    grad.addColorStop(0.7, 'rgba(168, 85, 247, 0.45)');
-    grad.addColorStop(1, 'rgba(168, 85, 247, 0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(bx, by, r * 1.65, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 旋轉漩渦弧線
-    const rot = reduced ? 0 : now * 0.0035;
-    ctx.strokeStyle = '#c084fc';
-    ctx.lineWidth = 2.5;
-    for (let arm = 0; arm < 3; arm++) {
-      const a0 = rot + (Math.PI * 2 * arm) / 3;
-      ctx.beginPath();
-      ctx.arc(bx, by, r * 0.85, a0, a0 + 1.15);
-      ctx.stroke();
-    }
-
-    // 黑洞中心事件視界
-    ctx.beginPath();
-    ctx.arc(bx, by, r * 0.46, 0, Math.PI * 2);
-    ctx.fillStyle = '#030712';
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#e879f9';
-    ctx.stroke();
-
-    // 若玩家正被黑洞吸住鎖定 2 秒，繪製連接追蹤環的「紫色彈力重力光束」與 2 秒倒數解鎖圈
-    if (game.blackHoleTrappedMs > 0 && trackerOutput.found) {
-      const tx = trackerOutput.x * W;
-      const ty = trackerOutput.y * H;
-      ctx.globalAlpha = 0.92;
-      ctx.strokeStyle = '#e879f9';
-      ctx.lineWidth = 4;
-      ctx.setLineDash([6, 5]);
-      ctx.beginPath();
-      ctx.moveTo(bx, by);
-      ctx.lineTo(tx, ty);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      const trapRatio = game.blackHoleTrappedMs / BLACK_HOLE_TRAP_MS;
-      ctx.beginPath();
-      ctx.arc(tx, ty, 33, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * trapRatio);
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = '#e879f9';
-      ctx.stroke();
-    }
-
-    ctx.restore();
+  if (state.cameraActive) {
+    ctx.fillStyle = 'rgba(67, 45, 28, 0.32)';
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    drawRetroTouchBackdrop(w, h);
   }
 
-  function drawSelectShapeIcon(cx, cy, r, shapeObj) {
-    const id = shapeObj.id;
-    ctx.save();
-    ctx.shadowColor = shapeObj.color;
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = shapeObj.color;
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = Math.max(2.5, r * 0.08);
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
+  const area = getPlayAreaBounds(w, h);
+  const zones = getZoneRects(w, h);
 
-    if (id === 'star') {
-      traceStarPath(ctx, cx, cy, r * 0.98, r * 0.46, 5, 0);
-      ctx.fill();
-      ctx.stroke();
-    } else if (id === 'moon') {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 0.88, 0.35 * Math.PI, 1.65 * Math.PI, false);
-      ctx.arc(cx + r * 0.38, cy - r * 0.08, r * 0.72, 1.52 * Math.PI, 0.48 * Math.PI, true);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    } else if (id === 'sun') {
-      traceStarPath(ctx, cx, cy, r * 1.02, r * 0.72, 12, 0);
-      ctx.fill();
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 0.52, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff7ed';
-      ctx.fill();
-    } else if (id === 'heart') {
-      const s = r * 0.92;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy + s * 0.78);
-      ctx.bezierCurveTo(cx - s * 1.15, cy + s * 0.15, cx - s * 0.95, cy - s * 0.85, cx, cy - s * 0.32);
-      ctx.bezierCurveTo(cx + s * 0.95, cy - s * 0.85, cx + s * 1.15, cy + s * 0.15, cx, cy + s * 0.78);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    } else if (id === 'clover') {
-      const leafDist = r * 0.42;
-      const leafR = r * 0.44;
-      for (let i = 0; i < 4; i++) {
-        const ang = (Math.PI / 2) * i + Math.PI / 4;
-        const lx = cx + Math.cos(ang) * leafDist;
-        const ly = cy + Math.sin(ang) * leafDist;
-        ctx.beginPath();
-        ctx.arc(lx, ly, leafR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      }
-      ctx.shadowBlur = 0;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 0.22, 0, Math.PI * 2);
-      ctx.fillStyle = '#dcfce7';
-      ctx.fill();
+  if (state.phase === 'ORDER_MEMORIZE') {
+    drawOrderMemorizeCard(area);
+  } else if (state.phase === 'BOWL_QUIZ') {
+    drawMemoryQuizShowcase(area);
+  } else if (state.phase !== 'BOWL_CELEBRATE') {
+    zones.forEach(z => (z.role === 'bowl' ? drawMainBowlZone(z) : drawPeripheralBasinZone(z)));
+    if (!isMultiBasinFindMode()) {
+      const bowlZone = zones.find(z => z.role === 'bowl');
+      const activeBasinZone = zones.find(z => z.id === state.activeBasinZoneId);
+      if (bowlZone && activeBasinZone) drawGuidedArrowBridge(bowlZone, activeBasinZone);
     }
+  } else {
+    drawCelebrationShowcase(area);
+  }
 
-    ctx.shadowBlur = 0;
-    ctx.font = '900 13px system-ui, -apple-system, "Noto Sans TC", sans-serif';
+  state.fallingDrops.forEach(drop => {
+    const curX = drop.x + (drop.targetX - drop.x) * drop.progress;
+    const curY = drop.y + (drop.targetY - drop.y) * drop.progress - Math.sin(drop.progress * Math.PI) * 55;
+    drawSingleIngredientPiece(drop.ing, curX, curY, drop.size, drop.rot, 0);
+  });
+
+  state.burstParticles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  state.confettiParticles.forEach(c => {
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.rot);
+    ctx.fillStyle = c.color;
+    ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+    ctx.restore();
+  });
+
+  state.floatingTexts.forEach(ft => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, ft.alpha);
+    ctx.font = `900 ${Math.round(23 * ft.scale)}px "Noto Sans TC", sans-serif`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const tagY = cy + r * 1.12;
-    ctx.fillStyle = 'rgba(9, 24, 32, 0.86)';
-    ctx.fillRect(cx - 28, tagY - 10, 56, 20);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(shapeObj.label, cx, tagY);
-
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(42, 24, 12, 0.92)';
+    ctx.strokeText(ft.text, ft.x, ft.y);
+    ctx.fillStyle = ft.color;
+    ctx.fillText(ft.text, ft.x, ft.y);
     ctx.restore();
+  });
+
+  if (state.phase !== 'ORDER_MEMORIZE') {
+    drawSpoonCursor(w, h);
   }
+}
 
-  function drawSelectQuestionHud(W) {
-    if (config.gamePlayMode !== 'select' || !game.selectTargetShape) return;
-    const s = game.selectTargetShape;
-    const cx = W * 0.5;
-    const cy = 66;
-    const audioOnly = config.selectPromptMode === 'audio_only';
+function drawOrderMemorizeCard(area) {
+  const recipe = getCurrentRecipe();
+  const steps = recipe.steps;
+  const cardW = Math.min(area.width - 20, 460);
+  const cardH = Math.min(area.height - 20, 310);
+  const x = area.centerX - cardW * 0.5;
+  const y = area.centerY - cardH * 0.5;
 
-    ctx.save();
-    ctx.fillStyle = 'rgba(12, 34, 46, 0.92)';
-    ctx.strokeStyle = audioOnly ? '#38bdf8' : s.color;
-    ctx.lineWidth = 2.5;
-    const boxW = audioOnly ? 210 : 196;
-    const boxH = 40;
-    ctx.beginPath();
-    if (ctx.roundRect) {
-      ctx.roundRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH, 20);
-    } else {
-      ctx.rect(cx - boxW / 2, cy - boxH / 2, boxW, boxH);
-    }
-    ctx.fill();
-    ctx.stroke();
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 251, 242, 0.98)';
+  roundRect(ctx, x, y, cardW, cardH, 24);
+  ctx.fill();
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = '#A95E35';
+  ctx.stroke();
 
-    ctx.font = '900 16px system-ui, -apple-system, "Noto Sans TC", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(
-      audioOnly ? '🎧 聽語音找出對應星象' : `題目：請找 ${s.icon} ${s.label}`,
-      cx,
-      cy + 1
-    );
-    ctx.restore();
-  }
+  ctx.font = '900 18px "Noto Sans TC", sans-serif';
+  ctx.fillStyle = '#A34E34';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`客人點餐：${recipe.name}`, area.centerX, y + 32, cardW - 24);
 
-  // 繪製「☁️ 撥開星雲」模式下的底層隱藏星星與大片多層次星雲帷幕
-  function drawNebulaScene(W, H, starR, now) {
-    if (config.gamePlayMode !== 'nebula' || !game.targets.length) return;
-    const centerX = (game.targets[0].baseX || 0.5) * W;
-    const centerY = (game.targets[0].baseY || 0.5) * H;
+  const ratio = Math.max(0, Math.min(1, state.memorizeTimer / config.memorizeSeconds));
+  const barW = cardW - 60;
+  ctx.fillStyle = '#EADCCB';
+  roundRect(ctx, x + 30, y + 54, barW, 8, 4);
+  ctx.fill();
+  ctx.fillStyle = '#A95E35';
+  roundRect(ctx, x + 30, y + 54, barW * ratio, 8, 4);
+  ctx.fill();
 
-    // 1. 先在底層畫出被星雲遮蓋的璀璨金色大星星
-    drawTargetEntity(
-      { type: 'normal', x: centerX / W, y: centerY / H, dwellMs: 0, requiredMs: 0 },
-      W,
-      H,
-      starR * 1.24,
-      now,
-      true
-    );
+  const itemW = (cardW - 44) / 3;
+  const iconSz = Math.min(62, itemW * 0.72);
+  const rowY = y + cardH * 0.54;
 
-    // 2. 在上方疊加寬幅多層次夢幻星雲帷幕（支援紫羅蘭／星河藍／極光粉漸層與揮動提示）
-    ctx.save();
-    const palettes = [
-      ['rgba(216, 180, 254, 0.95)', 'rgba(126, 34, 206, 0.78)', 'rgba(59, 7, 100, 0)'],
-      ['rgba(165, 180, 252, 0.95)', 'rgba(67, 56, 202, 0.78)', 'rgba(30, 27, 75, 0)'],
-      ['rgba(240, 171, 252, 0.92)', 'rgba(147, 51, 234, 0.75)', 'rgba(76, 29, 149, 0)']
-    ];
+  steps.forEach((ingId, idx) => {
+    const ing = INGREDIENTS[ingId];
+    const ix = x + 22 + itemW * (idx + 0.5);
 
-    for (let i = 0; i < game.targets.length; i++) {
-      const c = game.targets[i];
-      if (!c || c.cleared) continue;
-      const curScale = Math.max(0.30, c.scale ?? 1.0);
-      const cx = c.x * W + Math.sin(now * 0.0018 + c.phase) * 7;
-      const cy = c.y * H + Math.cos(now * 0.0015 + c.phase) * 6;
-      const cr = starR * (c.radiusScale || 1.95) * curScale;
-      const pal = palettes[(c.hueShift || 0) % palettes.length];
-
-      // 方案 A：實心縮小＋高對比光暈邊緣，絕不變淡成看不見的幽靈雲
-      ctx.globalAlpha = 0.94;
-      const grad = ctx.createRadialGradient(cx, cy, cr * 0.12, cx, cy, cr);
-      grad.addColorStop(0, pal[0]);
-      grad.addColorStop(0.68, pal[1]);
-      grad.addColorStop(1, 'rgba(59, 7, 100, 0.28)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, cr, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.lineWidth = 2.0;
-      ctx.strokeStyle = 'rgba(243, 232, 255, 0.58)';
-      ctx.stroke();
-    }
-
-    // 3. 在星雲帷幕中央繪製柔和「上下／左右揮動撥開」動態引導標示
-    const activeClouds = game.targets.filter(c => c && !c.cleared).length;
-    if (activeClouds > 0) {
-      ctx.globalAlpha = Math.min(0.88, avgOpacity);
-      ctx.font = '900 14px system-ui, -apple-system, "Noto Sans TC", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const arrowText =
-        config.rangeMode === 'ud'
-          ? '↕ 大幅上下揮動撥開星雲'
-          : config.rangeMode === 'lr'
-          ? '↔ 大幅左右揮動撥開星雲'
-          : '👋 大幅上下左右揮動撥開星雲';
-      const tw = 206;
-      const th = 28;
-      ctx.fillStyle = 'rgba(10, 16, 40, 0.82)';
-      ctx.strokeStyle = 'rgba(216, 180, 254, 0.75)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(centerX - tw / 2, centerY - th / 2, tw, th, 14);
-      } else {
-        ctx.rect(centerX - tw / 2, centerY - th / 2, tw, th);
-      }
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#f3e8ff';
-      ctx.fillText(arrowText, centerX, centerY + 0.5);
-    }
-
-    ctx.restore();
-  }
-
-  // 繪製「🧲 星際引力」的目標星門聖殿與小星星
-  function drawMagnetScene(W, H, starR, now) {
-    if (config.gamePlayMode !== 'magnet' || !game.magnetPortal) return;
-    const px = game.magnetPortal.x * W;
-    const py = game.magnetPortal.y * H;
-    const pr = starR * 1.18;
-
-    // 1. 繪製升級版「🌟 星門聖殿（Cosmic Stargate）」
-    drawCosmicStargate(px, py, pr, now, '🌟 星門聖殿', 'aurora');
-
-    // 2. 繪製場上散落或已被吸住的小星星
-    for (let i = 0; i < game.targets.length; i++) {
-      const ms = game.targets[i];
-      if (!ms || ms.delivered) continue;
-      if (ms.attached && trackerOutput.found) {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(112, 229, 171, 0.65)';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(trackerOutput.x * W, trackerOutput.y * H);
-        ctx.lineTo(ms.x * W, ms.y * H);
-        ctx.stroke();
-        ctx.restore();
-      }
-      drawTargetEntity(
-        { type: 'normal', x: ms.x, y: ms.y, dwellMs: 0, requiredMs: 0 },
-        W,
-        H,
-        starR * 0.72,
-        now,
-        true
-      );
-    }
-  }
-
-  function drawMotionTrail(target, W, H, r, colorRgb) {
-    if (!target.trail || target.trail.length < 2) return;
-    ctx.save();
-    for (let i = target.trail.length - 1; i >= 1; i--) {
-      const pt = target.trail[i];
-      const ratio = 1 - i / target.trail.length;
-      const tx = pt.x * W;
-      const ty = pt.y * H;
-      ctx.beginPath();
-      ctx.arc(tx, ty, r * (0.28 + ratio * 0.42), 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${colorRgb}, ${ratio * 0.28})`;
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  function drawTargetEntity(target, W, H, baseR, now, isReady = true) {
-    let cx = target.x * W;
-    const cy = target.y * H;
-
-    if (target.shakeUntil && now < target.shakeUntil) {
-      cx += Math.sin(now * 0.06) * 7;
-    }
-
-    if (target.completed) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 212, 82, 0.92)';
-      ctx.shadowColor = '#ffd452';
-      ctx.shadowBlur = 10;
-      ctx.fill();
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#ffffff';
-      ctx.stroke();
-
-      ctx.shadowBlur = 0;
-      ctx.font = '900 12px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#091820';
-      ctx.fillText(String(target.order), cx, cy + 0.5);
-      ctx.restore();
-      return;
-    }
-
-    const reduced = reducedMotionQuery.matches;
-    const pulse = reduced ? 1 : 1 + Math.sin(now * 0.0048) * 0.045;
-    const r = baseR * pulse;
-    const type = target.type;
-    const dwellProgress =
-      isReady && target.requiredMs > 0 ? Math.min(1, Math.max(0, target.dwellMs / target.requiredMs)) : 0;
-
-    // 繪製「🌈 星河軌道」的牽引光球（track_orb）
-    if (type === 'track_orb') {
-      drawMotionTrail(target, W, H, r, '56, 189, 248');
-      ctx.save();
-      if (!isReady) ctx.globalAlpha = 0.55;
-
-      const engaged = game.trackOrbEngaged;
-      const orbGrad = ctx.createRadialGradient(cx, cy, r * 0.15, cx, cy, r * 1.35);
-      orbGrad.addColorStop(0, '#ffffff');
-      orbGrad.addColorStop(0.45, engaged ? '#4cffb3' : '#38bdf8');
-      orbGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
-      ctx.fillStyle = orbGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.35, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 0.85, 0, Math.PI * 2);
-      ctx.fillStyle = engaged ? '#10b981' : '#0284c7';
-      ctx.fill();
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = '#ffffff';
-      ctx.stroke();
-
-      traceStarPath(ctx, cx, cy, r * 0.52, r * 0.24, 5, 0);
-      ctx.fillStyle = '#ffd452';
-      ctx.fill();
-      ctx.restore();
-      return;
-    }
-
-    // 繪製「🌠 托起墜落星」的飄落彗星、發光新月光托與動態「由下往上托」箭頭
-    if (type === 'falling_star') {
-      drawMotionTrail(target, W, H, r, '251, 191, 36');
-      ctx.save();
-      if (!isReady) ctx.globalAlpha = 0.55;
-
-      // 下方發光「新月光托（Crescent Cradle）」與動態向上雙箭頭，直覺引導「由下往上頂」！
-      const liftBounce = reduced ? 0 : Math.sin(now * 0.008) * 5;
-      ctx.shadowColor = '#4cffb3';
-      ctx.shadowBlur = 10;
-      ctx.strokeStyle = '#4cffb3';
-      ctx.lineWidth = 4.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.arc(cx, cy + r * 0.22 + liftBounce * 0.4, r * 1.22, 0.18 * Math.PI, 0.82 * Math.PI);
-      ctx.stroke();
-
-      // 繪製底部向上 V 型發光推進箭頭
-      const arrowY = cy + r * 1.62 + liftBounce;
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#ffd452';
-      ctx.beginPath();
-      ctx.moveTo(cx - 12, arrowY + 7);
-      ctx.lineTo(cx, arrowY - 3);
-      ctx.lineTo(cx + 12, arrowY + 7);
-      ctx.moveTo(cx - 8, arrowY + 15);
-      ctx.lineTo(cx, arrowY + 7);
-      ctx.lineTo(cx + 8, arrowY + 15);
-      ctx.stroke();
-
-      const starGrad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
-      starGrad.addColorStop(0, '#fff394');
-      starGrad.addColorStop(0.55, '#ffd23f');
-      starGrad.addColorStop(1, '#f59e0b');
-      ctx.shadowColor = 'rgba(255, 196, 37, 0.75)';
-      ctx.shadowBlur = 14;
-      traceStarPath(ctx, cx, cy, r, r * 0.48, 5, 0);
-      ctx.fillStyle = starGrad;
-      ctx.fill();
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#ffffff';
-      ctx.stroke();
-      ctx.restore();
-      return;
-    }
-
-    if (type === 'select' && target.shape) {
-      ctx.save();
-      if (!isReady || target.eliminated) {
-        ctx.globalAlpha = target.eliminated ? 0.26 : 0.55;
-      }
-      const darkBackdrop = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 1.35);
-      darkBackdrop.addColorStop(0, 'rgba(6, 18, 26, 0.6)');
-      darkBackdrop.addColorStop(1, 'rgba(6, 18, 26, 0)');
-      ctx.fillStyle = darkBackdrop;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.35, 0, Math.PI * 2);
-      ctx.fill();
-
-      drawSelectShapeIcon(cx, cy, r, target.shape);
-
-      if (isReady && !target.eliminated && dwellProgress > 0.01) {
-        ctx.strokeStyle = '#4cffb3';
-        ctx.lineWidth = 6;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.arc(cx, cy, r * 1.22, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * dwellProgress);
-        ctx.stroke();
-      }
-      ctx.restore();
-      return;
-    }
-
-    if (type === 'moving' || (type === 'traffic' && config.trafficVariant === 'cruise')) {
-      drawMotionTrail(target, W, H, r, '56, 189, 248');
-    } else if (type === 'charge_moving') {
-      drawMotionTrail(target, W, H, r, '168, 85, 247');
-    }
-
-    ctx.save();
-    if (!isReady) {
-      ctx.globalAlpha = 0.55;
-    }
-
-    const darkBackdrop = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 1.45);
-    darkBackdrop.addColorStop(0, 'rgba(6, 18, 26, 0.55)');
-    darkBackdrop.addColorStop(1, 'rgba(6, 18, 26, 0)');
-    ctx.fillStyle = darkBackdrop;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 1.45, 0, Math.PI * 2);
+    ctx.fillStyle = '#F3E7D4';
+    roundRect(ctx, ix - itemW * 0.44, rowY - 56, itemW * 0.88, 118, 14);
     ctx.fill();
 
-    let glowColorInner = 'rgba(255, 224, 102, 0.55)';
-    let glowColorMid = 'rgba(255, 184, 48, 0.22)';
-    if (type === 'timed') {
-      glowColorInner = 'rgba(244, 114, 182, 0.62)';
-      glowColorMid = 'rgba(56, 189, 248, 0.28)';
-    } else if (type === 'moving') {
-      glowColorInner = 'rgba(56, 189, 248, 0.58)';
-      glowColorMid = 'rgba(14, 165, 233, 0.22)';
-    } else if (type === 'charge_static') {
-      glowColorInner = 'rgba(59, 130, 246, 0.62)';
-      glowColorMid = 'rgba(37, 99, 235, 0.25)';
-    } else if (type === 'charge_moving') {
-      glowColorInner = 'rgba(168, 85, 247, 0.62)';
-      glowColorMid = 'rgba(126, 34, 206, 0.25)';
-    } else if (type === 'traffic') {
-      if (target.trafficLight === 'red') {
-        glowColorInner = 'rgba(244, 63, 94, 0.68)';
-        glowColorMid = 'rgba(225, 29, 72, 0.28)';
-      } else if (target.trafficLight === 'yellow') {
-        glowColorInner = 'rgba(251, 191, 36, 0.65)';
-        glowColorMid = 'rgba(217, 119, 6, 0.25)';
-      } else {
-        glowColorInner = 'rgba(74, 222, 128, 0.62)';
-        glowColorMid = 'rgba(22, 163, 74, 0.25)';
-      }
-    }
+    const extImg = getExternalAsset(ing.imgFile);
+    if (extImg) ctx.drawImage(extImg, ix - iconSz * 0.5, rowY - 40, iconSz, iconSz);
 
-    const glowGrad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.75);
-    glowGrad.addColorStop(0, glowColorInner);
-    glowGrad.addColorStop(0.58, glowColorMid);
-    glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = glowGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 1.75, 0, Math.PI * 2);
+    ctx.font = '900 19px "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#4A3222';
+    ctx.fillText(ing.name, ix, rowY + 38, itemW - 8);
+  });
+
+  ctx.font = '800 14px "Noto Sans TC", sans-serif';
+  ctx.fillStyle = '#7F7163';
+  ctx.fillText(`請記住這 3 樣材料（${Math.ceil(state.memorizeTimer)} 秒後開始，順序不限）`, area.centerX, y + cardH - 22);
+  ctx.restore();
+}
+
+function drawMainBowlZone(zone) {
+  const isPourTarget = (state.phase === 'GO_POUR');
+  const pulseAlpha = isPourTarget ? 0.34 + Math.sin(performance.now() * 0.008) * 0.08 : 0.28;
+
+  ctx.save();
+  ctx.fillStyle = isPourTarget ? `rgba(105, 118, 85, ${pulseAlpha})` : 'rgba(255, 254, 251, 0.58)';
+  roundRect(ctx, zone.x, zone.y, zone.w, zone.h, 24);
+  ctx.fill();
+
+  ctx.lineWidth = isPourTarget ? 5 : 2.5;
+  if (isPourTarget) {
+    ctx.setLineDash([10, 10]);
+    ctx.lineDashOffset = -performance.now() * 0.045;
+  }
+  ctx.strokeStyle = isPourTarget ? '#4E5A3D' : '#7B5942';
+  roundRect(ctx, zone.x, zone.y, zone.w, zone.h, 24);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  drawIceBowlAt(zone.x + zone.w * 0.5, zone.y + zone.h * 0.54, getZoneBowlRadius(zone), isPourTarget);
+  ctx.restore();
+}
+
+function drawPeripheralBasinZone(zone) {
+  const basinIng = state.basinMap[zone.id];
+  if (!basinIng) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(123, 89, 66, 0.08)';
+    roundRect(ctx, zone.x, zone.y, zone.w, zone.h, 24);
     ctx.fill();
-
-    if (type === 'charge_static' || type === 'charge_moving') {
-      const shieldRot = reduced ? 0 : now * 0.0008;
-      tracePolygonPath(ctx, cx, cy, r * 1.16, 6, shieldRot);
-      ctx.strokeStyle =
-        type === 'charge_static' ? 'rgba(147, 197, 253, 0.65)' : 'rgba(216, 180, 254, 0.68)';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-    }
-
-    if (type === 'traffic') {
-      const tl = target.trafficLight;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.22, 0, Math.PI * 2);
-      ctx.lineWidth = tl === 'red' ? 6 : 4.5;
-      ctx.strokeStyle =
-        tl === 'red' ? '#fb7185' : tl === 'yellow' ? '#fbbf24' : '#4ade80';
-      if (tl === 'red') {
-        ctx.fillStyle = 'rgba(225, 29, 72, 0.25)';
-        ctx.fill();
-      }
-      ctx.stroke();
-    }
-
-    const slotKey = customStarAssets[type] ? type : 'normal';
-    const customSlot = customStarAssets[slotKey];
-
-    if (customSlot.loaded && customSlot.img && !customSlot.failed) {
-      const size = r * 2.1;
-      ctx.drawImage(customSlot.img, cx - size / 2, cy - size / 2, size, size);
-    } else {
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-
-      if (type === 'timed') {
-        const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-        grad.addColorStop(0, '#ff6b8b');
-        grad.addColorStop(0.35, '#ffd452');
-        grad.addColorStop(0.7, '#4cffb3');
-        grad.addColorStop(1, '#60a5fa');
-
-        ctx.shadowColor = 'rgba(244, 114, 182, 0.7)';
-        ctx.shadowBlur = 14;
-        traceStarPath(ctx, cx, cy, r * 1.04, r * 0.54, 8, reduced ? 0 : now * 0.0012);
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.lineWidth = Math.max(2.5, r * 0.09);
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        traceStarPath(ctx, cx, cy, r * 0.45, r * 0.16, 4, 0);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.fill();
-      } else if (type === 'moving') {
-        const tilt = Math.abs(target.vx) >= Math.abs(target.vy)
-          ? (target.vx >= 0 ? 0.18 : -0.18)
-          : (target.vy >= 0 ? 0.12 : -0.12);
-        const grad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
-        grad.addColorStop(0, '#bae6fd');
-        grad.addColorStop(0.5, '#38bdf8');
-        grad.addColorStop(1, '#0284c7');
-
-        ctx.shadowColor = 'rgba(56, 189, 248, 0.7)';
-        ctx.shadowBlur = 13;
-        traceStarPath(ctx, cx, cy, r, r * 0.48, 5, tilt);
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.lineWidth = Math.max(2.5, r * 0.09);
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        traceStarPath(ctx, cx, cy - r * 0.05, r * 0.55, r * 0.26, 5, tilt);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
-        ctx.fill();
-      } else if (type === 'charge_static' || type === 'charge_moving') {
-        const isPurple = type === 'charge_moving';
-        const tilt = isPurple ? (target.vx >= 0 ? 0.15 : -0.15) : 0;
-        const grad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
-        if (isPurple) {
-          grad.addColorStop(0, '#e9d5ff');
-          grad.addColorStop(0.5, '#a855f7');
-          grad.addColorStop(1, '#6b21a8');
-        } else {
-          grad.addColorStop(0, '#bfdbfe');
-          grad.addColorStop(0.5, '#3b82f6');
-          grad.addColorStop(1, '#1d4ed8');
-        }
-
-        ctx.shadowColor = isPurple ? 'rgba(168, 85, 247, 0.7)' : 'rgba(59, 130, 246, 0.7)';
-        ctx.shadowBlur = 14;
-        traceStarPath(ctx, cx, cy, r, r * 0.50, 5, tilt);
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.lineWidth = Math.max(2.5, r * 0.09);
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        const coreScale = 0.24 + dwellProgress * 0.38;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r * coreScale, 0, Math.PI * 2);
-        ctx.fillStyle = dwellProgress > 0.02 ? '#ffffff' : 'rgba(255, 255, 255, 0.65)';
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = isPurple ? '#f0abfc' : '#93c5fd';
-        ctx.stroke();
-      } else {
-        const starGrad = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
-        starGrad.addColorStop(0, '#fff394');
-        starGrad.addColorStop(0.55, '#ffd23f');
-        starGrad.addColorStop(1, '#f59e0b');
-
-        ctx.shadowColor = 'rgba(255, 196, 37, 0.65)';
-        ctx.shadowBlur = 14;
-        traceStarPath(ctx, cx, cy, r, r * 0.48, 5, 0);
-        ctx.fillStyle = starGrad;
-        ctx.fill();
-
-        ctx.lineWidth = Math.max(2.5, r * 0.09);
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        traceStarPath(ctx, cx, cy - r * 0.06, r * 0.62, r * 0.3, 5, 0);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
-        ctx.fill();
-      }
-    }
-
-    if (type === 'traffic') {
-      ctx.shadowBlur = 0;
-      const tl = target.trafficLight;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 0.46, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(9, 24, 32, 0.88)';
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = tl === 'red' ? '#fb7185' : tl === 'yellow' ? '#fbbf24' : '#4ade80';
-      ctx.stroke();
-
-      ctx.font = `900 ${Math.round(r * 0.45)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = tl === 'red' ? '#fecdd3' : tl === 'yellow' ? '#fef08a' : '#bbf7d0';
-      ctx.fillText(tl === 'red' ? '停' : tl === 'yellow' ? '慢' : '行', cx, cy + 1);
-    }
-
-    if (type === 'timed' && target.maxTtlMs > 0) {
-      const ttlRatio = Math.min(1, Math.max(0, target.ttlMs / target.maxTtlMs));
-      ctx.shadowBlur = 0;
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.32, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.strokeStyle = ttlRatio > 0.35 ? '#ffd452' : '#fb7185';
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.32, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ttlRatio);
-      ctx.stroke();
-    }
-
-    if (type === 'connect') {
-      const isCurrentTarget = target.order === game.connectNextOrder;
-      const showNumber =
-        config.connectSubMode === 'number' ||
-        game.connectMemoryPhase ||
-        (config.connectSubMode === 'memory' && config.memoryViewSec === 0 && game.connectNextOrder === 1) ||
-        (game.connectAutoHintRemainMs > 0 && isCurrentTarget);
-
-      if (isCurrentTarget && (config.connectSubMode === 'number' || game.connectAutoHintRemainMs > 0)) {
-        ctx.beginPath();
-        ctx.arc(cx, cy, r * 1.18, 0, Math.PI * 2);
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([6, 5]);
-        ctx.strokeStyle = '#70e5ab';
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      ctx.shadowBlur = 0;
-      const badgeR = Math.max(12, r * 0.44);
-      ctx.beginPath();
-      ctx.arc(cx, cy, badgeR, 0, Math.PI * 2);
-      ctx.fillStyle = showNumber ? 'rgba(9, 24, 32, 0.9)' : 'rgba(25, 48, 62, 0.85)';
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = showNumber && isCurrentTarget ? '#70e5ab' : '#ffd452';
-      ctx.stroke();
-
-      ctx.font = `900 ${Math.round(badgeR * 1.22)}px system-ui, -apple-system, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = showNumber ? '#ffffff' : '#9ec0ca';
-      ctx.fillText(showNumber ? String(target.order) : '?', cx, cy + 1);
-    }
-
-    if (isReady && (dwellProgress > 0.01 || type === 'charge_static' || type === 'charge_moving')) {
-      const ringR = r * 1.24;
-      ctx.shadowBlur = 0;
-      ctx.lineWidth = type.startsWith('charge_') ? 7 : 6;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
-      ctx.beginPath();
-      ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
-      ctx.stroke();
-
-      if (dwellProgress > 0.01) {
-        ctx.strokeStyle =
-          type === 'charge_moving'
-            ? '#e879f9'
-            : type === 'charge_static'
-            ? '#60a5fa'
-            : '#4cffb3';
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.arc(cx, cy, ringR, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * dwellProgress);
-        ctx.stroke();
-      }
-    }
-
-    ctx.restore();
-  }
-
-  // 繪製「✨ 星座連線」與「🌈 星河軌道（牽引光球版）」的軌道走廊、終點星門與已點亮區段
-  function drawConstellationAndTrackLines(W, H) {
-    if (config.gamePlayMode === 'track' && game.trackCurvePoints.length >= 2) {
-      const pts = game.trackCurvePoints;
-      const starR = getStarRadiusPx();
-      const endPt = pts[pts.length - 1];
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // 1. 寬敞星河走廊底帶（跑出此走廊外光球會脫鉤停住）
-      ctx.strokeStyle = game.trackDerailedWarn
-        ? 'rgba(251, 191, 36, 0.25)'
-        : 'rgba(56, 189, 248, 0.18)';
-      ctx.lineWidth = Math.max(36, starR * 1.45);
-      ctx.beginPath();
-      pts.forEach((p, idx) => {
-        if (idx === 0) ctx.moveTo(p.x * W, p.y * H);
-        else ctx.lineTo(p.x * W, p.y * H);
-      });
-      ctx.stroke();
-
-      // 2. 走廊中央導引虛線
-      ctx.strokeStyle = 'rgba(186, 230, 253, 0.45)';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([8, 8]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // 3. 已牽引走過的黃金發光路段
-      if (game.trackOrbProgressIdx >= 1) {
-        ctx.strokeStyle = '#ffd452';
-        ctx.lineWidth = 9;
-        ctx.shadowColor = '#ffd452';
-        ctx.shadowBlur = 14;
-        ctx.beginPath();
-        for (let i = 0; i <= game.trackOrbProgressIdx; i++) {
-          if (i === 0) ctx.moveTo(pts[i].x * W, pts[i].y * H);
-          else ctx.lineTo(pts[i].x * W, pts[i].y * H);
-        }
-        ctx.stroke();
-      }
-
-      // 4. 繪製升級版終點「🌟 星門聖殿（Cosmic Stargate）」
-      ctx.restore();
-      const ex = endPt.x * W;
-      const ey = endPt.y * H;
-      drawCosmicStargate(ex, ey, starR * 0.92, performance.now(), '🏁 星門終點', 'gold');
-      return;
-    }
-
-    if (config.gamePlayMode !== 'connect' || game.targets.length < 2) return;
-    const sorted = [...game.targets].sort((a, b) => a.order - b.order);
-
-    // 繪製底層極淡的星座預覽骨架虛線
-    ctx.save();
-    ctx.strokeStyle = 'rgba(148, 198, 220, 0.22)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 6]);
-    ctx.beginPath();
-    sorted.forEach((pt, idx) => {
-      if (idx === 0) ctx.moveTo(pt.x * W, pt.y * H);
-      else ctx.lineTo(pt.x * W, pt.y * H);
-    });
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-
-    const completedList = sorted.filter(t => t.completed);
-    if (completedList.length >= 1) {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255, 212, 82, 0.88)';
-      ctx.lineWidth = 4;
-      ctx.shadowColor = '#ffd452';
-      ctx.shadowBlur = 10;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      if (completedList.length >= 2) {
-        ctx.beginPath();
-        completedList.forEach((pt, idx) => {
-          if (idx === 0) ctx.moveTo(pt.x * W, pt.y * H);
-          else ctx.lineTo(pt.x * W, pt.y * H);
-        });
-        ctx.stroke();
-      }
-
-      if (trackerOutput.found && state.modeReady) {
-        const lastPt = completedList[completedList.length - 1];
-        ctx.shadowBlur = 0;
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = 'rgba(112, 229, 171, 0.55)';
-        ctx.setLineDash([7, 6]);
-        ctx.beginPath();
-        ctx.moveTo(lastPt.x * W, lastPt.y * H);
-        ctx.lineTo(trackerOutput.x * W, trackerOutput.y * H);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-  }
-
-  function drawEffects(now) {
-    const W = stage.clientWidth || 360;
-    const H = stage.clientHeight || 480;
-
-    // 繪製「🌠 托起墜落星」成功由下往上托起後的「流光升空＋頂部星光煙火」動畫
-    for (let i = game.risingStars.length - 1; i >= 0; i--) {
-      const rs = game.risingStars[i];
-      const dtSec = 0.016;
-      rs.vy += (rs.ay || -900) * dtSec;
-      rs.x += rs.vx * dtSec;
-      rs.y += rs.vy * dtSec;
-      rs.rot += 0.16;
-      rs.trail.unshift({ x: rs.x, y: rs.y });
-      if (rs.trail.length > 14) rs.trail.pop();
-
-      // 沿途噴發金色與亮青流光粒子
-      if (!reducedMotionQuery.matches && Math.random() < 0.75) {
-        game.particles.push({
-          x: rs.x + (Math.random() - 0.5) * 16,
-          y: rs.y + rs.r * 0.4,
-          vx: (Math.random() - 0.5) * 2.4,
-          vy: 1.5 + Math.random() * 2.5,
-          size: 2.5 + Math.random() * 3.5,
-          color: Math.random() < 0.6 ? '#ffd452' : '#4cffb3',
-          born: now,
-          life: 380
-        });
-      }
-
-      // 繪製升空彗星長尾與旋轉亮星
-      ctx.save();
-      for (let k = rs.trail.length - 1; k >= 1; k--) {
-        const pt = rs.trail[k];
-        const ratio = 1 - k / rs.trail.length;
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, rs.r * (0.22 + ratio * 0.55), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 212, 82, ${ratio * 0.55})`;
-        ctx.fill();
-      }
-
-      ctx.shadowColor = '#ffd452';
-      ctx.shadowBlur = 18;
-      traceStarPath(ctx, rs.x, rs.y, rs.r * 1.08, rs.r * 0.50, 5, rs.rot);
-      ctx.fillStyle = '#fff5b8';
-      ctx.fill();
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#4cffb3';
-      ctx.stroke();
-      ctx.restore();
-
-      // 抵達夜空頂端時綻放大型星光煙火！
-      if (rs.y <= Math.max(48, H * 0.14) || now - rs.born > 1200) {
-        spawnCelebrationParticles(rs.x, Math.max(48, rs.y), rs.r * 1.15, true, true);
-        playGameSound('bonus');
-        game.risingStars.splice(i, 1);
-      }
-    }
-
-    if (game.constellationBurst) {
-      const cb = game.constellationBurst;
-      const t = (now - cb.born) / cb.duration;
-      if (t >= 1) {
-        game.constellationBurst = null;
-      } else if (cb.points.length >= 2) {
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, 1 - t);
-        ctx.strokeStyle = '#70e5ab';
-        ctx.lineWidth = 6 * (1 - t * 0.4);
-        ctx.shadowColor = '#4cffb3';
-        ctx.shadowBlur = 16;
-        ctx.beginPath();
-        cb.points.forEach((pt, idx) => {
-          if (idx === 0) ctx.moveTo(pt.x, pt.y);
-          else ctx.lineTo(pt.x, pt.y);
-        });
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
-
-    for (let i = game.milestoneRipples.length - 1; i >= 0; i--) {
-      const rp = game.milestoneRipples[i];
-      const t = (now - rp.born) / rp.duration;
-      if (t >= 1) {
-        game.milestoneRipples.splice(i, 1);
-        continue;
-      }
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, (1 - t) * 0.75);
-      ctx.strokeStyle = '#ffd452';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(rp.x, rp.y, rp.r * (1 + t * 2.2), 0, Math.PI * 2);
-      ctx.stroke();
-
-      if (t > 0.15) {
-        ctx.strokeStyle = '#70e5ab';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(rp.x, rp.y, rp.r * (0.8 + (t - 0.15) * 2.0), 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    for (let i = game.collectBursts.length - 1; i >= 0; i--) {
-      const b = game.collectBursts[i];
-      const t = (now - b.born) / b.duration;
-      if (t >= 1) {
-        game.collectBursts.splice(i, 1);
-        continue;
-      }
-      const scale = 1 + t * 0.65;
-      const alpha = Math.max(0, 1 - t);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      traceStarPath(ctx, b.x, b.y, b.r * scale, b.r * scale * 0.5, 5);
-      ctx.fillStyle = '#fff5b8';
-      ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = b.color || '#70e5ab';
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    for (let i = game.particles.length - 1; i >= 0; i--) {
-      const p = game.particles[i];
-      const age = now - p.born;
-      if (age >= p.life) {
-        game.particles.splice(i, 1);
-        continue;
-      }
-      p.x += p.vx;
-      p.y += p.vy;
-      const alpha = Math.max(0, 1 - age / p.life);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
-      const ft = game.floatingTexts[i];
-      const t = (now - ft.born) / ft.duration;
-      if (t >= 1) {
-        game.floatingTexts.splice(i, 1);
-        continue;
-      }
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, 1 - t);
-      ctx.font = '900 18px system-ui, -apple-system, "Noto Sans TC", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const yPos = ft.y - t * 28;
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = 'rgba(6, 18, 26, 0.88)';
-      ctx.strokeText(ft.text, ft.x, yPos);
-      ctx.fillStyle = ft.color;
-      ctx.fillText(ft.text, ft.x, yPos);
-      ctx.restore();
-    }
-  }
-
-  // 低干擾星空版活動範圍邊界：「星圖四隅光錨 ＋ 稀疏微光星塵點」（取代生硬的虛線方框）
-  function drawSubtleActiveRangeGuide(W, H, now = performance.now()) {
-    const hasCustom = modeRanges[state.mode].isCustom;
-    const b = getUserActiveRangeBox(state.mode);
-    const x1 = b.minX * W;
-    const y1 = b.minY * H;
-    const x2 = b.maxX * W;
-    const y2 = b.maxY * H;
-    const w = Math.max(20, x2 - x1);
-    const h = Math.max(20, y2 - y1);
-    const reduced = reducedMotionQuery.matches;
-
-    const baseAlpha = hasCustom ? 0.62 : state.mode === 'head' ? 0.54 : 0.38;
-    const armLen = Math.max(16, Math.min(30, Math.min(w, h) * 0.11));
-    const cornerRadius = 10;
-
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    // 1. 繪製四個角落的「L 型星光觀景窗光錨」與頂點四芒星
-    const corners = [
-      { cx: x1, cy: y1, dx: 1, dy: 1 },
-      { cx: x2, cy: y1, dx: -1, dy: 1 },
-      { cx: x1, cy: y2, dx: 1, dy: -1 },
-      { cx: x2, cy: y2, dx: -1, dy: -1 }
-    ];
-
-    for (let i = 0; i < corners.length; i++) {
-      const c = corners[i];
-      const grad = ctx.createRadialGradient(c.cx, c.cy, 1, c.cx, c.cy, armLen * 1.25);
-      grad.addColorStop(0, `rgba(255, 212, 82, ${baseAlpha * 0.95})`);
-      grad.addColorStop(0.45, `rgba(112, 229, 171, ${baseAlpha * 0.78})`);
-      grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
-
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 2.4;
-      ctx.beginPath();
-      ctx.moveTo(c.cx + c.dx * armLen, c.cy);
-      ctx.lineTo(c.cx + c.dx * cornerRadius, c.cy);
-      ctx.quadraticCurveTo(c.cx, c.cy, c.cx, c.cy + c.dy * cornerRadius);
-      ctx.lineTo(c.cx, c.cy + c.dy * armLen);
-      ctx.stroke();
-
-      // 角落星芒亮點
-      const starX = c.cx + c.dx * 3;
-      const starY = c.cy + c.dy * 3;
-      ctx.fillStyle = `rgba(255, 232, 140, ${baseAlpha * 0.92})`;
-      traceStarPath(ctx, starX, starY, 5.2, 1.5, 4, 0);
-      ctx.fill();
-    }
-
-    // 2. 四邊中點之間僅點綴極稀疏、柔和呼吸的「星塵微粒」，不畫連續虛線，保持畫面清透
-    const stepPx = 42;
-    const hSteps = Math.max(2, Math.floor((w - armLen * 2.4) / stepPx));
-    const vSteps = Math.max(2, Math.floor((h - armLen * 2.4) / stepPx));
-
-    for (let i = 1; i < hSteps; i++) {
-      const frac = i / hSteps;
-      const px = x1 + armLen * 1.2 + frac * (w - armLen * 2.4);
-      const twinkle = reduced ? 0.22 : 0.14 + Math.sin(now * 0.0022 + i * 1.1) * 0.08;
-      ctx.fillStyle = `rgba(186, 230, 253, ${twinkle * (baseAlpha / 0.5)})`;
-      ctx.beginPath();
-      ctx.arc(px, y1, 1.35, 0, Math.PI * 2);
-      ctx.arc(px, y2, 1.35, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    for (let j = 1; j < vSteps; j++) {
-      const frac = j / vSteps;
-      const py = y1 + armLen * 1.2 + frac * (h - armLen * 2.4);
-      const twinkle = reduced ? 0.22 : 0.14 + Math.cos(now * 0.0022 + j * 1.3) * 0.08;
-      ctx.fillStyle = `rgba(186, 230, 253, ${twinkle * (baseAlpha / 0.5)})`;
-      ctx.beginPath();
-      ctx.arc(x1, py, 1.35, 0, Math.PI * 2);
-      ctx.arc(x2, py, 1.35, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-  }
-
-  function drawRangeCalibrationOverlay(W, H) {
-    if (!calibState.workingBox) return;
-    const wb = calibState.workingBox;
-    const x1 = wb.minX * W;
-    const y1 = wb.minY * H;
-    const x2 = wb.maxX * W;
-    const y2 = wb.maxY * H;
-    const rw = x2 - x1;
-    const rh = y2 - y1;
-    const mx = (x1 + x2) * 0.5;
-    const my = (y1 + y2) * 0.5;
-
-    ctx.save();
-
-    ctx.fillStyle = 'rgba(6, 18, 25, 0.45)';
-    ctx.fillRect(0, 0, W, y1);
-    ctx.fillRect(0, y2, W, H - y2);
-    ctx.fillRect(0, y1, x1, rh);
-    ctx.fillRect(x2, y1, W - x2, rh);
-
-    ctx.fillStyle = 'rgba(112, 229, 171, 0.13)';
-    ctx.fillRect(x1, y1, rw, rh);
-
-    ctx.strokeStyle = '#70e5ab';
-    ctx.lineWidth = 3.5;
-    ctx.strokeRect(
-      Math.max(1.75, x1),
-      Math.max(1.75, y1),
-      Math.min(W - 3.5, rw),
-      Math.min(H - 3.5, rh)
-    );
-
-    ctx.strokeStyle = 'rgba(112, 229, 171, 0.38)';
+    ctx.strokeStyle = 'rgba(123, 89, 66, 0.2)';
     ctx.lineWidth = 1.5;
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    ctx.moveTo(mx - 18, my);
-    ctx.lineTo(mx + 18, my);
-    ctx.moveTo(mx, my - 18);
-    ctx.lineTo(mx, my + 18);
+    roundRect(ctx, zone.x, zone.y, zone.w, zone.h, 24);
     ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.restore();
+    return;
+  }
 
-    ctx.font = '800 14px system-ui, -apple-system, "Noto Sans TC", sans-serif';
+  const isTargetBasin = (zone.id === state.activeBasinZoneId);
+  const isScoopPhase = (state.phase === 'GO_SCOOP');
+  const highlightGuided = isScoopPhase && isTargetBasin && !isMultiBasinFindMode();
+
+  ctx.save();
+  let fillStyle = 'rgba(255, 254, 251, 0.55)';
+  let strokeStyle = 'rgba(122, 86, 57, 0.62)';
+  let lineW = 3;
+
+  if (highlightGuided) {
+    const pulse = 0.34 + Math.sin(performance.now() * 0.007) * 0.08;
+    fillStyle = `rgba(211, 155, 85, ${pulse * 0.52})`;
+    strokeStyle = '#B66D35';
+    lineW = 3;
+  } else if (isMultiBasinFindMode() && isScoopPhase) {
+    fillStyle = 'rgba(255, 254, 251, 0.68)';
+    lineW = 2;
+  }
+
+  ctx.fillStyle = fillStyle;
+  roundRect(ctx, zone.x, zone.y, zone.w, zone.h, 24);
+  ctx.fill();
+
+  const isDwellingThis = isScoopPhase && state.dwellElapsed > 0 && config.dwellSeconds > 0 && (state.dwellBasinId === zone.id);
+  if (isDwellingThis) {
+    const ratio = Math.min(1, state.dwellElapsed / config.dwellSeconds);
+    ctx.save();
+    roundRect(ctx, zone.x, zone.y, zone.w, zone.h, 24);
+    ctx.clip();
+    ctx.fillStyle = 'rgba(245, 166, 35, 0.42)';
+    const fillH = zone.h * ratio;
+    ctx.fillRect(zone.x, zone.y + zone.h - fillH, zone.w, fillH);
+    ctx.restore();
+  }
+
+  ctx.lineWidth = lineW;
+  if (highlightGuided) {
+    ctx.setLineDash([10, 10]);
+    ctx.lineDashOffset = -performance.now() * 0.045;
+  }
+  ctx.strokeStyle = strokeStyle;
+  roundRect(ctx, zone.x, zone.y, zone.w, zone.h, 24);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const zx = zone.x + zone.w * 0.5;
+  const zy = zone.y + zone.h * 0.50;
+  drawLargeIngredientBasin(zx, zy, getZoneBowlRadius(zone) * 0.96, basinIng, highlightGuided);
+
+  const labelW = Math.min(zone.w - 10, 184);
+  const labelH = 38;
+  const labelY = zone.y + zone.h - 24;
+  ctx.fillStyle = 'rgba(255, 249, 237, 0.98)';
+  roundRect(ctx, zx - labelW / 2, labelY - labelH / 2, labelW, labelH, 12);
+  ctx.fill();
+  ctx.strokeStyle = '#8C623E';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.font = `900 ${Math.min(22, Math.max(15, labelW * 0.135))}px "Noto Sans TC", sans-serif`;
+  ctx.fillStyle = '#3F2718';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(basinIng.name, zx, labelY, labelW - 12);
+  ctx.restore();
+}
+
+function drawGuidedArrowBridge(bowlZone, basinZone) {
+  const bx = bowlZone.x + bowlZone.w * 0.5;
+  const by = bowlZone.y + bowlZone.h * 0.545;
+  const px = basinZone.x + basinZone.w * 0.5;
+  const py = basinZone.y + basinZone.h * 0.545;
+
+  const isScoop = (state.phase === 'GO_SCOOP');
+  const [fullFromX, fullFromY] = isScoop ? [bx, by] : [px, py];
+  const [fullToX, fullToY]     = isScoop ? [px, py] : [bx, by];
+
+  const dx = fullToX - fullFromX;
+  const dy = fullToY - fullFromY;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 40) return;
+
+  const ux = dx / dist;
+  const uy = dy / dist;
+  const angle = Math.atan2(dy, dx);
+  const trimStart = Math.min(dist * 0.24, getZoneBowlRadius(isScoop ? bowlZone : basinZone) * 0.88);
+  const trimEnd   = Math.min(dist * 0.24, getZoneBowlRadius(isScoop ? basinZone : bowlZone) * 0.88);
+  const sx = fullFromX + ux * trimStart;
+  const sy = fullFromY + uy * trimStart;
+  const ex = fullToX - ux * trimEnd;
+  const ey = fullToY - uy * trimEnd;
+  if (Math.hypot(ex - sx, ey - sy) < 18) return;
+
+  const mainColor = isScoop ? '#D97706' : '#586A45';
+  const glowColor = isScoop ? 'rgba(245, 158, 11, 0.22)' : 'rgba(105, 118, 85, 0.24)';
+
+  ctx.save();
+  ctx.strokeStyle = glowColor;
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+
+  const now = performance.now() * 0.0013;
+  for (let i = 0; i < 3; i++) {
+    const t = (now + i / 3) % 1;
+    const ax = sx + (ex - sx) * t;
+    const ay = sy + (ey - sy) * t;
+    ctx.save();
+    ctx.translate(ax, ay);
+    ctx.rotate(angle);
+    ctx.globalAlpha = 0.25 + Math.sin(t * Math.PI) * 0.75;
+    ctx.strokeStyle = mainColor;
+    ctx.lineWidth = 4.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-9, -10);
+    ctx.lineTo(5, 0);
+    ctx.lineTo(-9, 10);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawLargeIngredientBasin(x, y, r, ing, isHighlighted) {
+  ctx.save();
+  ctx.translate(x, y);
+  const scale = isHighlighted ? 1.05 + Math.sin(performance.now() * 0.008) * 0.04 : 0.96;
+  ctx.scale(scale, scale);
+
+  const basinImg = getExternalAsset('basin-pot.png');
+  if (basinImg) {
+    ctx.drawImage(basinImg, -r, -r, r * 2, r * 2);
+  } else {
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.96, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFDF9';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = isHighlighted ? '#D97706' : '#7B5942';
+    ctx.stroke();
+  }
+
+  const extIngImg = getExternalAsset(ing.imgFile);
+  if (extIngImg) {
+    const iconR = r * 0.68;
+    ctx.drawImage(extIngImg, -iconR, -iconR, iconR * 2, iconR * 2);
+  } else {
+    [[0, 0], [-0.32, -0.22], [0.32, -0.22], [-0.34, 0.22], [0.34, 0.22]]
+      .forEach(([nx, ny], idx) => drawSingleIngredientPiece(ing, nx * r, ny * r, r * 0.27, idx * 0.6, idx % 2));
+  }
+  ctx.restore();
+}
+
+function drawIceBowlAt(cx, cy, baseR, isPourTarget = false, customLayers = null) {
+  const pulse = isPourTarget ? (1.05 + Math.sin(performance.now() * 0.008) * 0.03) : 1;
+  const scale = (customLayers ? 1 : state.bowlBounceScale) * pulse;
+  const layersToDraw = customLayers || state.currentBowlLayers;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bowlImg = getExternalAsset('bowl-empty.png');
+  if (bowlImg) {
+    ctx.drawImage(bowlImg, -baseR, -baseR, baseR * 2, baseR * 2);
+  } else {
+    ctx.beginPath();
+    ctx.arc(0, 0, baseR * 0.85, Math.PI, 0, false);
+    ctx.fillStyle = '#F2F9FF';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, baseR * 0.05, baseR * 0.88, 0, Math.PI, false);
+    ctx.fillStyle = '#FFFDF7';
+    ctx.fill();
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = '#7B5942';
+    ctx.stroke();
+  }
+
+  layersToDraw.forEach((layer, layerIdx) => {
+    const ing = layer.ing;
+    const prog = layer.animProgress;
+    if (ing.type === 'syrup') drawSyrupDrizzleOnIce(baseR, ing, prog, layerIdx);
+    layer.items.forEach(item => {
+      if (ing.type === 'syrup' && !ing.hasSeeds) return;
+      drawSingleIngredientPiece(ing, item.rx * baseR * 0.6, item.ry * baseR * 0.88, item.size * baseR * prog, item.rot, item.variant);
+    });
+  });
+
+  ctx.restore();
+}
+
+function drawRecipePreviewAt(recipe, cx, cy, r) {
+  const mockLayers = recipe.steps.map((ingId, sIdx) => {
+    const ing = INGREDIENTS[ingId];
+    const sideOffset = (ing.role === 'topping') ? (sIdx === 0 ? -0.38 : 0.38) : 0;
+    const pts = [[-0.22, -0.35], [0.18, -0.46], [-0.14, -0.22], [0.22, -0.24], [0, -0.40]];
+    return {
+      ing,
+      animProgress: 1,
+      items: pts.map(([lx, ry], idx) => ({
+        rx: sideOffset * 1.4 + lx,
+        ry,
+        size: 0.145,
+        rot: idx * 0.5,
+        variant: idx % 2
+      }))
+    };
+  });
+  drawIceBowlAt(cx, cy, r, false, mockLayers);
+  const garnishImg = getExternalAsset('bowl-garnish.png');
+  if (garnishImg) ctx.drawImage(garnishImg, cx - r * 0.92, cy - r * 1.18, r * 1.84, r * 1.18);
+}
+
+function drawMemoryQuizShowcase(area) {
+  const cx = area.centerX;
+  const topY = area.top + 36;
+
+  ctx.save();
+  const bannerW = Math.min(area.width - 20, 440);
+  const bannerH = 44;
+  ctx.fillStyle = 'rgba(255, 249, 237, 0.96)';
+  roundRect(ctx, cx - bannerW / 2, topY - bannerH / 2, bannerW, bannerH, 22);
+  ctx.fill();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#A34E34';
+  ctx.stroke();
+
+  ctx.font = `900 ${Math.round(Math.max(15, Math.min(20, area.width * 0.042)))}px "Noto Sans TC", sans-serif`;
+  ctx.fillStyle = '#4A3222';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const headerTxt = state.quizCooldownTimer > 0
+    ? `先想一想…（${state.quizCooldownTimer.toFixed(1)} 秒後可選）`
+    : '剛剛做的是哪一碗冰？';
+  ctx.fillText(headerTxt, cx, topY);
+
+  const cards = getQuizCardRects(area);
+  const holdNeed = Math.max(1.2, config.dwellSeconds);
+
+  cards.forEach(card => {
+    const isHovered = (state.quizDwellId === card.recipe.id) && state.quizCooldownTimer <= 0;
+    const ratio = isHovered ? Math.min(1, state.quizDwellElapsed / holdNeed) : 0;
+
+    ctx.save();
+    ctx.fillStyle = isHovered ? 'rgba(255, 244, 224, 0.98)' : 'rgba(255, 254, 251, 0.95)';
+    roundRect(ctx, card.x, card.y, card.w, card.h, 18);
+    ctx.fill();
+
+    if (ratio > 0) {
+      ctx.save();
+      roundRect(ctx, card.x, card.y, card.w, card.h, 18);
+      ctx.clip();
+      ctx.fillStyle = 'rgba(217, 119, 6, 0.25)';
+      ctx.fillRect(card.x, card.y, card.w * ratio, card.h);
+      ctx.restore();
+    }
+
+    ctx.lineWidth = isHovered ? 4 : 2;
+    ctx.strokeStyle = isHovered ? '#A34E34' : '#8C6849';
+    roundRect(ctx, card.x, card.y, card.w, card.h, 18);
+    ctx.stroke();
+
+    if (card.w > card.h * 1.4) {
+      const imgSz = Math.min(card.h - 14, 74);
+      drawRecipePreviewAt(card.recipe, card.x + 14 + imgSz * 0.5, card.y + card.h * 0.54, imgSz * 0.48);
+      ctx.font = `900 ${Math.min(18, Math.max(14, card.w * 0.052))}px "Noto Sans TC", sans-serif`;
+      ctx.fillStyle = '#4A3222';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(card.recipe.name, card.x + imgSz + 24, card.y + card.h * 0.5, card.w - imgSz - 32);
+    } else {
+      const imgSz = Math.min(card.w * 0.66, card.h * 0.58);
+      drawRecipePreviewAt(card.recipe, card.x + card.w * 0.5, card.y + 18 + imgSz * 0.5, imgSz * 0.48);
+      ctx.font = `900 ${Math.min(17, Math.max(13, card.w * 0.082))}px "Noto Sans TC", sans-serif`;
+      ctx.fillStyle = '#4A3222';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(card.recipe.name, card.x + card.w * 0.5, card.y + card.h - 24, card.w - 14);
+    }
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+function drawCelebrationShowcase(area) {
+  const recipe = getCurrentRecipe();
+  const cx = area.centerX;
+  const cy = area.centerY + Math.min(22, area.height * 0.04);
+  const minDim = Math.min(area.width, area.height);
+  const heroR = Math.max(78, Math.min(150, minDim * 0.30));
+
+  const elapsed = state.celebrateTotal - state.celebrateTimer;
+  const popBounce = elapsed < 0.35
+    ? 0.85 + Math.sin((elapsed / 0.35) * (Math.PI * 0.65)) * 0.28
+    : 1.06 + Math.sin(performance.now() * 0.008) * 0.025;
+
+  const rayR = heroR * 1.65;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(performance.now() * 0.001);
+  for (let i = 0; i < 12; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    const a1 = (i * 2 * Math.PI) / 12;
+    ctx.arc(0, 0, rayR, a1, a1 + Math.PI / 12);
+    ctx.closePath();
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(232, 182, 106, 0.22)' : 'rgba(255, 249, 237, 0.10)';
+    ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(popBounce, popBounce);
+  drawRecipePreviewAt(recipe, 0, 0, heroR);
+  ctx.restore();
+
+  const titleY = Math.max(area.top + 28, cy - heroR * 1.24);
+  const subY = Math.min(area.top + area.height - 22, cy + heroR * 1.12);
+
+  ctx.save();
+  const titleText = `${recipe.name}完成！`;
+  ctx.font = `900 ${Math.round(Math.max(18, Math.min(29, minDim * 0.06)))}px "Noto Sans TC", sans-serif`;
+  const pillW = Math.min(area.width - 20, ctx.measureText(titleText).width + 44);
+  const pillH = Math.max(42, Math.min(54, minDim * 0.11));
+
+  ctx.fillStyle = 'rgba(255, 249, 237, 0.96)';
+  roundRect(ctx, cx - pillW / 2, titleY - pillH / 2, pillW, pillH, pillH / 2);
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#A34E34';
+  ctx.stroke();
+
+  ctx.fillStyle = '#4A3222';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(titleText, cx, titleY, pillW - 20);
+
+  ctx.fillStyle = '#A34E34';
+  roundRect(ctx, cx - 84, subY - 18, 168, 36, 18);
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#FFF8EA';
+  ctx.stroke();
+
+  ctx.font = `900 ${Math.round(Math.max(15, Math.min(20, minDim * 0.045)))}px "Noto Sans TC", sans-serif`;
+  ctx.fillStyle = '#FFF8EA';
+  ctx.fillText('成功上菜！', cx, subY);
+  ctx.restore();
+}
+
+function drawSyrupDrizzleOnIce(r, ing, prog, layerIdx) {
+  ctx.save();
+  ctx.fillStyle = ing.color;
+  ctx.globalAlpha = 0.94;
+  const topY = -r * 0.84;
+  const spreadW = r * 0.72 * prog;
+  const dripDepth = r * (0.38 + 0.3 * prog);
+
+  ctx.beginPath();
+  ctx.moveTo(-spreadW, topY + r * 0.34);
+  ctx.quadraticCurveTo(0, topY - r * 0.14, spreadW, topY + r * 0.34);
+
+  const stepW = (spreadW * 2) / 5;
+  for (let i = 5; i >= 1; i--) {
+    const xEnd = -spreadW + (i - 1) * stepW;
+    const extraDrop = ((i + layerIdx) % 2 === 0 ? 1.25 : 0.75) * dripDepth;
+    ctx.quadraticCurveTo(xEnd + stepW * 0.5, topY + r * 0.26 + extraDrop, xEnd, topY + r * 0.34);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawSingleIngredientPiece(ing, x, y, size, rot, variant = 0) {
+  if (size <= 0.5) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+
+  const extImg = getExternalAsset(ing.imgFile);
+  if (extImg) {
+    ctx.drawImage(extImg, -size * 1.15, -size * 1.15, size * 2.3, size * 2.3);
+    ctx.restore();
+    return;
+  }
+
+  ctx.fillStyle = (variant === 1 && ing.secondaryColor) ? ing.secondaryColor : ing.color;
+  ctx.beginPath();
+  ctx.arc(0, 0, size * 0.85, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawSpoonCursor(w, h) {
+  const px = state.cursorX * w;
+  const py = state.cursorY * h;
+  const ing = getActiveIngredient();
+  const hasFood = Boolean(state.carryingIngredient);
+  const isMemHidden = (config.gameMode === 'MEMORY_ORDER') && !hasFood && state.peekTimer <= 0 && state.phase === 'GO_SCOOP';
+  const isDormant = !hasFreshTracking();
+
+  if (state.spoonTrail.length > 1) {
+    const trailColor = hasFood ? ing.badgeColor : 'rgba(123, 89, 66, 0.45)';
+    for (let i = 1; i < state.spoonTrail.length; i++) {
+      const pt = state.spoonTrail[i];
+      const prev = state.spoonTrail[i - 1];
+      ctx.save();
+      ctx.strokeStyle = trailColor;
+      ctx.globalAlpha = Math.max(0, pt.alpha * (hasFood ? 0.65 : 0.3));
+      ctx.lineWidth = (i / state.spoonTrail.length) * (hasFood ? 20 : 10);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  ctx.save();
+  ctx.translate(px, py);
+  if (isDormant) ctx.globalAlpha = 0.42;
+
+  ctx.beginPath();
+  ctx.arc(0, 0, hasFood ? 48 : 40, 0, Math.PI * 2);
+  ctx.fillStyle = hasFood ? 'rgba(105, 118, 85, 0.28)' : 'rgba(245, 166, 35, 0.2)';
+  ctx.fill();
+  if (!hasFood) ctx.setLineDash([8, 6]);
+  ctx.lineWidth = hasFood ? 4 : 2.5;
+  ctx.strokeStyle = hasFood ? '#697655' : '#D97706';
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.save();
+  ctx.rotate(state.dwellElapsed > 0 ? 0.25 : 0.55);
+  const spoonImg = getExternalAsset('spoon.png');
+  if (spoonImg) {
+    ctx.drawImage(spoonImg, -36, -30, 120, 60);
+  } else {
+    ctx.fillStyle = '#B87B4B';
+    roundRect(ctx, 18, -9, 68, 18, 9);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 34, 27, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (hasFood) {
+    const carryIng = state.carryingIngredient;
+    ctx.beginPath();
+    ctx.arc(0, -3, 25, 0, Math.PI * 2);
+    ctx.fillStyle = carryIng.color;
+    ctx.fill();
+    [[-10, -6], [10, -6], [0, -12], [-8, 5], [8, 5], [0, 3]]
+      .forEach(([ox, oy], idx) => drawSingleIngredientPiece(carryIng, ox, oy, 11.5, idx * 0.7, idx % 2));
+  }
+  ctx.restore();
+
+  if (state.phase !== 'BOWL_CELEBRATE') {
+    const isQuiz = (state.phase === 'BOWL_QUIZ');
+    const label = isDormant
+      ? '等待感測訊號…'
+      : (isQuiz ? (state.quizCooldownTimer > 0 ? '先想一想…' : '停留在正確冰品上') : (hasFood ? '放回冰碗' : (isMemHidden ? '憑記憶選料' : ing.name)));
+    ctx.fillStyle = isQuiz ? '#744B32' : (hasFood ? '#784127' : '#A95E35');
+    roundRect(ctx, -82, -72, 164, 32, 16);
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#FFF9ED';
+    ctx.stroke();
+
+    ctx.font = '900 14px "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#FFF9ED';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const labelW = Math.min(rw - 16, 182);
-    if (labelW > 80 && rh > 54) {
-      ctx.fillStyle = 'rgba(9, 24, 32, 0.78)';
-      ctx.fillRect(mx - labelW / 2, my - 15, labelW, 30);
-      ctx.fillStyle = '#d8fff0';
-      ctx.fillText(`${modeName(state.mode)}活動範圍（可拖移）`, mx, my);
-    }
-
-    const hx1 = Math.max(11, Math.min(W - 11, x1));
-    const hx2 = Math.max(11, Math.min(W - 11, x2));
-    const hy1 = Math.max(11, Math.min(H - 11, y1));
-    const hy2 = Math.max(11, Math.min(H - 11, y2));
-
-    const handles = [
-      [hx1, hy1], [hx2, hy1], [hx1, hy2], [hx2, hy2],
-      [mx, hy1], [mx, hy2], [hx1, my], [hx2, my]
-    ];
-    handles.forEach(([hx, hy]) => {
-      ctx.beginPath();
-      ctx.arc(hx, hy, 11, 0, Math.PI * 2);
-      ctx.fillStyle = '#091820';
-      ctx.fill();
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = '#70e5ab';
-      ctx.stroke();
-    });
-
-    ctx.restore();
+    ctx.fillText(label, 0, -56);
   }
 
-  function drawTrackerRing(x, y, colorRadiusPx = 0) {
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-    ctx.save();
+  ctx.restore();
+}
 
-    if (state.mode === 'color' && colorRadiusPx > 26) {
-      ctx.strokeStyle = 'rgba(88, 245, 180, 0.45)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath();
-      ctx.arc(x, y, colorRadiusPx, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
+function roundRect(context, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.lineTo(x + width - r, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + r);
+  context.lineTo(x + width, y + height - r);
+  context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  context.lineTo(x + r, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - r);
+  context.lineTo(x, y + r);
+  context.quadraticCurveTo(x, y, x + r, y);
+  context.closePath();
+}
 
-    ctx.beginPath();
-    ctx.arc(x, y, 22, 0, Math.PI * 2);
-    ctx.lineWidth = 7;
-    ctx.strokeStyle = 'rgba(5, 24, 18, 0.85)';
-    ctx.stroke();
+/********************************************************************
+ * 8. 觸控／取色、診斷面板展開收合與 UI 事件綁定
+ ********************************************************************/
+canvas.addEventListener('pointerdown', (e) => {
+  sound.init();
+  requestScreenWakeLock();
+  if (state.paused || state.inSummary) return;
 
-    const isTrapped = game.blackHoleTrappedMs > 0;
-    ctx.shadowColor = isTrapped ? '#e879f9' : '#2ce695';
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.arc(x, y, 22, 0, Math.PI * 2);
-    ctx.lineWidth = 3.5;
-    ctx.strokeStyle = isTrapped
-      ? '#e879f9'
-      : state.modeReady || state.calibratingRange
-      ? '#58f5b4'
-      : '#6bc2e8';
-    ctx.stroke();
-
-    if (!state.modeReady && !state.calibratingRange && state.stableMs > 0) {
-      const ratio = Math.min(1, Math.max(0, state.stableMs / MODE_INIT_STABLE_MS));
-      ctx.shadowBlur = 0;
-      ctx.beginPath();
-      ctx.arc(x, y, 29, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio);
-      ctx.lineWidth = 4.5;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#ffd452';
-      ctx.stroke();
-    }
-
-    ctx.shadowBlur = 0;
-    ctx.beginPath();
-    ctx.arc(x, y, 7, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(5, 24, 18, 0.9)';
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
-    ctx.fillStyle = isTrapped ? '#e879f9' : '#4cffb3';
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  function renderScene(now = performance.now()) {
-    const W = stage.clientWidth;
-    const H = stage.clientHeight;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.clearRect(0, 0, W, H);
-
-    if (state.calibratingRange) {
-      drawRangeCalibrationOverlay(W, H);
-    } else {
-      drawCosmicAtmosphereAndMidline(W, H, now);
-      drawSubtleActiveRangeGuide(W, H, now);
-
-      if (state.gameState !== 'game_complete') {
-        const starR = getStarRadiusPx();
-        drawBlackHoleAndTrap(W, H, starR, now);
-
-        if (config.gamePlayMode === 'nebula') {
-          drawNebulaScene(W, H, starR, now);
-        } else if (config.gamePlayMode === 'magnet') {
-          drawMagnetScene(W, H, starR, now);
-        } else {
-          drawConstellationAndTrackLines(W, H);
-          drawSelectQuestionHud(W);
-          for (let i = 0; i < game.targets.length; i++) {
-            const t = game.targets[i];
-            if (t && !t.collectedLock) {
-              drawTargetEntity(t, W, H, starR, now, state.modeReady);
-            }
-          }
-        }
-      }
-
-      drawEffects(now);
-    }
-
-    if (trackerOutput.found) {
-      drawTrackerRing(
-        trackerOutput.x * W,
-        trackerOutput.y * H,
-        trackerOutput.colorRadiusPx
-      );
+  if (config.trackMode === 'COLOR' && state.cameraActive && state.awaitingColorPick) {
+    const sampled = tracker.sampleColorAtScreenPoint(e.clientX, e.clientY);
+    if (sampled) {
+      state.awaitingColorPick = false;
+      state.lastTrackValidTime = performance.now();
+      document.getElementById('color-swatch').style.background = sampled.hex;
+      setTrackingStatusUI('cam-on', '🎨 已鎖定物品顏色！移動物品即可操作');
+      updateHUD();
+      spawnSuccessParticles(e.clientX, e.clientY, sampled.hex, 16);
+      sound.playScoop();
     }
   }
-
-  // ==================== 強化版手部／頭部／顏色追蹤核心（修復偶爾抓不到的問題） ====================
-
-  function setMode(m) {
-    if (m === state.mode) return;
-    state.mode = m;
-    state.loopToken++;
-    cancelAnimationFrame(state.rafId);
-    state.previousVideoTime = -1;
-    state.lastSeenTime = 0;
-    state.missCount = 0;
-    state.busy = false;
-    state.busySince = 0;
-
-    resetModeInitialization();
-
-    document.querySelectorAll('[data-mode]').forEach(b => {
-      b.setAttribute('aria-pressed', String(b.dataset.mode === m));
-    });
-
-    $('rechooseBtn').hidden = m !== 'color';
-    $('colorSwatch').hidden = m !== 'color';
-
-    const hasCustom = modeRanges[m].isCustom;
-    $('footerHint').textContent =
-      m === 'color'
-        ? state.colorTarget
-          ? '已沿用儲存的物品色彩樣本，確認追蹤約 1 秒後自動繼續遊戲。'
-          : '請點選畫面中的彩色或黑／灰物品中央取樣，完成後確認追蹤。'
-        : m === 'hand'
-        ? `手部模式（${hasCustom ? '自訂活動範圍' : '預設大活動範圍'}）：握拳或張掌皆可追蹤。`
-        : `頭部模式（${hasCustom ? '自訂活動範圍' : '中心舒適小範圍'}）：微幅移動頭部即可互動。`;
-
-    updateScoreAndTimerUI();
-    if (isMultiNodeMode() || config.gamePlayMode === 'select') {
-      spawnNextTargets(performance.now(), false);
-    } else {
-      ensureCurrentTargetsInsideBounds();
-    }
-
-    if (state.calibratingRange) {
-      openRangeCalibration();
-    }
-
-    if (state.active) {
-      startLoop();
-    } else {
-      setAppState('camera_idle');
-      updateStatusUI('攝影機未開啟', '', '按下「啟動前鏡頭」開始星空宇宙復健練習');
-      renderScene();
-    }
-  }
-
-  document.querySelectorAll('[data-mode]').forEach(b => {
-    b.addEventListener('click', () => {
-      unlockAudio();
-      setMode(b.dataset.mode);
-    });
-  });
-
-  function loadScript(url) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = url;
-      s.crossOrigin = 'anonymous';
-      s.onload = resolve;
-      s.onerror = () => {
-        s.remove();
-        reject(new Error('模型腳本下載失敗'));
-      };
-      document.head.append(s);
-    });
-  }
-
-  async function ensureModel(m) {
-    if (m === 'hand' && state.handModel) return state.handModel;
-    if (m === 'head' && state.headModel) return state.headModel;
-
-    const symbol = m === 'hand' ? 'Hands' : 'FaceMesh';
-    if (!window[symbol]) {
-      try {
-        await loadScript(scriptUrls[m][0]);
-      } catch {
-        await loadScript(scriptUrls[m][1]);
-      }
-    }
-    if (!window[symbol]) {
-      throw new Error('無法載入 ' + modeName(m) + ' 辨識模型');
-    }
-
-    const base = m === 'hand' ? 'hands' : 'face_mesh';
-    const inst = new window[symbol]({
-      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/${base}/${f}`
-    });
-
-    if (m === 'hand') {
-      // 調降手部辨識信心門檻至 0.30，讓中風患者握拳、微彎或手背朝前也能穩定抓到！
-      inst.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.30,
-        minTrackingConfidence: 0.28
-      });
-      inst.onResults(r => onMediaPipeResults('hand', r));
-      state.handModel = inst;
-    } else {
-      // 調降頭部辨識信心門檻至 0.35，讓微側臉或光線稍暗時依然穩定追蹤！
-      inst.setOptions({
-        maxNumFaces: 1,
-        refineLandmarks: false,
-        minDetectionConfidence: 0.35,
-        minTrackingConfidence: 0.32
-      });
-      inst.onResults(r => onMediaPipeResults('head', r));
-      state.headModel = inst;
-    }
-    return inst;
-  }
-
-  function onMediaPipeResults(m, r) {
-    if (m !== state.mode || !state.active) return;
-    const now = performance.now();
-    const landmarks = m === 'hand' ? r.multiHandLandmarks?.[0] : r.multiFaceLandmarks?.[0];
-    let rawPoint = null;
-
-    if (landmarks) {
-      if (m === 'hand') {
-        const ids = [0, 5, 9, 13, 17].filter(i => landmarks[i]);
-        if (ids.length) {
-          rawPoint = {
-            x: ids.reduce((sum, i) => sum + landmarks[i].x, 0) / ids.length,
-            y: ids.reduce((sum, i) => sum + landmarks[i].y, 0) / ids.length
-          };
-        }
-      } else {
-        // 同時取鼻尖(1, 4)與兩頰中點的穩定回退點
-        rawPoint = landmarks[1] || landmarks[4] || landmarks[0];
-      }
-    }
-
-    const norm = normalizeCameraPoint(rawPoint);
-    if (norm) {
-      state.missCount = 0;
-      state.lastSeenTime = now;
-      publishTrackingState(true, norm.x, norm.y, now, 0);
-      refreshTrackingBanner(m);
-    } else {
-      state.missCount++;
-      // 放寬短暫閃爍容忍至 3 幀 / 340ms，避免偶發單幀漏抓造成畫面閃爍中斷
-      if (state.missCount >= 3 || now - state.lastSeenTime > 340) {
-        publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
-        refreshTrackingBanner(m);
-      }
-    }
-  }
-
-  function drawCameraToWorkCanvas() {
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    const W = work.width;
-    const H = work.height;
-    if (!vw || !vh || !W || !H) return false;
-    wctx.save();
-    wctx.clearRect(0, 0, W, H);
-    wctx.translate(W, 0);
-    wctx.scale(-1, 1);
-    if (config.cameraFit === 'cover') {
-      const s = config.cameraFit === 'cover' ? Math.max(W / vw, H / vh) : (W / vw);
-      const sw = W / s;
-      const sh = H / s;
-      wctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, W, H);
-    } else {
-      const s = W / vw;
-      const dw = vw * s;
-      const dh = vh * s;
-      const dx = (W - dw) / 2;
-      const dy = (H - dh) / 2;
-      wctx.drawImage(video, 0, 0, vw, vh, dx, dy, dw, dh);
-    }
-    wctx.restore();
-    return true;
-  }
-
-  function rgbToHsv(r, g, b) {
-    r /= 255;
-    g /= 255;
-    b /= 255;
-    const mx = Math.max(r, g, b);
-    const mn = Math.min(r, g, b);
-    const d = mx - mn;
-    let h = 0;
-    if (d) {
-      switch (mx) {
-        case r: h = ((g - b) / d) % 6; break;
-        case g: h = (b - r) / d + 2; break;
-        default: h = (r - g) / d + 4;
-      }
-      h = (h * 60 + 360) % 360;
-    }
-    return [h, mx ? d / mx : 0, mx];
-  }
-
-  const hueDiff = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
-
-  function isLikelySkinPixel(r, g, b, s, luma) {
-    return (
-      luma > 0.20 &&
-      luma < 0.88 &&
-      s > 0.15 &&
-      s < 0.62 &&
-      r > g + 13 &&
-      g > b + 4 &&
-      r - b > 24
-    );
-  }
-
-  function matchesTargetPixel(r, g, b, target, tol) {
-    const v = rgbToHsv(r, g, b);
-    if (target.kind === 'chromatic') {
-      return (
-        hueDiff(v[0], target.h) <= tol &&
-        v[1] >= Math.max(0.20, target.s - 0.34) &&
-        v[2] >= Math.max(0.13, target.v - 0.44) &&
-        v[2] <= Math.min(1, target.v + 0.44)
-      );
-    }
-
-    const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    const tolScale = Math.max(0.65, Math.min(1.45, tol / 16));
-
-    const maxAllowedS = target.luma < 0.16
-      ? Math.min(0.42, Math.max(0.24, target.s + 0.16 * tolScale))
-      : Math.min(0.30, Math.max(0.16, target.s + 0.11 * tolScale));
-    if (v[1] > maxAllowedS) return false;
-
-    if (target.rgDiff < 0.055 && isLikelySkinPixel(r, g, b, v[1], luma)) {
-      return false;
-    }
-
-    const lumaTol = (target.luma < 0.20 ? 0.082 : 0.095) * tolScale;
-    if (Math.abs(luma - target.luma) > lumaTol) return false;
-    if (Math.abs(v[2] - target.v) > lumaTol * 1.15) return false;
-
-    const rg = (r - g) / 255;
-    const gb = (g - b) / 255;
-    const tintDist = Math.abs(rg - target.rgDiff) + Math.abs(gb - target.gbDiff);
-    if (tintDist > 0.105 * tolScale) return false;
-
-    return true;
-  }
-
-  function selectColorAtWorkCoord(wx, wy) {
-    if (!drawCameraToWorkCanvas()) return;
-    const W = work.width;
-    const H = work.height;
-    const p = wctx.getImageData(0, 0, W, H).data;
-
-    const patchAll = [];
-    const patchChromatic = [];
-
-    for (let yy = Math.max(0, wy - 7); yy <= Math.min(H - 1, wy + 7); yy += 1) {
-      for (let xx = Math.max(0, wx - 7); xx <= Math.min(W - 1, wx + 7); xx += 1) {
-        const k = (yy * W + xx) * 4;
-        const r = p[k];
-        const g = p[k + 1];
-        const b = p[k + 2];
-        const c = rgbToHsv(r, g, b);
-        const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        const sample = { h: c[0], s: c[1], v: c[2], luma, r, g, b, rgb: [r, g, b] };
-        patchAll.push(sample);
-        if (c[1] > 0.21 && c[2] > 0.15) {
-          patchChromatic.push(sample);
-        }
-      }
-    }
-
-    if (patchAll.length < 16) return;
-
-    if (patchChromatic.length >= Math.max(12, patchAll.length * 0.40)) {
-      const bins = Array(36).fill(0);
-      patchChromatic.forEach(o => bins[Math.floor(o.h / 10) % 36]++);
-      let bestBin = 0;
-      let highest = -1;
-      for (let i = 0; i < 36; i++) {
-        const score = bins[(i + 35) % 36] + bins[i] + bins[(i + 1) % 36];
-        if (score > highest) {
-          highest = score;
-          bestBin = i;
-        }
-      }
-
-      let selected = patchChromatic.filter(o => hueDiff(o.h, bestBin * 10 + 5) < 22);
-      if (!selected.length) selected = patchChromatic;
-      selected.sort((a, b) => a.s - b.s);
-      const mid = selected[Math.floor(selected.length / 2)];
-
-      let cx = 0;
-      let cy = 0;
-      for (const o of selected) {
-        cx += Math.cos((o.h * Math.PI) / 180);
-        cy += Math.sin((o.h * Math.PI) / 180);
-      }
-
-      state.colorTarget = {
-        kind: 'chromatic',
-        h: ((Math.atan2(cy, cx) * 180) / Math.PI + 360) % 360,
-        s: mid.s,
-        v: mid.v,
-        luma: mid.luma,
-        r: mid.r,
-        g: mid.g,
-        b: mid.b,
-        rgDiff: (mid.r - mid.g) / 255,
-        gbDiff: (mid.g - mid.b) / 255,
-        refArea: 0
-      };
-      state.lastColorPos = { x: wx, y: wy };
-      state.colorLostFrames = 0;
-      resetModeInitialization();
-      $('colorSwatch').style.background = `rgb(${mid.rgb.join(',')})`;
-
-      if (!state.calibratingRange) {
-        updateStatusUI('已選取彩色物品｜確認中…', 'info', '已取色！請保持彩色物品在畫面內約 1 秒以確認穩定追蹤');
-      }
-      detectColorFrame(performance.now(), true);
-      return;
-    }
-
-    const sortedByLuma = [...patchAll].sort((a, b) => a.luma - b.luma);
-    const startIdx = Math.floor(sortedByLuma.length * 0.2);
-    const endIdx = Math.max(startIdx + 1, Math.floor(sortedByLuma.length * 0.8));
-    const core = sortedByLuma.slice(startIdx, endIdx);
-    const mid = core[Math.floor(core.length / 2)];
-
-    const candidateTarget = {
-      kind: 'achromatic',
-      h: mid.h,
-      s: mid.s,
-      v: mid.v,
-      luma: mid.luma,
-      r: mid.r,
-      g: mid.g,
-      b: mid.b,
-      rgDiff: (mid.r - mid.g) / 255,
-      gbDiff: (mid.g - mid.b) / 255,
-      subType: mid.luma < 0.22 ? 'black' : 'gray',
-      refArea: 0
-    };
-
-    let ringTotal = 0;
-    let ringSame = 0;
-    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
-      for (const rad of [26, 38]) {
-        const rx = Math.round(wx + Math.cos(angle) * rad);
-        const ry = Math.round(wy + Math.sin(angle) * rad);
-        if (rx < 0 || rx >= W || ry < 0 || ry >= H) continue;
-        ringTotal++;
-        const k = (ry * W + rx) * 4;
-        if (matchesTargetPixel(p[k], p[k + 1], p[k + 2], candidateTarget, state.tolerance)) {
-          ringSame++;
-        }
-      }
-    }
-
-    const step = 3;
-    const gw = Math.ceil(W / step);
-    const gh = Math.ceil(H / step);
-    let globalMatched = 0;
-    for (let gy = 0; gy < gh; gy++) {
-      for (let gx = 0; gx < gw; gx++) {
-        const x = Math.min(W - 1, gx * step + 1);
-        const y = Math.min(H - 1, gy * step + 1);
-        const k = (y * W + x) * 4;
-        if (matchesTargetPixel(p[k], p[k + 1], p[k + 2], candidateTarget, state.tolerance)) {
-          globalMatched++;
-        }
-      }
-    }
-
-    if (globalMatched > gw * gh * 0.28 || (ringTotal >= 12 && ringSame / ringTotal > 0.82 && globalMatched > gw * gh * 0.16)) {
-      resetModeInitialization();
-      updateStatusUI(
-        '背景對比不足',
-        'warn',
-        '黑／灰物品與周圍背景太相似，請在對比較明顯的背景前點選物品中央'
-      );
-      return;
-    }
-
-    state.colorTarget = candidateTarget;
-    state.lastColorPos = { x: wx, y: wy };
-    state.lastColorArea = 0;
-    state.colorLostFrames = 0;
-    resetModeInitialization();
-    $('colorSwatch').style.background = `rgb(${mid.rgb.join(',')})`;
-
-    if (!state.calibratingRange) {
-      const labelType = candidateTarget.subType === 'black' ? '深黑物品' : '灰色物品';
-      updateStatusUI(
-        `已選取${labelType}｜確認中…`,
-        'info',
-        `已取樣${labelType}！請保持物品在畫面內約 1 秒以確認穩定追蹤`
-      );
-    }
-    detectColorFrame(performance.now(), true);
-  }
-
-  function computeComponentBoundaryContrast(im, W, H, minx, miny, maxx, maxy, step, targetLuma) {
-    let sumDiff = 0;
-    let count = 0;
-    const pad = 2;
-    const xLeft = Math.max(0, (minx - pad) * step);
-    const xRight = Math.min(W - 1, (maxx + pad) * step);
-    const yTop = Math.max(0, (miny - pad) * step);
-    const yBottom = Math.min(H - 1, (maxy + pad) * step);
-
-    const sampleCoords = [
-      [xLeft, Math.floor(((miny + maxy) * 0.5) * step)],
-      [xRight, Math.floor(((miny + maxy) * 0.5) * step)],
-      [Math.floor(((minx + maxx) * 0.5) * step), yTop],
-      [Math.floor(((minx + maxx) * 0.5) * step), yBottom],
-      [xLeft, yTop],
-      [xRight, yTop],
-      [xLeft, yBottom],
-      [xRight, yBottom]
-    ];
-
-    for (const [sx, sy] of sampleCoords) {
-      if (sx < 0 || sx >= W || sy < 0 || sy >= H) continue;
-      const k = (sy * W + sx) * 4;
-      const extLuma = (0.299 * im[k] + 0.587 * im[k + 1] + 0.114 * im[k + 2]) / 255;
-      sumDiff += Math.abs(extLuma - targetLuma);
-      count++;
-    }
-    return count > 0 ? sumDiff / count : 0;
-  }
-
-  function detectColorFrame(now = performance.now(), isInitialSeed = false) {
-    if (!state.colorTarget) {
-      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
-      refreshTrackingBanner('color');
-      return;
-    }
-    if (!drawCameraToWorkCanvas()) return;
-
-    const W = work.width;
-    const H = work.height;
-    const im = wctx.getImageData(0, 0, W, H).data;
-    const c = state.colorTarget;
-    const step = 3;
-    const gw = Math.ceil(W / step);
-    const gh = Math.ceil(H / step);
-    const totalCells = gw * gh;
-    const mask = new Uint8Array(totalCells);
-    let totalMatched = 0;
-
-    for (let gy = 0; gy < gh; gy++) {
-      for (let gx = 0; gx < gw; gx++) {
-        const x = Math.min(W - 1, gx * step + 1);
-        const y = Math.min(H - 1, gy * step + 1);
-        const k = (y * W + x) * 4;
-        if (matchesTargetPixel(im[k], im[k + 1], im[k + 2], c, state.tolerance)) {
-          mask[gy * gw + gx] = 1;
-          totalMatched++;
-        }
-      }
-    }
-
-    const maxBgFraction = c.kind === 'achromatic' ? 0.28 : 0.38;
-    if (totalMatched > totalCells * maxBgFraction) {
-      state.lastColorPos = null;
-      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
-      updateStatusUI(
-        '背景與物品過於相似',
-        'warn',
-        c.kind === 'achromatic'
-          ? '背景有太多相近黑／灰或深色區域，請改善背景對比或點「重新選色」'
-          : '背景有太多相近顏色導致辨識不可靠，請避開同色背景或點「重新選色」'
-      );
-      return;
-    }
-
-    const vis = new Uint8Array(mask.length);
-    const candidates = [];
-    const minCells = Math.max(5, Math.round(totalCells * 0.0007));
-    const maxCells = c.kind === 'achromatic' ? totalCells * 0.16 : totalCells * 0.28;
-    const diag = Math.hypot(W, H);
-
-    for (let i = 0; i < mask.length; i++) {
-      if (!mask[i] || vis[i]) continue;
-      const q = [i];
-      let head = 0;
-      let n = 0;
-      let sx = 0;
-      let sy = 0;
-      let minx = gw;
-      let miny = gh;
-      let maxx = 0;
-      let maxy = 0;
-      let borderTouches = 0;
-      vis[i] = 1;
-
-      while (head < q.length) {
-        const idx = q[head++];
-        const x = idx % gw;
-        const y = Math.floor(idx / gw);
-        n++;
-        sx += x;
-        sy += y;
-        if (x < minx) minx = x;
-        if (y < miny) miny = y;
-        if (x > maxx) maxx = x;
-        if (y > maxy) maxy = y;
-        if (x === 0 || x === gw - 1 || y === 0 || y === gh - 1) {
-          borderTouches++;
-        }
-
-        const neighbors = [
-          [x - 1, y],
-          [x + 1, y],
-          [x, y - 1],
-          [x, y + 1]
-        ];
-        for (let nb = 0; nb < 4; nb++) {
-          const nx = neighbors[nb][0];
-          const ny = neighbors[nb][1];
-          if (nx < 0 || nx >= gw || ny < 0 || ny >= gh) continue;
-          const ni = ny * gw + nx;
-          if (mask[ni] && !vis[ni]) {
-            vis[ni] = 1;
-            q.push(ni);
-          }
-        }
-      }
-
-      if (n < minCells || n > maxCells) continue;
-
-      const bw = maxx - minx + 1;
-      const bh = maxy - miny + 1;
-      const fillRatio = n / Math.max(1, bw * bh);
-      const aspect = Math.max(bw, bh) / Math.max(1, Math.min(bw, bh));
-      const px = (sx / n + 0.5) * step;
-      const py = (sy / n + 0.5) * step;
-
-      if (c.kind === 'achromatic') {
-        if (aspect > 5.8 || fillRatio < 0.17) continue;
-        if (bw > gw * 0.72 || bh > gh * 0.72) continue;
-
-        const extContrast = computeComponentBoundaryContrast(im, W, H, minx, miny, maxx, maxy, step, c.luma);
-        if (extContrast < 0.055) continue;
-
-        const touchesBottom = maxy >= gh - 2 && bw > gw * 0.32;
-        if (touchesBottom && (!state.lastColorPos || Math.hypot(px - state.lastColorPos.x, py - state.lastColorPos.y) > diag * 0.16)) {
-          continue;
-        }
-      }
-
-      let continuityWeight = 1.0;
-      let distNorm = 1.0;
-      if (state.lastColorPos) {
-        distNorm = Math.hypot(px - state.lastColorPos.x, py - state.lastColorPos.y) / diag;
-        if (distNorm <= 0.22) {
-          continuityWeight = 1.2 + (1 - distNorm / 0.22) * 2.2;
-        } else if (distNorm <= 0.36) {
-          continuityWeight = 0.75;
-        } else {
-          continuityWeight = state.colorLostFrames >= 4 ? 0.85 : 0.20;
-        }
-      }
-
-      let areaWeight = 1.0;
-      if (c.refArea > 0) {
-        const ratio = n / c.refArea;
-        if (ratio >= 0.30 && ratio <= 3.2) {
-          areaWeight = 1.25;
-        } else if (ratio < 0.15 || ratio > 5.5) {
-          areaWeight = 0.45;
-        }
-      }
-
-      const borderPenalty = borderTouches > n * 0.35 ? 0.6 : 1.0;
-      const compactnessBonus = 0.75 + Math.min(0.5, fillRatio * 0.6);
-      const score = n * continuityWeight * areaWeight * borderPenalty * compactnessBonus;
-
-      candidates.push({
-        x: px,
-        y: py,
-        n,
-        score,
-        distNorm,
-        w: bw * step,
-        h: bh * step
-      });
-    }
-
-    candidates.sort((a, b) => b.score - a.score);
-    const best = candidates[0] || null;
-
-    if (
-      best &&
-      c.kind === 'achromatic' &&
-      !isInitialSeed &&
-      best.distNorm > 0.25 &&
-      candidates.length >= 3 &&
-      candidates[1].score > best.score * 0.78 &&
-      candidates[2].score > best.score * 0.65
-    ) {
-      state.colorLostFrames++;
-      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
-      updateStatusUI(
-        '背景有相近深色干擾',
-        'warn',
-        '畫面中有多處相近的黑／灰區域（如衣服、頭髮或陰影），請讓物品靠近鏡頭或改善背景對比'
-      );
-      return;
-    }
-
-    if (best) {
-      if (isInitialSeed || !c.refArea) {
-        c.refArea = best.n;
-      } else if (best.distNorm < 0.15) {
-        c.refArea = c.refArea * 0.85 + best.n * 0.15;
-      }
-      state.lastColorPos = { x: best.x, y: best.y };
-      state.colorLostFrames = 0;
-
-      const normX = best.x / W;
-      const normY = best.y / H;
-      const radiusPx = Math.max(
-        22,
-        Math.min(
-          105,
-          Math.max((best.w / W) * stage.clientWidth, (best.h / H) * stage.clientHeight) * 0.55
-        )
-      );
-      publishTrackingState(true, normX, normY, now, radiusPx);
-      refreshTrackingBanner('color');
-    } else {
-      state.colorLostFrames++;
-      if (state.colorLostFrames >= 5) {
-        state.lastColorPos = null;
-      }
-      publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
-      refreshTrackingBanner('color');
-    }
-  }
-
-  // ==================== 相機與主迴圈控制（含 1.2 秒推論逾時防卡死 Watchdog） ====================
-
-  async function startCamera() {
-    unlockAudio();
-    const btn = $('startBtn');
-    btn.disabled = true;
-    setAppState('camera_loading');
-    updateStatusUI('啟動鏡頭中…', '', '首次使用請允許瀏覽器使用前鏡頭權限');
-
-    try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error('此環境不支援相機 API，請使用 HTTPS 網址並以 Safari 或 Chrome 開啟');
-      }
-      if (!state.stream) {
-        state.stream = await window.StarMotionTracker.acquireWidestFrontStream();
-        video.srcObject = state.stream;
-        await video.play();
-      }
-      state.active = true;
-      resizeStage();
-      $('startOverlay').hidden = true;
-      resetModeInitialization();
-      if (!game.targets.length && state.gameState !== 'game_complete') {
-        setGameState('game_playing');
-        spawnNextTargets(performance.now(), false);
-      }
-      startLoop();
-    } catch (e) {
-      state.active = false;
-      setAppState('error');
-      $('coverTitle').textContent = '無法啟動前鏡頭';
-      $('coverText').textContent =
-        e.name === 'NotAllowedError'
-          ? '請在瀏覽器網址列或系統設定中允許攝影機權限，再按下方按鈕重試。'
-          : e.message || String(e);
-      btn.textContent = '重新嘗試啟動';
-      $('startOverlay').hidden = false;
-      updateStatusUI('鏡頭啟動失敗', 'warn', '請檢查相機權限與 HTTPS 連線');
-    } finally {
-      btn.disabled = false;
-    }
-  }
-
-  function handleModelError(e) {
-    state.loopToken++;
-    cancelAnimationFrame(state.rafId);
-    publishTrackingState(false, 0.5, 0.5);
-    setAppState('error');
-    const msg = e?.message || String(e);
-    updateStatusUI('模型載入失敗', 'warn', msg);
-    $('coverTitle').textContent = '辨識模型載入失敗';
-    $('coverText').textContent = msg + '。請確認網路連線正常，或先切換至「🟠 顏色」模式練習。';
-    $('startBtn').textContent = '重新嘗試';
-    $('startOverlay').hidden = false;
-  }
-
-  function startLoop() {
-    const token = ++state.loopToken;
-    cancelAnimationFrame(state.rafId);
-    state.previousVideoTime = -1;
-    state.missCount = 0;
-    state.busy = false;
-    state.busySince = 0;
-    resetModeInitialization();
-
-    if (state.mode === 'color') {
-      setAppState('tracking_search');
-      refreshTrackingBanner('color');
-    } else {
-      setAppState('model_loading');
-      updateStatusUI('正在載入' + modeName() + '模型…', 'info', '首次使用需載入辨識模型，請稍候…');
-    }
-
-    (async () => {
-      let detector = null;
-      try {
-        if (state.mode !== 'color') {
-          detector = await ensureModel(state.mode);
-        }
-        if (token !== state.loopToken || !state.active) return;
-
-        if (detector) {
-          setAppState('tracking_search');
-          refreshTrackingBanner(state.mode);
-        }
-
-        let lastColorCheck = 0;
-        const frameLoop = async ts => {
-          if (token !== state.loopToken || !state.active) return;
-
-          if (!document.hidden && video.readyState >= 2) {
-            // 推論逾時 Watchdog：若單幀 AI 推論超過 1200ms 尚未回傳，自動解鎖 busy 防止卡死
-            if (state.busy && ts - state.busySince > 1200) {
-              state.busy = false;
-            }
-
-            if (state.mode === 'color') {
-              if (ts - lastColorCheck > 55) {
-                lastColorCheck = ts;
-                if (state.colorTarget) {
-                  detectColorFrame(ts);
-                } else {
-                  refreshTrackingBanner('color');
-                }
-              }
-            } else if (!state.busy && video.currentTime !== state.previousVideoTime) {
-              state.previousVideoTime = video.currentTime;
-              state.busy = true;
-              state.busySince = ts;
-              try {
-                await detector.send({ image: video });
-              } catch (err) {
-                state.busy = false;
-                if (token === state.loopToken) handleModelError(err);
-                return;
-              } finally {
-                state.busy = false;
-              }
-            }
-
-            updateGameLogic(ts);
-            renderScene(ts);
-          }
-
-          state.rafId = requestAnimationFrame(frameLoop);
-        };
-
-        state.rafId = requestAnimationFrame(frameLoop);
-      } catch (err) {
-        if (token === state.loopToken) handleModelError(err);
-      }
-    })();
-  }
-
-  // ==================== 事件綁定 ====================
-
-  $('startBtn').addEventListener('click', () => {
-    if (state.active) {
-      $('startOverlay').hidden = true;
-      startLoop();
-    } else {
-      startCamera();
-    }
-  });
-
-  $('playAgainBtn').addEventListener('click', () => {
-    unlockAudio();
-    resetGame();
-  });
-
-  $('completeSettingsBtn').addEventListener('click', () => {
-    updateCustomRangeLabels();
-    syncSettingsVisibility();
-    $('settingsSheet').hidden = false;
-    syncModeCarouselUI(false);
-  });
-
-  $('copySessionLogBtn').addEventListener('click', copyDailySessionSummary);
-
-  $('resetGameBtn').addEventListener('click', () => {
-    unlockAudio();
-    resetGame();
-  });
-
-  stage.addEventListener('pointerdown', e => {
-    unlockAudio();
-    if (!$('startOverlay').hidden || !$('completeOverlay').hidden || !$('settingsSheet').hidden) {
-      return;
-    }
-
-    const r = stage.getBoundingClientRect();
-    const px = e.clientX - r.left;
-    const py = e.clientY - r.top;
-    const nx = Math.max(0, Math.min(1, px / Math.max(1, r.width)));
-    const ny = Math.max(0, Math.min(1, py / Math.max(1, r.height)));
-
-    if (state.calibratingRange) {
-      const handle = hitTestCalibHandle(px, py);
-      if (handle) {
-        calibState.dragHandle = handle;
-        calibState.dragStartNorm = { x: nx, y: ny };
-        calibState.dragStartBox = { ...calibState.workingBox };
-        try {
-          stage.setPointerCapture(e.pointerId);
-        } catch {}
-        return;
-      }
-    }
-
-    if (state.mode === 'color' && state.active && !state.calibratingRange) {
-      const wx = Math.max(0, Math.min(work.width - 1, Math.floor(nx * work.width)));
-      const wy = Math.max(0, Math.min(work.height - 1, Math.floor(ny * work.height)));
-      selectColorAtWorkCoord(wx, wy);
-    }
-  });
-
-  stage.addEventListener('pointermove', e => {
-    if (!state.calibratingRange || !calibState.dragHandle) return;
-    const r = stage.getBoundingClientRect();
-    const nx = Math.max(0, Math.min(1, (e.clientX - r.left) / Math.max(1, r.width)));
-    const ny = Math.max(0, Math.min(1, (e.clientY - r.top) / Math.max(1, r.height)));
-    updateCalibDrag(nx, ny);
-  });
-
-  function endCalibDrag() {
-    calibState.dragHandle = null;
-    calibState.dragStartNorm = null;
-    calibState.dragStartBox = null;
-  }
-  stage.addEventListener('pointerup', endCalibDrag);
-  stage.addEventListener('pointercancel', endCalibDrag);
-
-  $('rechooseBtn').addEventListener('click', () => {
-    state.colorTarget = null;
-    state.lastColorPos = null;
-    state.lastColorArea = 0;
-    state.colorLostFrames = 0;
-    $('colorSwatch').style.background = '#546c78';
-    resetModeInitialization();
-    refreshTrackingBanner('color');
-    renderScene();
-  });
-
-  $('openRangeCalibBtn').addEventListener('click', openRangeCalibration);
-  $('calibResetDefaultBtn').addEventListener('click', resetCurrentModeRangeToDefault);
-  $('calibApplyBtn').addEventListener('click', applyRangeAndReturn);
-
-  const MODE_ORDER = ['collect', 'connect', 'track', 'select', 'traffic', 'nebula', 'magnet', 'falling'];
-  let carouselProgrammaticScrollUntil = 0;
-
-  function syncModeCarouselUI(scrollIntoViewSmooth = true) {
-    const activeMode = config.gamePlayMode === 'charge' ? 'collect' : config.gamePlayMode;
-    document.querySelectorAll('.mode-level-card[data-mode-card]').forEach(card => {
-      const isSel = card.dataset.modeCard === activeMode;
-      card.setAttribute('aria-selected', String(isSel));
-      const pill = card.querySelector('[data-card-status]');
-      if (pill) {
-        pill.textContent = isSel ? '✓ 目前選擇' : '點選切換此關';
-      }
-    });
-
-    document.querySelectorAll('.mode-dot-btn[data-mode-dot]').forEach(dot => {
-      dot.setAttribute('aria-current', String(dot.dataset.modeDot === activeMode));
-    });
-
-    document.querySelectorAll('.seg-btn[data-setting="gamePlayMode"]').forEach(b => {
-      b.setAttribute('aria-checked', String(b.dataset.value === activeMode));
-    });
-
-    const track = $('modeCarouselTrack');
-    const activeCard = track?.querySelector(`.mode-level-card[data-mode-card="${activeMode}"]`);
-    if (track && activeCard && !$('settingsSheet').hidden) {
-      carouselProgrammaticScrollUntil = performance.now() + 460;
-      const targetLeft = Math.max(0, activeCard.offsetLeft - 4);
-      try {
-        track.scrollTo({ left: targetLeft, behavior: scrollIntoViewSmooth ? 'smooth' : 'auto' });
-      } catch {
-        track.scrollLeft = targetLeft;
-      }
-    }
-  }
-
-  function selectGameModeFromCarousel(nextMode, scrollSmooth = true) {
-    if (!nextMode) return;
-    const prevMode = config.gamePlayMode;
-    config.gamePlayMode = nextMode;
-    syncModeCarouselUI(scrollSmooth);
-    syncSettingsVisibility();
-    updateScoreAndTimerUI();
-    if (prevMode !== nextMode) {
-      resetGame();
-    } else {
-      renderScene();
-    }
-  }
-
-  function openSettings() {
-    updateCustomRangeLabels();
-    syncSettingsVisibility();
-    $('settingsSheet').hidden = false;
-    const resumeBtn = $('resumeFromSettingsBtn');
-    if (resumeBtn) {
-      resumeBtn.textContent = state.active ? '▶ 繼續遊戲' : '▶ 開始遊戲';
-    }
-    syncModeCarouselUI(false);
-  }
-
-  async function restartCameraAndGame() {
-    closeSettings();
-    state.loopToken++;
-    cancelAnimationFrame(state.rafId);
-
-    // 徹底釋放舊鏡頭串流與清空殘留畫布，避免 iPad 爆圖或殘影
-    if (state.stream) {
-      try {
-        state.stream.getTracks().forEach(t => t.stop());
-      } catch {}
-      state.stream = null;
-    }
-    video.srcObject = null;
-
-    game.particles = [];
-    game.floatingTexts = [];
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, stage.clientWidth, stage.clientHeight);
-
-    resetGame();
-    await startCamera();
-  }
-  function closeSettings() {
-    $('settingsSheet').hidden = true;
-    game.lastTickTs = performance.now();
-  }
-  $('openSettingsTop').addEventListener('click', openSettings);
-  $('closeSettingsBtn').addEventListener('click', closeSettings);
-  $('resumeFromSettingsBtn').addEventListener('click', () => {
-    closeSettings();
-    if (!state.active) {
-      startCamera();
-    }
-  });
-  $('restartFullBtn').addEventListener('click', () => {
-    restartCameraAndGame();
-  });
-  $('closeSettingsTop').addEventListener('click', closeSettings);
-  $('settingsSheet').addEventListener('click', e => {
-    if (e.target === $('settingsSheet')) closeSettings();
-  });
-
-  function syncBlackHoleUI() {
-    const input = $('blackHoleToggleInput');
-    if (input) input.checked = Boolean(config.blackHoleOn);
-    const label = $('blackHoleStateText');
-    if (label) {
-      label.textContent = config.blackHoleOn ? '開啟' : '關閉';
-      label.className = 'switch-state-label' + (config.blackHoleOn ? ' on' : '');
-    }
-    document.querySelectorAll('.seg-btn[data-setting="blackHoleQuick"]').forEach(b => {
-      b.setAttribute('aria-checked', String((b.dataset.value === 'on') === Boolean(config.blackHoleOn)));
-    });
-  }
-
-  // 滑動開關事件綁定（黑洞障礙、跨中線引導、語音報數、遊戲音效）
-  $('blackHoleToggleInput').addEventListener('change', e => {
-    config.blackHoleOn = Boolean(e.target.checked);
-    syncBlackHoleUI();
-    const b = getEffectiveStarSpawnBounds(state.mode);
-    spawnOrUpdateBlackHole(b, game.targets);
-    renderScene();
-  });
-
-  $('midlineToggleInput').addEventListener('change', e => {
-    config.midlineGuideOn = Boolean(e.target.checked);
-    const label = $('midlineStateText');
-    label.textContent = config.midlineGuideOn ? '開啟' : '關閉';
-    label.className = 'switch-state-label' + (config.midlineGuideOn ? ' on' : '');
-    renderScene();
-  });
-
-  $('voiceToggleInput').addEventListener('change', e => {
-    config.voiceOn = Boolean(e.target.checked);
-    const label = $('voiceStateText');
-    label.textContent = config.voiceOn ? '開啟' : '關閉';
-    label.className = 'switch-state-label' + (config.voiceOn ? ' on' : '');
-    if (config.voiceOn) {
-      unlockAudio();
-    } else if ('speechSynthesis' in window) {
-      try { window.speechSynthesis.cancel(); } catch {}
-    }
-  });
-
-
-  $('bgmToggleInput').addEventListener('change', e => {
-    config.bgmOn = Boolean(e.target.checked);
-    const label = $('bgmStateText');
-    label.textContent = config.bgmOn ? '開啟' : '關閉';
-    label.className = 'switch-state-label' + (config.bgmOn ? ' on' : '');
-    unlockAudio();
-  });
-
-  $('bgmVolumeInput').addEventListener('input', e => {
-    const pct = Number(e.target.value) || 0;
-    config.bgmVolume = pct / 100;
-    $('bgmVolumeText').textContent = `${pct}%`;
-    syncAudioConfig();
-  });
-
-  $('sfxVolumeInput').addEventListener('input', e => {
-    const pct = Number(e.target.value) || 0;
-    config.sfxVolume = pct / 100;
-    $('sfxVolumeText').textContent = `${pct}%`;
-    syncAudioConfig();
-  });
-
-  $('cameraFitSelect').addEventListener('change', e => {
-    config.cameraFit = e.target.value === 'cover' ? 'cover' : 'fit-width';
-    video.classList.toggle('fit-cover', config.cameraFit === 'cover');
-    resizeStage();
-  });
-
-  $('soundToggleInput').addEventListener('change', e => {
-    config.soundOn = Boolean(e.target.checked);
-    const label = $('soundStateText');
-    label.textContent = config.soundOn ? '開啟' : '關閉';
-    label.className = 'switch-state-label' + (config.soundOn ? ' on' : '');
-    syncAudioConfig();
-    if (config.soundOn) {
-      unlockAudio();
-      playGameSound('connect_node', 0);
-    }
-  });
-
-  document.querySelectorAll('.seg-btn[data-setting]').forEach(btn => {
+});
+
+function bindOptionGroup(groupId, onSelect) {
+  const container = document.getElementById(groupId);
+  if (!container) return;
+  const buttons = container.querySelectorAll('.opt-btn');
+  buttons.forEach(btn => {
     btn.addEventListener('click', () => {
-      unlockAudio();
-      const key = btn.dataset.setting;
-      const val = btn.dataset.value;
-
-      document.querySelectorAll(`.seg-btn[data-setting="${key}"]`).forEach(b => {
-        b.setAttribute('aria-checked', String(b === btn));
-      });
-
-      let needRespawnReset = false;
-
-      if (key === 'gamePlayMode') {
-        config.gamePlayMode = val === 'charge' ? 'collect' : val;
-        if (val === 'charge') config.collectActionType = 'charge_mixed';
-        syncModeCarouselUI(true);
-        needRespawnReset = true;
-      } else if (key === 'collectActionType') {
-        config.collectActionType = val;
-        needRespawnReset = true;
-      } else if (key === 'specialFreq') {
-        config.specialFreq = val;
-        game.shuffleBag = [];
-      } else if (key === 'chargeTypeMode') {
-        config.chargeTypeMode = val;
-        needRespawnReset = true;
-      } else if (key === 'chargeDurationSec') {
-        config.chargeDurationSec = Number(val);
-      } else if (key === 'blackHoleQuick') {
-        config.blackHoleOn = val === 'on';
-        syncBlackHoleUI();
-        const b = getEffectiveStarSpawnBounds(state.mode);
-        spawnOrUpdateBlackHole(b, game.targets);
-      } else if (key === 'connectSubMode') {
-        config.connectSubMode = val;
-        needRespawnReset = true;
-      } else if (key === 'connectRouteMode') {
-        config.connectRouteMode = val;
-        needRespawnReset = true;
-      } else if (key === 'connectStarCount') {
-        config.connectStarCount = Number(val);
-        needRespawnReset = true;
-      } else if (key === 'memoryViewSec') {
-        config.memoryViewSec = Number(val);
-        needRespawnReset = true;
-      } else if (key === 'trackShape') {
-        config.trackShape = val;
-        needRespawnReset = true;
-      } else if (key === 'selectOptionCount') {
-        config.selectOptionCount = Number(val);
-        needRespawnReset = true;
-      } else if (key === 'selectLayoutMode') {
-        config.selectLayoutMode = val;
-        needRespawnReset = true;
-      } else if (key === 'selectPromptMode') {
-        config.selectPromptMode = val;
-      } else if (key === 'cosmicBgMode') {
-        config.cosmicBgMode = val;
-        stage.dataset.cosmicBg = val;
-      } else if (key === 'trafficVariant') {
-        config.trafficVariant = val;
-        needRespawnReset = true;
-      } else if (key === 'trafficPace') {
-        config.trafficPace = val;
-        needRespawnReset = true;
-      } else if (key === 'nebulaDensity') {
-        config.nebulaDensity = val;
-        needRespawnReset = true;
-      } else if (key === 'magnetStarCount') {
-        config.magnetStarCount = Number(val);
-        needRespawnReset = true;
-      } else if (key === 'fallingSpeed') {
-        config.fallingSpeed = val;
-        needRespawnReset = true;
-      } else if (key === 'challengeType') {
-        config.challengeType = val;
-        needRespawnReset = true;
-      } else if (key === 'targetCount') {
-        config.targetCount = Number(val);
-        if (config.challengeType === 'count' && getPrimaryCount() >= config.targetCount) {
-          needRespawnReset = true;
-        }
-      } else if (key === 'challengeDurationSec') {
-        config.challengeDurationSec = Number(val);
-        if (config.challengeType === 'timed') {
-          needRespawnReset = true;
-        }
-      } else if (key === 'rangeMode') {
-        config.rangeMode = val;
-        if (state.active && state.gameState !== 'game_complete') {
-          spawnNextTargets(performance.now(), false);
-        }
-      } else if (key === 'targetSize') {
-        config.targetSize = val;
-        if (isMultiNodeMode() || config.gamePlayMode === 'select') {
-          spawnNextTargets(performance.now(), false);
-        } else {
-          ensureCurrentTargetsInsideBounds();
-        }
-      } else if (key === 'dwellMode') {
-        config.dwellMode = val;
-      }
-
-      syncSettingsVisibility();
-      updateScoreAndTimerUI();
-      if (needRespawnReset) {
-        resetGame();
-      } else {
-        renderScene();
-      }
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onSelect(btn.dataset.val);
     });
   });
+}
 
-  $('toleranceInput').addEventListener('input', e => {
-    state.tolerance = Number(e.target.value);
-    $('tolText').textContent = e.target.value;
-  });
-
-  $('fullBtn').addEventListener('click', async () => {
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else if (document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen();
-      } else {
-        updateStatusUI('不支援全螢幕', 'warn', '此瀏覽器不支援直接切換全螢幕，可將網頁加入主畫面');
-      }
-    } catch {
-      updateStatusUI('不支援全螢幕', 'warn', '請使用瀏覽器選單的全螢幕或加入主畫面功能');
+function syncGameModeUI(scrollIntoView = false) {
+  document.querySelectorAll('#grp-game-mode .mode-card').forEach(card => {
+    const isAct = card.dataset.mode === config.gameMode;
+    card.classList.toggle('active', isAct);
+    if (isAct && scrollIntoView) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   });
+  document.getElementById('sub-memorize-row').style.display = config.gameMode === 'MEMORY_ORDER' ? 'flex' : 'none';
+  syncSpaceLevelUI();
+}
 
-  window.addEventListener('resize', () => {
-    resizeStage();
-    renderScene();
+function syncSpaceLevelUI() {
+  const subL1 = document.getElementById('sub-level1-dir');
+  const subMulti = document.getElementById('sub-multi-seq');
+  const levelBtns = document.querySelectorAll('#grp-space-level .opt-btn');
+  const needMulti = isMultiBasinFindMode();
+
+  if (needMulti && config.spaceLevel < 2) config.spaceLevel = 2;
+
+  levelBtns.forEach(btn => {
+    const lv = parseInt(btn.dataset.val, 10);
+    btn.classList.toggle('active', lv === config.spaceLevel);
+    btn.classList.toggle('disabled-opt', needMulti && lv === 1);
   });
 
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && state.active) {
-      state.busy = false;
-      game.lastTickTs = performance.now();
-      startLoop();
+  subL1.style.display = config.spaceLevel === 1 ? 'block' : 'none';
+  subMulti.style.display = (config.spaceLevel >= 2 && !needMulti) ? 'block' : 'none';
+}
+
+function syncTrackModeButtons() {
+  document.querySelectorAll('#grp-track-mode .opt-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === config.trackMode);
+  });
+  document.getElementById('sub-color-tools').style.display = config.trackMode === 'COLOR' ? 'flex' : 'none';
+  document.getElementById('repick-color-btn').classList.toggle('visible', state.cameraActive && config.trackMode === 'COLOR');
+}
+
+function initDiagnosticsWidget() {
+  const toggleBtn = document.getElementById('diag-toggle-btn');
+  const closeBtn = document.getElementById('diag-close-btn');
+  const card = document.getElementById('diag-card');
+  if (!toggleBtn || !card) return;
+
+  const setOpen = (open) => {
+    card.hidden = !open;
+    toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggleBtn.textContent = open ? '🩺 收合診斷' : '🩺 診斷';
+  };
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(card.hidden);
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setOpen(false);
+    });
+  }
+}
+
+function initUIEvents() {
+  initDiagnosticsWidget();
+
+  const welcomeModal = document.getElementById('welcome-modal');
+  const settingsModal = document.getElementById('settings-modal');
+
+  document.getElementById('btn-welcome-hand').addEventListener('click', () => {
+    sound.init();
+    welcomeModal.classList.remove('open');
+    startCameraMode('HAND');
+  });
+
+  document.getElementById('btn-welcome-color').addEventListener('click', () => {
+    sound.init();
+    welcomeModal.classList.remove('open');
+    startCameraMode('COLOR');
+  });
+
+  document.getElementById('btn-welcome-touch').addEventListener('click', () => {
+    sound.init();
+    requestScreenWakeLock();
+    welcomeModal.classList.remove('open');
+    state.paused = false;
+    stopCameraMode();
+  });
+
+  document.getElementById('btn-welcome-settings').addEventListener('click', () => {
+    sound.init();
+    requestScreenWakeLock();
+    welcomeModal.classList.remove('open');
+    settingsModal.classList.add('open');
+  });
+
+  document.getElementById('peek-order-btn').addEventListener('click', () => {
+    state.peekTimer = 3.0;
+    updateHUD();
+    const remNames = getRemainingIngIds().map(id => INGREDIENTS[id].name).join('、');
+    speakText(remNames);
+  });
+
+  document.getElementById('repick-color-btn').addEventListener('click', () => {
+    state.awaitingColorPick = true;
+    tracker.clearColorTarget();
+    setTrackingStatusUI('cam-warn', '👆 請點擊畫面上的彩色物品取色');
+    updateHUD();
+  });
+
+  document.getElementById('btn-repick-in-panel').addEventListener('click', () => {
+    settingsModal.classList.remove('open');
+    state.paused = false;
+    state.awaitingColorPick = true;
+    tracker.clearColorTarget();
+    startCameraMode('COLOR');
+  });
+
+  document.getElementById('btn-settings').addEventListener('click', () => {
+    state.paused = true;
+    settingsModal.classList.add('open');
+  });
+
+  const closeSettings = async () => {
+    settingsModal.classList.remove('open');
+    state.paused = false;
+    requestScreenWakeLock();
+
+    if (config.trackMode === 'TOUCH') {
+      if (state.cameraActive) stopCameraMode();
+    } else if (!state.cameraActive || tracker.mode !== config.trackMode) {
+      await startCameraMode(config.trackMode);
     }
+
+    startNewBowl();
+    syncTrackModeButtons();
+    updateHUD();
+  };
+  document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
+  document.getElementById('btn-apply-settings').addEventListener('click', closeSettings);
+
+  document.getElementById('btn-restart-session').addEventListener('click', () => {
+    settingsModal.classList.remove('open');
+    state.paused = false;
+    requestScreenWakeLock();
+    initSession();
   });
 
-  window.addEventListener('pagehide', () => {
-    state.stream?.getTracks().forEach(t => t.stop());
-    state.active = false;
-    state.loopToken++;
-    cancelAnimationFrame(state.rafId);
-  });
-
-  // 綁定關卡式水平滑動選單（卡片點選、左右箭頭、下方編號點、以及手指滑動停妥後自動切換）
-  document.querySelectorAll('.mode-level-card[data-mode-card]').forEach(card => {
+  document.querySelectorAll('#grp-game-mode .mode-card').forEach(card => {
     card.addEventListener('click', () => {
-      unlockAudio();
-      selectGameModeFromCarousel(card.dataset.modeCard, true);
-    });
-    card.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        unlockAudio();
-        selectGameModeFromCarousel(card.dataset.modeCard, true);
-      }
+      config.gameMode = card.dataset.mode;
+      syncGameModeUI(true);
     });
   });
 
-  document.querySelectorAll('.mode-dot-btn[data-mode-dot]').forEach(dot => {
-    dot.addEventListener('click', () => {
-      unlockAudio();
-      selectGameModeFromCarousel(dot.dataset.modeDot, true);
+  bindOptionGroup('grp-track-mode', (val) => {
+    config.trackMode = val;
+    if (val === 'COLOR' && !tracker.hasColorTarget()) state.awaitingColorPick = true;
+    syncTrackModeButtons();
+  });
+  bindOptionGroup('grp-space-level', (val) => { config.spaceLevel = parseInt(val, 10); syncSpaceLevelUI(); });
+  bindOptionGroup('grp-l1-dir', (val) => { config.level1Dir = val; });
+  bindOptionGroup('grp-seq-mode', (val) => { config.seqMode = val; });
+  bindOptionGroup('grp-memorize-sec', (val) => { config.memorizeSeconds = parseFloat(val); });
+  bindOptionGroup('grp-dwell-time', (val) => { config.dwellSeconds = parseFloat(val); });
+  bindOptionGroup('grp-require-return', (val) => { config.requireReturn = (val === 'true'); });
+  bindOptionGroup('grp-zone-size', (val) => { config.zoneSizeScale = parseFloat(val); });
+  bindOptionGroup('grp-target-bowls', (val) => { config.targetBowls = parseInt(val, 10); initSession(); });
+
+  const btnBgm = document.getElementById('btn-toggle-bgm');
+  const bgmSlider = document.getElementById('bgm-volume-slider');
+  const bgmVal = document.getElementById('bgm-volume-val');
+  if (btnBgm) {
+    btnBgm.addEventListener('click', () => {
+      sound.setBgmEnabled(!sound.bgmEnabled);
+      btnBgm.classList.toggle('active', sound.bgmEnabled);
+      btnBgm.textContent = sound.bgmEnabled ? '🎵 古早味配樂開' : '🔇 古早味配樂關';
     });
+  }
+  if (bgmSlider && bgmVal) {
+    bgmSlider.addEventListener('input', () => {
+      const pct = parseInt(bgmSlider.value, 10);
+      bgmVal.textContent = `${pct}%`;
+      sound.setBgmVolume(pct / 100);
+    });
+  }
+
+  const btnSound = document.getElementById('btn-toggle-sound');
+  btnSound.addEventListener('click', () => {
+    sound.enabled = !sound.enabled;
+    btnSound.classList.toggle('active', sound.enabled);
+    btnSound.textContent = sound.enabled ? '🔊 音效開' : '🔇 音效關';
   });
 
-  $('modePrevBtn')?.addEventListener('click', () => {
-    unlockAudio();
-    const idx = Math.max(0, MODE_ORDER.indexOf(config.gamePlayMode));
-    const prevIdx = (idx - 1 + MODE_ORDER.length) % MODE_ORDER.length;
-    selectGameModeFromCarousel(MODE_ORDER[prevIdx], true);
+  const btnTts = document.getElementById('btn-toggle-tts');
+  btnTts.addEventListener('click', () => {
+    config.ttsEnabled = !config.ttsEnabled;
+    btnTts.classList.toggle('active', config.ttsEnabled);
+    btnTts.textContent = config.ttsEnabled ? '🗣️ 語音報料開' : '🤐 語音報料關';
+    if (!config.ttsEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    else if (config.ttsEnabled) speakText('語音報料開啟');
   });
 
-  $('modeNextBtn')?.addEventListener('click', () => {
-    unlockAudio();
-    const idx = Math.max(0, MODE_ORDER.indexOf(config.gamePlayMode));
-    const nextIdx = (idx + 1) % MODE_ORDER.length;
-    selectGameModeFromCarousel(MODE_ORDER[nextIdx], true);
+  document.getElementById('btn-fullscreen').addEventListener('click', () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    else document.exitFullscreen().catch(() => {});
   });
 
-  let carouselScrollTimer = null;
-  $('modeCarouselTrack')?.addEventListener('scroll', () => {
-    if (performance.now() < carouselProgrammaticScrollUntil) return;
-    clearTimeout(carouselScrollTimer);
-    carouselScrollTimer = setTimeout(() => {
-      const track = $('modeCarouselTrack');
-      if (!track || $('settingsSheet').hidden) return;
-      const trackRect = track.getBoundingClientRect();
-      const targetCenter = trackRect.left + trackRect.width * 0.44;
-      let closestMode = null;
-      let minDist = Infinity;
-      track.querySelectorAll('.mode-level-card[data-mode-card]').forEach(card => {
-        const r = card.getBoundingClientRect();
-        const cardCenter = r.left + r.width * 0.5;
-        const d = Math.abs(cardCenter - targetCenter);
-        if (d < minDist) {
-          minDist = d;
-          closestMode = card.dataset.modeCard;
-        }
-      });
-      if (closestMode && closestMode !== config.gamePlayMode) {
-        selectGameModeFromCarousel(closestMode, false);
-      }
-    }, 130);
-  }, { passive: true });
+  document.getElementById('btn-sum-again').addEventListener('click', () => { requestScreenWakeLock(); initSession(); });
+  document.getElementById('btn-sum-settings').addEventListener('click', () => {
+    document.getElementById('summary-modal').classList.remove('open');
+    state.inSummary = false;
+    state.paused = true;
+    settingsModal.classList.add('open');
+  });
 
-  // 初始化載入已存範圍與今日累積紀錄、同步設定介面並渲染初始畫面
-  loadSavedRanges();
-  syncSettingsVisibility();
-  syncModeCarouselUI(false);
-  resizeStage();
-  updateScoreAndTimerUI();
-  spawnNextTargets(performance.now(), false);
-  setGameState('game_ready');
-  renderScene();
-})();
+  syncGameModeUI();
+  syncTrackModeButtons();
+}
+
+function resizeCanvas() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+let lastFrameTime = performance.now();
+function mainLoop(now) {
+  const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+  lastFrameTime = now;
+  updateGameLogic(dt, window.innerWidth, window.innerHeight);
+  drawScene(window.innerWidth, window.innerHeight);
+  requestAnimationFrame(mainLoop);
+}
+
+resizeCanvas();
+initUIEvents();
+initSession();
+requestAnimationFrame(mainLoop);
