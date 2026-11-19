@@ -5055,69 +5055,17 @@
     });
   });
 
-  function loadScript(url) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = url;
-      s.crossOrigin = 'anonymous';
-      s.onload = resolve;
-      s.onerror = () => {
-        s.remove();
-        reject(new Error('模型腳本下載失敗'));
-      };
-      document.head.append(s);
-    });
-  }
-
   async function ensureModel(m) {
-    if (m === 'hand' && state.handModel) return state.handModel;
-    if (m === 'head' && state.headModel) return state.headModel;
-
-    const symbol = m === 'hand' ? 'Hands' : 'FaceMesh';
-    if (!window[symbol]) {
-      try {
-        await loadScript(scriptUrls[m][0]);
-      } catch {
-        await loadScript(scriptUrls[m][1]);
-      }
-    }
-    if (!window[symbol]) {
-      throw new Error('無法載入 ' + modeName(m) + ' 辨識模型');
-    }
-
-    const base = m === 'hand' ? 'hands' : 'face_mesh';
-    const inst = new window[symbol]({
-      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/${base}/${f}`
-    });
-
-    if (m === 'hand') {
-      // 調降手部辨識信心門檻至 0.30，讓中風患者握拳、微彎或手背朝前也能穩定抓到！
-      inst.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.30,
-        minTrackingConfidence: 0.28
-      });
-      inst.onResults(r => onMediaPipeResults('hand', r));
-      state.handModel = inst;
-    } else {
-      // 調降頭部辨識信心門檻至 0.35，讓微側臉或光線稍暗時依然穩定追蹤！
-      inst.setOptions({
-        maxNumFaces: 1,
-        refineLandmarks: false,
-        minDetectionConfidence: 0.35,
-        minTrackingConfidence: 0.32
-      });
-      inst.onResults(r => onMediaPipeResults('head', r));
-      state.headModel = inst;
-    }
-    return inst;
+    const det = await window.StarMotionTracker.ensureDetector(m);
+    if (!det) throw new Error('無法載入 ' + modeName(m) + ' 辨識模型');
+    if (m === 'hand') state.handModel = det;
+    if (m === 'head') state.headModel = det;
+    return det;
   }
 
-  function onMediaPipeResults(m, r) {
+  function onMediaPipeResults(m, landmarks) {
     if (m !== state.mode || !state.active) return;
     const now = performance.now();
-    const landmarks = m === 'hand' ? r.multiHandLandmarks?.[0] : r.multiFaceLandmarks?.[0];
     let rawPoint = null;
 
     if (landmarks) {
@@ -5729,11 +5677,12 @@
         }
 
         let lastColorCheck = 0;
+        let lastAiCheck = 0;
+        let lastInferTs = 0;
         const frameLoop = async ts => {
           if (token !== state.loopToken || !state.active) return;
 
           if (!document.hidden && video.readyState >= 2) {
-            // 推論逾時 Watchdog：若單幀 AI 推論超過 1200ms 尚未回傳，自動解鎖 busy 防止卡死
             if (state.busy && ts - state.busySince > 1200) {
               state.busy = false;
             }
@@ -5747,16 +5696,26 @@
                   refreshTrackingBanner('color');
                 }
               }
-            } else if (!state.busy && video.currentTime !== state.previousVideoTime) {
+            } else if (
+              !state.busy &&
+              ts - lastAiCheck >= 66 &&
+              video.videoWidth > 0 &&
+              video.videoHeight > 0 &&
+              video.currentTime !== state.previousVideoTime
+            ) {
+              lastAiCheck = ts;
               state.previousVideoTime = video.currentTime;
               state.busy = true;
               state.busySince = ts;
               try {
-                await detector.send({ image: video });
+                const inferTs = Math.max(lastInferTs + 1, Math.round(ts));
+                lastInferTs = inferTs;
+                const landmarks = await window.StarMotionTracker.detectLandmarks(state.mode, video, inferTs);
+                if (token === state.loopToken && state.active) {
+                  onMediaPipeResults(state.mode, landmarks);
+                }
               } catch (err) {
-                state.busy = false;
-                if (token === state.loopToken) handleModelError(err);
-                return;
+                console.warn('TasksVision detect warning:', err);
               } finally {
                 state.busy = false;
               }
