@@ -18,6 +18,8 @@
   let faceDelegate = 'GPU';
   let consecutiveHandErr = 0;
   let consecutiveFaceErr = 0;
+  let emptyHandFrames = 0;
+  let emptyFaceFrames = 0;
 
   async function acquireWidestFrontStream() {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -25,16 +27,6 @@
     }
 
     const attempts = [
-      {
-        audio: false,
-        video: {
-          facingMode: 'user',
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          aspectRatio: { ideal: 4 / 3 },
-          frameRate: { ideal: 24, max: 30 }
-        }
-      },
       {
         audio: false,
         video: {
@@ -151,6 +143,34 @@
     return null;
   }
 
+  function switchHandToCpu() {
+    emptyHandFrames = 0;
+    consecutiveHandErr = 0;
+    try { handLandmarker?.close?.(); } catch {}
+    handLandmarker = null;
+    handPromise = createHandWithDelegate('CPU')
+      .then(inst => {
+        handLandmarker = inst;
+        return inst;
+      })
+      .catch(() => null);
+    return handPromise;
+  }
+
+  function switchFaceToCpu() {
+    emptyFaceFrames = 0;
+    consecutiveFaceErr = 0;
+    try { faceLandmarker?.close?.(); } catch {}
+    faceLandmarker = null;
+    facePromise = createFaceWithDelegate('CPU')
+      .then(inst => {
+        faceLandmarker = inst;
+        return inst;
+      })
+      .catch(() => null);
+    return facePromise;
+  }
+
   async function detectLandmarks(mode, videoEl, ts) {
     if (!videoEl || videoEl.readyState < 2 || videoEl.videoWidth === 0 || videoEl.videoHeight === 0) {
       return null;
@@ -160,18 +180,21 @@
       try {
         const res = handLandmarker.detectForVideo(videoEl, ts);
         consecutiveHandErr = 0;
-        return res?.landmarks?.[0] || null;
+        const lm = res?.landmarks?.[0] || null;
+        if (lm) {
+          emptyHandFrames = 0;
+          return lm;
+        }
+        emptyHandFrames++;
+        // 若部分手機（如 S25）GPU delegate 靜默回傳空結果達 ~1.6 秒，自動切換 CPU delegate 自癒
+        if (emptyHandFrames >= 25 && handDelegate === 'GPU') {
+          await switchHandToCpu();
+        }
+        return null;
       } catch (err) {
         consecutiveHandErr++;
         if (consecutiveHandErr >= 3 && handDelegate === 'GPU') {
-          consecutiveHandErr = 0;
-          try { handLandmarker.close?.(); } catch {}
-          handLandmarker = null;
-          handPromise = createHandWithDelegate('CPU').then(inst => {
-            handLandmarker = inst;
-            return inst;
-          }).catch(() => null);
-          await handPromise;
+          await switchHandToCpu();
           return null;
         }
         throw err;
@@ -183,18 +206,20 @@
       try {
         const res = faceLandmarker.detectForVideo(videoEl, ts);
         consecutiveFaceErr = 0;
-        return res?.faceLandmarks?.[0] || null;
+        const lm = res?.faceLandmarks?.[0] || null;
+        if (lm) {
+          emptyFaceFrames = 0;
+          return lm;
+        }
+        emptyFaceFrames++;
+        if (emptyFaceFrames >= 25 && faceDelegate === 'GPU') {
+          await switchFaceToCpu();
+        }
+        return null;
       } catch (err) {
         consecutiveFaceErr++;
         if (consecutiveFaceErr >= 3 && faceDelegate === 'GPU') {
-          consecutiveFaceErr = 0;
-          try { faceLandmarker.close?.(); } catch {}
-          faceLandmarker = null;
-          facePromise = createFaceWithDelegate('CPU').then(inst => {
-            faceLandmarker = inst;
-            return inst;
-          }).catch(() => null);
-          await facePromise;
+          await switchFaceToCpu();
           return null;
         }
         throw err;
