@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#070b1d">
 <title>星動體感訓練｜楊昀霖 職能治療師</title>
-<link rel="stylesheet" href="css/style.css?v=4.2">
+<link rel="stylesheet" href="css/style.css?v=4.3">
 </head>
 <body>
 <main class="app">
@@ -19,7 +19,7 @@
         <span>⏱</span>
         <span id="timerText">60s</span>
       </div>
-      <span class="ver-pill" title="目前版本">v4.2</span>
+      <span class="ver-pill" title="目前版本">v4.3</span>
       <div class="score-badge" id="scoreBadge" aria-live="polite" title="目前進度">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path fill="#ffd452" stroke="#ff9f1c" stroke-width="1.5" d="M12 2.4l2.9 6.1 6.7.9-4.9 4.7 1.2 6.7L12 17.6 6.1 20.8l1.2-6.7-4.9-4.7 6.7-.9L12 2.4z"/>
@@ -119,7 +119,7 @@
     <article>
       <div class="sheet-sticky-top">
         <div class="sheet-header">
-          <h3 id="settingsTitle">⚙ 星動體感訓練｜設定 <span class="ver-badge">v4.2</span></h3>
+          <h3 id="settingsTitle">⚙ 星動體感訓練｜設定 <span class="ver-badge">v4.3</span></h3>
           <button class="icon-btn icon-btn-sm" id="closeSettingsTop" aria-label="關閉設定">✕</button>
         </div>
         <div class="panel-quick-actions">
@@ -641,9 +641,9 @@
 
             <div class="setting-row" style="margin-top:8px;">
               <label>📷 鏡頭畫面比例</label>
-              <div class="seg" role="group" aria-label="鏡頭畫面比例">
-                <button class="opt active" type="button" data-camera-fit="fit-width">↔ 保留左右寬度</button>
-                <button class="opt" type="button" data-camera-fit="cover">⛶ 滿版填滿</button>
+              <div class="seg-group" role="radiogroup" aria-label="鏡頭畫面比例">
+                <button class="seg-btn" type="button" role="radio" aria-checked="true" data-camera-fit="fit-width">↔ 保留左右寬度</button>
+                <button class="seg-btn" type="button" role="radio" aria-checked="false" data-camera-fit="cover">⛶ 滿版填滿</button>
               </div>
             </div>
           </div>
@@ -663,7 +663,7 @@
       <!-- 5. 延伸資源：復健衛教懶人包（中風／帕金森）、手功能五階段線上課程、3D列印手部練習工具與聯絡職能治療師 -->
       <section class="cr-section-wrap" aria-label="延伸復健資源與工具">
         <h4 class="cr-section-heading">✨ 延伸復健資源與課程工具</h4>
-        <div class="cr-root"><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span><div><div class="cr-panel-title">復健衛教資源</div><div class="cr-panel-sub">中風與帕金森生活復健指南，依需要選擇閱讀</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><p>將常見的復健與照護問題整理成容易查找的指南，可依疾病與目前遇到的生活困難選擇閱讀。</p><div class="cr-feature"><h3>中風復健攻略</h3><div class="cr-muted">包含手部動作、站立行走、生活自理、照顧及其他常見問題。</div><div class="cr-linkrow"><a href="https://reliveot.github.io/stroke-rehab-guide/" rel="noopener" target="_blank">進入中風復健攻略 ↗</a></div></div><div class="cr-feature"><h3>帕金森氏症生活復健指南</h3><div class="cr-muted">從翻身、走路、手部動作到疲勞與照顧安排，以問題卡片探索；提供民眾家屬版與職能治療師專業版。</div><div class="cr-linkrow"><a href="https://reliveot.github.io/parkinsons-rehab-guide/" rel="noopener" target="_blank">開啟帕金森生活復健指南 ↗</a></div></div></div></details><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="m2 10 10-6 10 6-10 6z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path><path d="M22 10v7"></path></svg></span><div><div class="cr-panel-title">手功能五階段線上課程</div><div class="cr-panel-sub">會員課程｜提供免費預覽與教學</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><div class="cr-card-course-mini"><img alt="中風後，手到底該怎麼練？課程情境插畫" class="cr-card-course-photo" src="assets/course-hand-hero.webp?v=4.2"/><div class="cr-card-course-body"><span class="cr-card-paid">YouTube 付費會員課程</span><h3>中風後，讓患側手回到生活</h3><p>從目前做得到的動作開始，認識五階段練習、調整難度，讓患側手逐步參與生活。</p><a class="cr-card-primary-link" href="https://reliveot.github.io/stroke-hand-course/" rel="noopener noreferrer" target="_blank">查看課程介紹與免費教學 ↗</a><div class="cr-card-mini-note">完整課程約 1 小時 40 分鐘｜YouTube 會員 NT$600／月<br/>另有免費預覽與教學影片，完整課程需付費加入會員。</div></div></div></div></details><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect height="7" width="10" x="7" y="14"></rect></svg></span><div><div class="cr-panel-title">3D 列印手部練習工具</div><div class="cr-panel-sub">六種工具與免費操作示範</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><p>六種 3D 列印手部練習工具，提供前臂翻轉、雙手合作、抓握與日常操作等活動選擇。</p><div class="cr-card-tools-grid"><div class="cr-card-tool"><img alt="翻轉手操作商品照" decoding="async" loading="lazy" src="assets/tool-flip-hand.webp?v=4.2"/><span>翻轉手</span></div><div class="cr-card-tool"><img alt="雙手合作握把操作商品照" decoding="async" loading="lazy" src="assets/tool-two-hand-grip.webp?v=4.2"/><span>雙手合作握把</span></div><div class="cr-card-tool"><img alt="日常動作訓練握把操作商品照" decoding="async" loading="lazy" src="assets/tool-daily-grip.webp?v=4.2"/><span>日常動作訓練握把</span></div><div class="cr-card-tool"><img alt="抓握助手操作商品照" decoding="async" loading="lazy" src="assets/tool-grasp-helper.webp?v=4.2"/><span>抓握助手</span></div><div class="cr-card-tool"><img alt="手指開合夾操作商品照" decoding="async" loading="lazy" src="assets/tool-finger-clip.webp?v=4.2"/><span>手指開合夾</span></div><div class="cr-card-tool"><img alt="筷夾手操作商品照" decoding="async" loading="lazy" src="assets/tool-chopstick-hand.webp?v=4.2"/><span>筷夾手</span></div></div><div class="cr-linkrow cr-card-tool-links"><a href="https://shopee.tw/peter72401" rel="noopener noreferrer" target="_blank">查看練習工具與賣場 ↗</a><a href="https://www.youtube.com/playlist?list=PLYhYZRJq80tqVBohsxQh9XkC1cUZw-QXT" rel="noopener noreferrer" target="_blank">觀看免費操作示範 ↗</a></div><div class="cr-smallprint">工具是輔助日常活動與自主練習的選擇，建議依目前能力、練習目標與安全條件，和治療師討論適用方式。</div></div></details></div><a class="cr-contact" href="https://reliveot.github.io/card" rel="noopener noreferrer" target="_blank">聯絡楊昀霖職能治療師 ↗</a>
+        <div class="cr-root"><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span><div><div class="cr-panel-title">復健衛教資源</div><div class="cr-panel-sub">中風與帕金森生活復健指南，依需要選擇閱讀</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><p>將常見的復健與照護問題整理成容易查找的指南，可依疾病與目前遇到的生活困難選擇閱讀。</p><div class="cr-feature"><h3>中風復健攻略</h3><div class="cr-muted">包含手部動作、站立行走、生活自理、照顧及其他常見問題。</div><div class="cr-linkrow"><a href="https://reliveot.github.io/stroke-rehab-guide/" rel="noopener" target="_blank">進入中風復健攻略 ↗</a></div></div><div class="cr-feature"><h3>帕金森氏症生活復健指南</h3><div class="cr-muted">從翻身、走路、手部動作到疲勞與照顧安排，以問題卡片探索；提供民眾家屬版與職能治療師專業版。</div><div class="cr-linkrow"><a href="https://reliveot.github.io/parkinsons-rehab-guide/" rel="noopener" target="_blank">開啟帕金森生活復健指南 ↗</a></div></div></div></details><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="m2 10 10-6 10 6-10 6z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path><path d="M22 10v7"></path></svg></span><div><div class="cr-panel-title">手功能五階段線上課程</div><div class="cr-panel-sub">會員課程｜提供免費預覽與教學</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><div class="cr-card-course-mini"><img alt="中風後，手到底該怎麼練？課程情境插畫" class="cr-card-course-photo" src="assets/course-hand-hero.webp?v=4.3"/><div class="cr-card-course-body"><span class="cr-card-paid">YouTube 付費會員課程</span><h3>中風後，讓患側手回到生活</h3><p>從目前做得到的動作開始，認識五階段練習、調整難度，讓患側手逐步參與生活。</p><a class="cr-card-primary-link" href="https://reliveot.github.io/stroke-hand-course/" rel="noopener noreferrer" target="_blank">查看課程介紹與免費教學 ↗</a><div class="cr-card-mini-note">完整課程約 1 小時 40 分鐘｜YouTube 會員 NT$600／月<br/>另有免費預覽與教學影片，完整課程需付費加入會員。</div></div></div></div></details><details class="cr-panel"><summary><span class="cr-symbol"><svg aria-hidden="true" fill="none" height="23" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="23"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect height="7" width="10" x="7" y="14"></rect></svg></span><div><div class="cr-panel-title">3D 列印手部練習工具</div><div class="cr-panel-sub">六種工具與免費操作示範</div></div><span aria-hidden="true" class="cr-chev"></span></summary><div class="cr-panel-content"><p>六種 3D 列印手部練習工具，提供前臂翻轉、雙手合作、抓握與日常操作等活動選擇。</p><div class="cr-card-tools-grid"><div class="cr-card-tool"><img alt="翻轉手操作商品照" decoding="async" loading="lazy" src="assets/tool-flip-hand.webp?v=4.3"/><span>翻轉手</span></div><div class="cr-card-tool"><img alt="雙手合作握把操作商品照" decoding="async" loading="lazy" src="assets/tool-two-hand-grip.webp?v=4.3"/><span>雙手合作握把</span></div><div class="cr-card-tool"><img alt="日常動作訓練握把操作商品照" decoding="async" loading="lazy" src="assets/tool-daily-grip.webp?v=4.3"/><span>日常動作訓練握把</span></div><div class="cr-card-tool"><img alt="抓握助手操作商品照" decoding="async" loading="lazy" src="assets/tool-grasp-helper.webp?v=4.3"/><span>抓握助手</span></div><div class="cr-card-tool"><img alt="手指開合夾操作商品照" decoding="async" loading="lazy" src="assets/tool-finger-clip.webp?v=4.3"/><span>手指開合夾</span></div><div class="cr-card-tool"><img alt="筷夾手操作商品照" decoding="async" loading="lazy" src="assets/tool-chopstick-hand.webp?v=4.3"/><span>筷夾手</span></div></div><div class="cr-linkrow cr-card-tool-links"><a href="https://shopee.tw/peter72401" rel="noopener noreferrer" target="_blank">查看練習工具與賣場 ↗</a><a href="https://www.youtube.com/playlist?list=PLYhYZRJq80tqVBohsxQh9XkC1cUZw-QXT" rel="noopener noreferrer" target="_blank">觀看免費操作示範 ↗</a></div><div class="cr-smallprint">工具是輔助日常活動與自主練習的選擇，建議依目前能力、練習目標與安全條件，和治療師討論適用方式。</div></div></details></div><a class="cr-contact" href="https://reliveot.github.io/card" rel="noopener noreferrer" target="_blank">聯絡楊昀霖職能治療師 ↗</a>
       </section>
 
       <div class="notice-box">
@@ -680,8 +680,8 @@
   </div>
 </main>
 
-<script src="js/sound.js?v=4.2"></script>
-<script src="js/tracker.js?v=4.2"></script>
-<script src="js/game.js?v=4.2"></script>
+<script src="js/sound.js?v=4.3"></script>
+<script src="js/tracker.js?v=4.3"></script>
+<script src="js/game.js?v=4.3"></script>
 </body>
 </html>

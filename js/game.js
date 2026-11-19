@@ -6042,10 +6042,11 @@
       const val = btn.dataset.cameraFit === 'cover' ? 'cover' : 'fit-width';
       config.cameraFit = val;
       document.querySelectorAll('[data-camera-fit]').forEach(b => {
-        b.classList.toggle('active', b.dataset.cameraFit === val);
+        b.setAttribute('aria-checked', String(b.dataset.cameraFit === val));
       });
       video.classList.toggle('fit-cover', val === 'cover');
       resizeStage();
+      renderScene();
     });
   });
 
