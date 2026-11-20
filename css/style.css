@@ -214,7 +214,7 @@ button:disabled {
 }
 .stage canvas {
   pointer-events: none;
-  z-index: 2;
+  z-index: 5;
 }
 /* 星空宇宙深邃星雲濾鏡：中央維持清透看清手部與道具，四周邊緣暈染深空靛藍與星雲紫 */
 .scrim {
@@ -237,6 +237,7 @@ button:disabled {
 
 /* 舞台內頂部狀態膠囊 */
 .status-bar {
+  pointer-events: none;
   position: absolute;
   left: 10px;
   top: 10px;

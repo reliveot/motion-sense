@@ -26,7 +26,7 @@
   // 星象選擇模式的 5 種雙重編碼星際／自然圖騰
   const SELECT_SHAPES = [
     { id: 'star', label: '星星', icon: '⭐', color: '#ffd452', stroke: '#f59e0b' },
-    { id: 'moon', label: '月亮', icon: '🌙', color: '#93c5fd', stroke: '#3b82f6' },
+    { id: 'moon', label: '月亮', icon: '🌙', color: '#fde047', stroke: '#ca8a04' },
     { id: 'sun', label: '太陽', icon: '☀️', color: '#fdba74', stroke: '#ea580c' },
     { id: 'heart', label: '愛心', icon: '❤️', color: '#f472b6', stroke: '#db2777' },
     { id: 'clover', label: '幸運草', icon: '🍀', color: '#4ade80', stroke: '#16a34a' }
@@ -2851,9 +2851,8 @@
         effectiveSweepSpeed *= 1.75;
       }
 
-      const minSweepSpeed = 48; // 必須有明顯揮動速度才算撥雲
-      const isActivelySweeping = effectiveSweepSpeed >= minSweepSpeed;
-      let touchingAnyCloud = false;
+      // 只要停在雲團上或輕輕來回擦動即可穩穩縮小消散（不強迫快速揮動）
+      const motionBoost = Math.min(2.2, 0.55 + effectiveSweepSpeed / 140);
 
       for (let i = 0; i < game.targets.length; i++) {
         const c = game.targets[i];
@@ -2863,36 +2862,31 @@
         if (trackerOutput.found && !isTrappedByBlackHole) {
           const dist = Math.hypot((trackerOutput.x - c.x) * W, (trackerOutput.y - c.y) * H);
           const curScale = Math.max(0.28, c.scale ?? 1.0);
-          const wipeRadius = starR * (c.radiusScale || 1.95) * curScale * 1.05;
+          const wipeRadius = starR * (c.radiusScale || 1.95) * curScale * 1.12;
           if (dist <= wipeRadius) {
-            touchingAnyCloud = true;
-            if (isActivelySweeping) {
-              const wipePower = Math.min(3.2, effectiveSweepSpeed / 165);
-              c.scale = Math.max(0, curScale - dtSec * 0.92 * wipePower);
-              // 輕微順著揮動方向位移，但限制在中央可視範圍內不跑出角落
-              c.x = Math.max(0.14, Math.min(0.86, c.x + (game.trackerVxPxPerSec * dtSec * 0.14) / W));
-              c.y = Math.max(0.16, Math.min(0.84, c.y + (game.trackerVyPxPerSec * dtSec * 0.14) / H));
+            c.scale = Math.max(0, curScale - dtSec * 0.68 * motionBoost);
+            c.x = Math.max(0.14, Math.min(0.86, c.x + (game.trackerVxPxPerSec * dtSec * 0.09) / W));
+            c.y = Math.max(0.16, Math.min(0.84, c.y + (game.trackerVyPxPerSec * dtSec * 0.09) / H));
 
-              if (Math.random() < 0.55 && !reducedMotionQuery.matches) {
-                const shardColors = ['#e9d5ff', '#facc15', '#7dd3fc', '#f472b6'];
-                game.particles.push({
-                  x: c.x * W + (Math.random() - 0.5) * 34 * curScale,
-                  y: c.y * H + (Math.random() - 0.5) * 34 * curScale,
-                  vx: (game.trackerVxPxPerSec * 0.011) + (Math.random() - 0.5) * 2.8,
-                  vy: (game.trackerVyPxPerSec * 0.011) + (Math.random() - 0.5) * 2.8,
-                  size: 3.5 + Math.random() * 3.5,
-                  color: shardColors[Math.floor(Math.random() * shardColors.length)],
-                  born: now,
-                  life: 420
-                });
-              }
+            if (Math.random() < 0.45 && !reducedMotionQuery.matches) {
+              const shardColors = ['#e9d5ff', '#facc15', '#7dd3fc', '#f472b6'];
+              game.particles.push({
+                x: c.x * W + (Math.random() - 0.5) * 32 * curScale,
+                y: c.y * H + (Math.random() - 0.5) * 32 * curScale,
+                vx: (game.trackerVxPxPerSec * 0.008) + (Math.random() - 0.5) * 2.2,
+                vy: (game.trackerVyPxPerSec * 0.008) + (Math.random() - 0.5) * 2.2,
+                size: 3 + Math.random() * 3.5,
+                color: shardColors[Math.floor(Math.random() * shardColors.length)],
+                born: now,
+                life: 400
+              });
+            }
 
-              if (c.scale <= 0.30) {
-                c.cleared = true;
-                c.scale = 0;
-                playGameSound('connect_node', i);
-                spawnCelebrationParticles(c.x * W, c.y * H, starR * 0.72, false, false);
-              }
+            if (c.scale <= 0.30) {
+              c.cleared = true;
+              c.scale = 0;
+              playGameSound('connect_node', i);
+              spawnCelebrationParticles(c.x * W, c.y * H, starR * 0.72, false, false);
             }
           } else if (config.nebulaDensity === 'regen' && c.scale > 0.30 && c.scale < 1.0) {
             c.scale = Math.min(1.0, c.scale + dtSec * 0.09);
@@ -2900,12 +2894,6 @@
         }
 
         if (!c.cleared) remainingClouds++;
-      }
-
-      if (touchingAnyCloud && !isActivelySweeping && now - game.nebulaIdleWarnAt > 1200) {
-        game.nebulaIdleWarnAt = now;
-        const dirHint = config.rangeMode === 'ud' ? '上下大幅揮動' : config.rangeMode === 'lr' ? '左右大幅揮動' : '上下左右揮動';
-        addFloatingText(trackerOutput.x * W, trackerOutput.y * H - starR, `👋 請${dirHint}才能撥開星雲喔！`, '#e9d5ff');
       }
 
       if (remainingClouds === 0 && game.targets.length > 0) {
@@ -3939,40 +3927,46 @@
       const c = game.targets[i];
       if (!c || c.cleared) continue;
       const curScale = Math.max(0.30, c.scale ?? 1.0);
-      const cx = c.x * W + Math.sin(now * 0.0018 + c.phase) * 7;
-      const cy = c.y * H + Math.cos(now * 0.0015 + c.phase) * 6;
+      const cx = c.x * W + Math.sin(now * 0.0018 + c.phase) * 6;
+      const cy = c.y * H + Math.cos(now * 0.0015 + c.phase) * 5;
       const cr = starR * (c.radiusScale || 1.95) * curScale;
       const pal = palettes[(c.hueShift || 0) % palettes.length];
 
-      // 方案 A：實心縮小＋高對比光暈邊緣，絕不變淡成看不見的幽靈雲
-      ctx.globalAlpha = 0.94;
-      const grad = ctx.createRadialGradient(cx, cy, cr * 0.12, cx, cy, cr);
-      grad.addColorStop(0, pal[0]);
-      grad.addColorStop(0.68, pal[1]);
-      grad.addColorStop(1, 'rgba(59, 7, 100, 0.28)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, cr, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.lineWidth = 2.0;
-      ctx.strokeStyle = 'rgba(243, 232, 255, 0.58)';
-      ctx.stroke();
+      // 方案 A 升級版：蓬鬆多團星雲（無醜白圈），高飽和雲核實心縮小
+      const puffs = [
+        { ox: 0, oy: 0, rr: cr },
+        { ox: -cr * 0.34, oy: cr * 0.14, rr: cr * 0.68 },
+        { ox: cr * 0.32, oy: -cr * 0.16, rr: cr * 0.64 }
+      ];
+      ctx.globalAlpha = 0.92;
+      for (let p = 0; p < puffs.length; p++) {
+        const px = cx + puffs[p].ox;
+        const py = cy + puffs[p].oy;
+        const pr = puffs[p].rr;
+        const grad = ctx.createRadialGradient(px, py, pr * 0.08, px, py, pr);
+        grad.addColorStop(0, pal[0]);
+        grad.addColorStop(0.55, pal[1]);
+        grad.addColorStop(1, pal[2]);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(px, py, pr, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // 3. 在星雲帷幕中央繪製柔和「上下／左右揮動撥開」動態引導標示
+    // 3. 在星雲帷幕中央繪製柔和動態引導標示
     const activeClouds = game.targets.filter(c => c && !c.cleared).length;
     if (activeClouds > 0) {
-      ctx.globalAlpha = Math.min(0.88, avgOpacity);
+      ctx.globalAlpha = 0.88;
       ctx.font = '900 14px system-ui, -apple-system, "Noto Sans TC", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const arrowText =
         config.rangeMode === 'ud'
-          ? '↕ 大幅上下揮動撥開星雲'
+          ? '↕ 在星雲上來回撥動擦開'
           : config.rangeMode === 'lr'
           ? '↔ 大幅左右揮動撥開星雲'
-          : '👋 大幅上下左右揮動撥開星雲';
+          : '👋 在星雲上輕輕撥動擦開';
       const tw = 206;
       const th = 28;
       ctx.fillStyle = 'rgba(10, 16, 40, 0.82)';
@@ -4381,11 +4375,42 @@
       ctx.strokeStyle = tl === 'red' ? '#fb7185' : tl === 'yellow' ? '#fbbf24' : '#4ade80';
       ctx.stroke();
 
-      ctx.font = `900 ${Math.round(r * 0.45)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = tl === 'red' ? '#fecdd3' : tl === 'yellow' ? '#fef08a' : '#bbf7d0';
-      ctx.fillText(tl === 'red' ? '停' : tl === 'yellow' ? '慢' : '行', cx, cy + 1);
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (tl === 'red') {
+        // 禁止符號 ⊘（純圖像，長輩一眼看懂不可碰）
+        const ir = r * 0.25;
+        ctx.strokeStyle = '#fecdd3';
+        ctx.lineWidth = Math.max(2.5, r * 0.09);
+        ctx.beginPath();
+        ctx.arc(cx, cy, ir, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx - ir * 0.68, cy + ir * 0.68);
+        ctx.lineTo(cx + ir * 0.68, cy - ir * 0.68);
+        ctx.stroke();
+      } else if (tl === 'yellow') {
+        // 警示驚嘆號 !（快變紅燈預警）
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(cx - r * 0.055, cy - r * 0.24, r * 0.11, r * 0.28, 3) : ctx.rect(cx - r * 0.055, cy - r * 0.24, r * 0.11, r * 0.28);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy + r * 0.18, r * 0.065, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // 綠色前進箭頭 ▶（可碰收集）
+        const ir = r * 0.22;
+        ctx.fillStyle = '#bbf7d0';
+        ctx.beginPath();
+        ctx.moveTo(cx - ir * 0.55, cy - ir * 0.85);
+        ctx.lineTo(cx + ir * 0.95, cy);
+        ctx.lineTo(cx - ir * 0.55, cy + ir * 0.85);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     if (type === 'timed' && target.maxTtlMs > 0) {
@@ -4487,12 +4512,35 @@
       });
       ctx.stroke();
 
-      // 2. 走廊中央導引虛線
+      // 2. 走廊中央導引虛線 + 流動方向箭頭（明確指示起點 → 星門終點）
       ctx.strokeStyle = 'rgba(186, 230, 253, 0.45)';
       ctx.lineWidth = 3;
       ctx.setLineDash([8, 8]);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      const arrowFlow = (performance.now() * 0.0025) % 1;
+      const stepCount = Math.max(3, Math.min(7, Math.floor(pts.length / 4)));
+      for (let sIdx = 1; sIdx < stepCount; sIdx++) {
+        const frac = (sIdx + arrowFlow * 0.45) / stepCount;
+        const pIdx = Math.min(pts.length - 2, Math.max(0, Math.floor(frac * (pts.length - 1))));
+        const pA = pts[pIdx];
+        const pB = pts[pIdx + 1];
+        const ax = pA.x * W;
+        const ay = pA.y * H;
+        const ang = Math.atan2((pB.y - pA.y) * H, (pB.x - pA.x) * W);
+        ctx.save();
+        ctx.translate(ax, ay);
+        ctx.rotate(ang);
+        ctx.strokeStyle = 'rgba(254, 240, 138, 0.85)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-7, -7);
+        ctx.lineTo(5, 0);
+        ctx.lineTo(-7, 7);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // 3. 已牽引走過的黃金發光路段
       if (game.trackOrbProgressIdx >= 1) {
@@ -5092,7 +5140,9 @@
     } else {
       state.missCount++;
       // 放寬短暫閃爍容忍至 3 幀 / 340ms，避免偶發單幀漏抓造成畫面閃爍中斷
-      if (state.missCount >= 3 || now - state.lastSeenTime > 340) {
+      const maxMissMs = config.gamePlayMode === 'nebula' ? 540 : 360;
+      const maxMissFrames = config.gamePlayMode === 'nebula' ? 5 : 3;
+      if (state.missCount >= maxMissFrames || now - state.lastSeenTime > maxMissMs) {
         publishTrackingState(false, trackerOutput.x, trackerOutput.y, now, 0);
         refreshTrackingBanner(m);
       }
